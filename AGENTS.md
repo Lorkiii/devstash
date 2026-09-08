@@ -60,6 +60,7 @@ do not add speculative services, queues, caches, or abstractions.
 - Use the installed Next.js App Router, React, and TypeScript versions. Read the
   bundled Next.js docs before relying on remembered APIs.
 - Keep the current repository-root app directory unless a move is approved.
+- Follow docs/PROJECT_STRUCTURE.md for file placement, naming, and imports.
 - Use npm and the committed package-lock.json.
 - Use Tailwind CSS and shadcn/ui.
 - Use Auth.js with Google OAuth only.
