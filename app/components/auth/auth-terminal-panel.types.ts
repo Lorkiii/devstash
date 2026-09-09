@@ -1,3 +1,4 @@
 export interface AuthTerminalPanelProps {
-  onGoogleSignIn: () => void;
+  errorMessage?: string;
+  isConfigured?: boolean;
 }

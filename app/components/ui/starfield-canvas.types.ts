@@ -1,5 +1,7 @@
 export type StarHue = "cool" | "cyan" | "white";
 
+export type StarfieldMotion = "drift" | "orbit";
+
 export interface Star {
   x: number;
   y: number;
@@ -8,9 +10,13 @@ export interface Star {
   p: number;
   f: number;
   hue: StarHue;
+  angle?: number;
+  radiusT?: number;
+  angularSpeed?: number;
 }
 
 export interface StarfieldCanvasProps {
   className?: string;
   starCount?: number;
+  motion?: StarfieldMotion;
 }

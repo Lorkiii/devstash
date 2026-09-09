@@ -41,7 +41,8 @@ or silently relaxing it.
 
 ## V1 scope
 
-DevStash V1 is personal-only and supports one approved Google identity.
+DevStash V1 is an individual-user service open to verified Gmail identities.
+Each authenticated user owns a separate private vault.
 
 Include Google-only sign-in; a separately locked encrypted vault; login
 credentials, API keys, access tokens, database and SSH credentials, recovery
@@ -75,7 +76,7 @@ implement cryptographic algorithms manually.
 
 ## Security states and authentication
 
-Google authentication establishes the approved identity and session. The Vault
+Google authentication establishes a verified identity and session. The Vault
 Passphrase independently derives the key that unlocks vault data. Google
 authentication must never automatically unlock the vault.
 
@@ -92,13 +93,13 @@ Refresh may preserve the Auth.js session but must return the vault to locked.
 Vault locking and authentication logout are separate operations.
 
 Required flow: verify the session; redirect signed-out users to /login; complete
-Google OAuth; verify identity and the personal allowlist server-side; create the
+Google OAuth; verify the Gmail identity and Google subject server-side; create the
 session; redirect to /dashboard locked; then create or unlock the vault locally.
 
 Authentication and authorization rules:
 
-- Require a verified Google email, exact server-side allowlist match, and stable
-  Google provider subject. Never trust browser-provided identity fields.
+- Require a verified Gmail address and stable Google provider subject. Never
+  trust browser-provided identity fields.
 - Request only identity scopes. Do not add local passwords, registration,
   forgot-password, email verification, or another provider.
 - Prefer revocable database-backed Auth.js sessions. If compatibility requires
@@ -293,8 +294,8 @@ the cryptographic boundary.
 
 ## Threat model and claims
 
-DevStash reduces risk from database/snapshot leaks, unauthorized Google
-accounts, IDOR, accidental server plaintext handling during normal operation,
+DevStash reduces risk from database/snapshot leaks, forged identities,
+cross-user access, accidental server plaintext handling during normal operation,
 authenticated-encryption tampering, and network observation under correct HTTPS.
 
 It does not fully protect against a compromised device/browser, malicious
@@ -318,7 +319,7 @@ lifecycle.
    KDF/CSP compatibility, and supported browsers.
 2. Foundation: shell, design tokens, shadcn/ui, login, locked dashboard,
    validation conventions, and test setup.
-3. Authentication: Google-only Auth.js, verified allowlist and stable identity,
+3. Authentication: Google-only Auth.js, verified Gmail and stable identity,
    sessions, route UX, centralized authorization, and ownership tests.
 4. Cryptographic proof: reviewed Argon2id, versioned formats and AAD, isolated
    primitives, fixed vectors, negative tests, and CSP proof.
@@ -360,7 +361,7 @@ screen-reader feedback without announcing secret values.
 ## Non-negotiable invariants
 
 1. Google authentication and vault unlocking remain separate.
-2. Only the approved Google identity may establish a V1 session.
+2. Only verified Gmail identities may establish a V1 session.
 3. Every protected operation authenticates, authorizes, validates, and enforces
    ownership server-side.
 4. Browser-provided owner identifiers are never trusted.

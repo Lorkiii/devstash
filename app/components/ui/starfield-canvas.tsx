@@ -6,6 +6,7 @@ import type { Star, StarHue, StarfieldCanvasProps } from "./starfield-canvas.typ
 export function StarfieldCanvas({
   className = "absolute inset-0 pointer-events-none",
   starCount = 180,
+  motion = "drift",
 }: StarfieldCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -20,6 +21,14 @@ export function StarfieldCanvas({
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
+    // Orbit geometry mirrors the planet dome in orbital-horizon.tsx: a
+    // 2400x1800px ellipse pinned at bottom:-1500px, so its center sits 600px
+    // below the viewport bottom. Keep these in sync if the dome changes.
+    let orbitCenterX = 0;
+    let orbitCenterY = 0;
+    let minOrbitRadius = 0;
+    let maxOrbitRadius = 0;
+
     // DPR scaling for razor sharp rendering
     const updateSize = () => {
       if (!canvas) return;
@@ -31,6 +40,11 @@ export function StarfieldCanvas({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      orbitCenterX = width / 2;
+      orbitCenterY = height + 600;
+      minOrbitRadius = 950; // just clears the horizon at screen center
+      maxOrbitRadius = Math.hypot(width / 2, height + 600) + 40;
     };
 
     updateSize();
@@ -51,7 +65,7 @@ export function StarfieldCanvas({
 
     const stars: Star[] = Array.from({ length: starCount }, () => {
       const hIndex = Math.floor(rand() * 3);
-      return {
+      const star: Star = {
         x: rand() * width,
         y: rand() * height,
         r: 0.4 + rand() * 1.3,
@@ -60,7 +74,30 @@ export function StarfieldCanvas({
         f: 0.4 + rand() * 1.2,
         hue: hues[hIndex] || "cool",
       };
+
+      if (motion === "orbit") {
+        star.angle = rand() * Math.PI * 2;
+        star.radiusT = rand();
+        // Negative = sweeps leftward across the top of the sky, matching the
+        // old drift direction; 0.005-0.02 rad/s is one orbit every ~5-21 min.
+        star.angularSpeed = -(0.005 + rand() * 0.015);
+      }
+
+      return star;
     });
+
+    const positionOrbitStar = (star: Star) => {
+      if (star.angle === undefined || star.radiusT === undefined) return;
+
+      const orbitRadius =
+        minOrbitRadius + star.radiusT * (maxOrbitRadius - minOrbitRadius);
+      star.x = orbitCenterX + Math.cos(star.angle) * orbitRadius;
+      star.y = orbitCenterY + Math.sin(star.angle) * orbitRadius;
+    };
+
+    if (motion === "orbit") {
+      stars.forEach(positionOrbitStar);
+    }
 
     let lastTime = performance.now();
 
@@ -73,7 +110,16 @@ export function StarfieldCanvas({
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
 
-        if (!prefersReducedMotion) {
+        if (motion === "orbit") {
+          if (
+            !prefersReducedMotion &&
+            s.angle !== undefined &&
+            s.angularSpeed !== undefined
+          ) {
+            s.angle += s.angularSpeed * dt;
+          }
+          positionOrbitStar(s);
+        } else if (!prefersReducedMotion) {
           s.x -= s.v * dt;
           if (s.x < -4) {
             s.x = width + 4;
@@ -124,7 +170,7 @@ export function StarfieldCanvas({
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
     };
-  }, [starCount]);
+  }, [starCount, motion]);
 
   return (
     <canvas

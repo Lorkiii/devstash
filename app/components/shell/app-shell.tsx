@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { StarfieldCanvas } from "@/app/components/ui/starfield-canvas";
 import { VaultSessionProvider, useVaultSession } from "@/app/lib/vault-session";
@@ -9,27 +10,33 @@ import { AppHeader } from "./sections/app-header";
 import { AppStatusBar } from "./sections/app-status-bar";
 import { VaultLockPanel } from "./lock/vault-lock-panel";
 import { CommandPalette } from "./palette/command-palette";
+import type { AppShellProps, ShellFrameProps } from "./app-shell.types";
+import { AUTH_ROUTES, AUTH_SESSION_POLICY } from "@/app/lib/auth/config";
 
-interface AppShellProps {
-  children: React.ReactNode;
-}
-
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, session }: AppShellProps) {
   return (
-    <VaultSessionProvider>
-      <ShellFrame>{children}</ShellFrame>
-    </VaultSessionProvider>
+    <SessionProvider
+      session={session}
+      refetchInterval={AUTH_SESSION_POLICY.clientRefreshSeconds}
+      refetchOnWindowFocus
+    >
+      <VaultSessionProvider>
+        <ShellFrame>{children}</ShellFrame>
+      </VaultSessionProvider>
+    </SessionProvider>
   );
 }
 
 // Authenticated shell. Pages are only mounted while the vault is unlocked; the
 // locked face swaps every content area for the unlock panel so no decrypted
 // data, titles, or counts can render before the local unlock succeeds.
-function ShellFrame({ children }: AppShellProps) {
+function ShellFrame({ children }: ShellFrameProps) {
   const router = useRouter();
+  const { status } = useSession();
   const session = useVaultSession();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   const isUnlocked = session.lockState === "unlocked";
   const recordCount = session.data
@@ -45,17 +52,30 @@ function ShellFrame({ children }: AppShellProps) {
     session.lock();
   }, [session]);
 
-  const handleSignOut = useCallback(() => {
-    // Order matters: clear vault state first, then end the session. In this
-    // preview there is no Auth.js session yet, so we only navigate to "/".
+  const handleSignOut = useCallback(async () => {
     session.lock();
-    router.push("/");
+    setIsPaletteOpen(false);
+    setSignOutError(null);
+    try {
+      const result = await signOut({ redirect: false, redirectTo: AUTH_ROUTES.login });
+      if (result?.url !== `${window.location.origin}${AUTH_ROUTES.login}`) {
+        throw new Error("Sign-out failed");
+      }
+      router.replace(AUTH_ROUTES.login);
+      router.refresh();
+    } catch {
+      setSignOutError("Sign-out could not be completed. Your vault is locked. Please try again.");
+    }
   }, [session, router]);
 
-  const handleUnlock = useCallback(() => {
-    setIsPaletteOpen(false);
-    session.unlock();
-  }, [session]);
+  const lock = session.lock;
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      lock();
+      router.replace(AUTH_ROUTES.login);
+      router.refresh();
+    }
+  }, [status, lock, router]);
 
   useEffect(() => {
     if (!isUnlocked) return;
@@ -92,11 +112,12 @@ function ShellFrame({ children }: AppShellProps) {
         />
 
         <main className="flex-1 min-w-0 min-h-0 overflow-y-auto">
+          {signOutError && <p role="alert" className="relative p-4 text-sm text-amber-200">{signOutError}</p>}
           {isUnlocked ? (
             <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-7xl mx-auto">{children}</div>
           ) : (
             <div className="h-full flex items-center justify-center px-4 py-8">
-              <VaultLockPanel onUnlock={handleUnlock} />
+              <VaultLockPanel />
             </div>
           )}
         </main>

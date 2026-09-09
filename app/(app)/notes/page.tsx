@@ -1,11 +1,7 @@
-import { Suspense } from "react";
+import { requireSession } from "@/app/lib/auth/session";
 import { NotesBrowser } from "@/app/components/notes/notes-browser";
 
-// useSearchParams inside NotesBrowser requires a Suspense boundary.
-export default function NotesPage() {
-  return (
-    <Suspense fallback={null}>
-      <NotesBrowser />
-    </Suspense>
-  );
+export default async function NotesPage() {
+  await requireSession();
+  return <NotesBrowser />;
 }

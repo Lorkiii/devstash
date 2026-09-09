@@ -13,7 +13,7 @@ interface AppStatusBarProps {
 export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: AppStatusBarProps) {
   const segments: string[] = [
     "argon2id · v1 (planned)",
-    "aes-256-gcm",
+    "aes-256-gcm (planned)",
     isUnlocked ? `${recordCount} records in memory` : "0 records in memory",
   ];
   if (isUnlocked && secondsUntilAutoLock !== null) {
@@ -32,7 +32,7 @@ export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: 
             </React.Fragment>
           ))}
         </div>
-        <span className="shrink-0 text-amber-300/80">UI PREVIEW · NO BACKEND</span>
+        <span className="shrink-0 text-amber-300/80">VAULT ENCRYPTION PENDING</span>
       </div>
     </footer>
   );

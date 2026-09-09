@@ -10,6 +10,7 @@ import { LandingFooter } from "./components/landing/sections/landing-footer";
 import { SecurityModal } from "./components/landing/modals/security-modal";
 import { EnvelopeModal } from "./components/landing/modals/envelope-modal";
 import { AuthTerminalPanel } from "./components/auth/auth-terminal-panel";
+import { AUTH_ROUTES } from "./lib/auth/config";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -20,16 +21,13 @@ export default function LandingPage() {
   const openEnvelopeModal = () => setIsEnvelopeModalOpen(true);
 
   const handleGoogleSignIn = () => {
-    // UI preview only: jumps straight to the locked dashboard shell. The Auth.js
-    // phase replaces this with the real Google sign-in route and server-side
-    // allowlist check; sign-in never unlocks the vault.
-    router.push("/dashboard");
+    router.push(AUTH_ROUTES.login);
   };
 
   return (
     // Desktop is pinned to one viewport; smaller screens stack and scroll normally.
     <div className="relative min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-[#05070d] text-[#e8eefb] overflow-x-hidden selection:bg-[#6ea8ff]/30 selection:text-white">
-      <StarfieldCanvas starCount={200} />
+      <StarfieldCanvas starCount={200} motion="orbit" />
       <OrbitalHorizon />
 
       <LandingHeader
@@ -45,7 +43,7 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-5">
-            <AuthTerminalPanel onGoogleSignIn={handleGoogleSignIn} />
+            <AuthTerminalPanel />
           </div>
         </div>
       </main>

@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { GoogleIcon, ShieldLockIcon } from "@/app/components/ui/icons";
+import { AUTH_PROVIDER_ID, AUTH_ROUTES } from "@/app/lib/auth/config";
 import type { AuthTerminalPanelProps } from "./auth-terminal-panel.types";
-
-// Plain description of the two independent gates: Google identity, then the
-// local Vault Passphrase. Sign-in never unlocks the vault on its own.
 const ACCESS_STEPS = [
   {
     code: "01",
     label: "IDENTITY",
-    value: "Google sign-in, allowlisted account only",
+    value: "Google sign-in with a verified Gmail account",
   },
   {
     code: "02",
@@ -20,16 +19,39 @@ const ACCESS_STEPS = [
   {
     code: "03",
     label: "DATA",
-    value: "Encrypted in the browser with AES-256-GCM; server stores ciphertext only",
+    value:
+      "Encrypted in the browser with AES-256-GCM; server stores ciphertext only",
   },
 ];
 
-export function AuthTerminalPanel({ onGoogleSignIn }: AuthTerminalPanelProps) {
-  const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+export function AuthTerminalPanel({
+  errorMessage,
+  isConfigured = true,
+}: AuthTerminalPanelProps) {
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     setIsSigningIn(true);
-    onGoogleSignIn();
+    setFailure(null);
+    try {
+      // Auth.js beta.32 navigates to its error API when provider lookup fails,
+      // even with redirect:false. Preflight keeps that failure in this panel.
+      const providers = await fetch(`${AUTH_ROUTES.api}/providers`, {
+        cache: "no-store",
+      });
+      if (!providers.ok) throw new Error("Sign-in unavailable");
+      const result = await signIn(AUTH_PROVIDER_ID, {
+        redirect: false,
+        redirectTo: AUTH_ROUTES.authenticatedHome,
+      });
+      if (!result?.ok || !result.url || result.error)
+        throw new Error("Sign-in unavailable");
+      window.location.assign(result.url);
+    } catch {
+      setFailure("Google sign-in is unavailable. Please try again later.");
+      setIsSigningIn(false);
+    }
   };
 
   return (
@@ -58,12 +80,17 @@ export function AuthTerminalPanel({ onGoogleSignIn }: AuthTerminalPanelProps) {
           {ACCESS_STEPS.map((step) => (
             <div
               key={step.code}
-              className="grid grid-cols-[24px_1fr] gap-2 items-start text-xs py-1.5 border-b border-[#6ea8ff]/10 last:border-0"
-            >
-              <span className="text-[#6ea8ff]/60 text-[10px] pt-0.5">{step.code}</span>
+              className="grid grid-cols-[24px_1fr] gap-2 items-start text-xs py-1.5 border-b border-[#6ea8ff]/10 last:border-0">
+              <span className="text-[#6ea8ff]/60 text-[10px] pt-0.5">
+                {step.code}
+              </span>
               <div>
-                <span className="text-[#e8eefb] font-medium">{step.label}: </span>
-                <span className="text-[#e8eefb]/65 text-[11px]">{step.value}</span>
+                <span className="text-[#e8eefb] font-medium">
+                  {step.label}:{" "}
+                </span>
+                <span className="text-[#e8eefb]/65 text-[11px]">
+                  {step.value}
+                </span>
               </div>
             </div>
           ))}
@@ -72,20 +99,32 @@ export function AuthTerminalPanel({ onGoogleSignIn }: AuthTerminalPanelProps) {
         {/* Primary Sign-In Action */}
         <button
           onClick={handleSignIn}
-          disabled={isSigningIn}
-          className="w-full py-3 px-4 rounded bg-[#e8eefb] text-[#05070d] font-bold text-xs tracking-wider uppercase hover:bg-[#6ea8ff] hover:text-[#05070d] hover:shadow-[0_0_25px_rgba(110,168,255,0.4)] transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed group"
-        >
+          type="button"
+          disabled={isSigningIn || !isConfigured}
+          aria-busy={isSigningIn}
+          className="w-full py-3 px-4 rounded bg-[#e8eefb] text-[#05070d] font-bold text-xs tracking-wider uppercase hover:bg-[#6ea8ff] hover:text-[#05070d] hover:shadow-[0_0_25px_rgba(110,168,255,0.4)] transition-all duration-200 flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed group">
           <GoogleIcon className="w-4 h-4" />
-          <span>{isSigningIn ? "REDIRECTING TO GOOGLE..." : "CONTINUE WITH GOOGLE"}</span>
-          <span className="text-[#05070d] group-hover:translate-x-0.5 transition-transform">→</span>
+          <span>
+            {isSigningIn ? "REDIRECTING TO GOOGLE..." : "CONTINUE WITH GOOGLE"}
+          </span>
+          <span className="text-[#05070d] group-hover:translate-x-0.5 transition-transform">
+            →
+          </span>
         </button>
+
+        {(failure || errorMessage || !isConfigured) && (
+          <p role="alert" className="text-xs leading-relaxed text-amber-200">
+            {failure || errorMessage || "Google sign-in is not configured yet."}
+          </p>
+        )}
 
         <div className="p-2.5 rounded bg-[#060b14] border border-[#6ea8ff]/15 text-[10px] text-[#e8eefb]/60 leading-relaxed flex items-start gap-2">
           <ShieldLockIcon className="w-3.5 h-3.5 text-[#6ea8ff] shrink-0 mt-0.5" />
           <span>
-            <b className="text-[#e8eefb]">Sign-in is not unlock.</b> Google sign-in
-            identifies you; it does not unlock the vault. After sign-in, your Vault
-            Passphrase unlocks the encryption keys locally in the browser.
+            <b className="text-[#e8eefb]">Sign-in is not unlock.</b> Google
+            sign-in identifies you; it does not unlock the vault. After sign-in,
+            your Vault Passphrase unlocks the encryption keys locally in the
+            browser.
           </span>
         </div>
       </div>

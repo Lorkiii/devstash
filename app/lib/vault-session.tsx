@@ -11,13 +11,9 @@ import React, {
 } from "react";
 import type { RecentKind, RecentRef, VaultData } from "./vault-data.types";
 import type { AutoLockMinutes, VaultLockState, VaultSessionValue } from "./vault-session.types";
-import { MOCK_VAULT_DATA } from "./mock-vault-data";
 
-// UI-preview session. Holds the "unlocked" state purely in React memory so a
-// refresh always returns to locked, matching the real lifecycle. The crypto
-// phase replaces `unlock` with passphrase -> Argon2id -> DEK unwrap and
-// `data` with locally decrypted records. Nothing here touches storage or the
-// network, and this provider must never learn the passphrase.
+// Ephemeral vault state. Authentication cannot populate it: a reviewed local
+// DEK unwrap and decryption flow must exist before unlocking can be enabled.
 
 const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = [
   "pointerdown",
@@ -47,15 +43,6 @@ export function VaultSessionProvider({ children }: { children: React.ReactNode }
     setSecondsUntilAutoLock(null);
     setRecents([]);
   }, []);
-
-  const unlock = useCallback(() => {
-    const now = Date.now();
-    lastActivityRef.current = now;
-    setData(MOCK_VAULT_DATA);
-    setUnlockedAt(now);
-    setSecondsUntilAutoLock(autoLockMinutes * 60);
-    setLockState("unlocked");
-  }, [autoLockMinutes]);
 
   const touchRecent = useCallback((kind: RecentKind, id: string) => {
     setRecents((current) => {
@@ -97,12 +84,11 @@ export function VaultSessionProvider({ children }: { children: React.ReactNode }
       autoLockMinutes,
       secondsUntilAutoLock,
       recents,
-      unlock,
       lock,
       setAutoLockMinutes,
       touchRecent,
     }),
-    [lockState, data, unlockedAt, autoLockMinutes, secondsUntilAutoLock, recents, unlock, lock, touchRecent]
+    [lockState, data, unlockedAt, autoLockMinutes, secondsUntilAutoLock, recents, lock, touchRecent]
   );
 
   return <VaultSessionContext.Provider value={value}>{children}</VaultSessionContext.Provider>;

@@ -14,7 +14,6 @@ export interface VaultSessionValue {
   /** Seconds until inactivity lock; null while locked. */
   secondsUntilAutoLock: number | null;
   recents: RecentRef[];
-  unlock: () => void;
   lock: () => void;
   setAutoLockMinutes: (minutes: AutoLockMinutes) => void;
   touchRecent: (kind: RecentKind, id: string) => void;

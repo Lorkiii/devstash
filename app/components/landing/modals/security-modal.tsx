@@ -52,8 +52,8 @@ export function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
         <b className="text-[#6ea8ff] font-mono uppercase block mb-1">
           THREAT MODEL SUMMARY:
         </b>
-        DevStash reduces risk from database/snapshot leaks, unauthorized Google accounts,
-        IDOR, accidental server-side plaintext handling, ciphertext tampering, and network
+        DevStash reduces risk from database/snapshot leaks, forged identities, cross-user
+        access, accidental server-side plaintext handling, ciphertext tampering, and network
         observation under HTTPS. It does not protect against a compromised device or browser,
         XSS while unlocked, or a weak passphrase.
       </div>
