@@ -38,9 +38,18 @@ app/
     generator/page.tsx
     settings/page.tsx
   lib/                         # shared non-UI modules (types, session, helpers)
+    vault-crypto/              # browser-only, versioned cryptography + lifecycle
+      argon2id.ts              # bounded Argon2id dependency wrapper
+      recovery-phrase.ts       # 256-bit entropy and BIP-39 English encoding
+      web-crypto.ts            # HKDF, AES-GCM, wrapping, record primitives
+      operations.ts            # setup, unlock, recovery, and rewrap orchestration
+      vault-crypto.worker.ts   # short-lived same-origin cryptography worker
+    vault-profile/             # server validation + owner-scoped persistence
+    vault-profile-client.ts    # ciphertext-only same-origin profile transport
+    vault-profile.types.ts     # exact browser/server profile contracts
     vault-data.types.ts        # in-memory shapes of decrypted content
     vault-types.ts             # per-type labels and colors
-    vault-session.tsx          # locked/unlocked client context (preview)
+    vault-session.tsx          # ephemeral locked/unlocked client lifecycle
     vault-session.types.ts
     mock-vault-data.ts         # synthetic fixtures for the UI preview only
     password-generator.ts      # secure-random generation, no UI
@@ -86,6 +95,9 @@ app/
     settings/                  # preference panels
 docs/
   PROJECT_STRUCTURE.md         # this file
+  VAULT_ENCRYPTION_ARCHITECTURE.md
+  VAULT_CRYPTOGRAPHIC_PROOF.md
+  VAULT_LIFECYCLE_IMPLEMENTATION.md
 public/                        # static assets served at "/"
 ```
 
@@ -108,6 +120,9 @@ app/api/.../route.ts         -> ciphertext-only Route Handlers, no UI
 - May be imported from `ui/`, any feature, and route files via
   `@/app/lib/<file>`.
 - Must not import from `components/`.
+- `vault-crypto/` is browser-only security-boundary code. Keep encoding, KDF,
+  AAD, Web Crypto, worker transport, and lifecycle orchestration distinct; do
+  not import these modules from Server Components or Route Handlers.
 - `mock-vault-data.ts` exists only for the UI preview and is removed when
   client-side decryption of real ciphertext lands.
 

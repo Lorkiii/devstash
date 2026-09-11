@@ -12,8 +12,8 @@ interface AppStatusBarProps {
 // tmux/VS Code style status line. Only non-sensitive metadata appears here.
 export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: AppStatusBarProps) {
   const segments: string[] = [
-    "argon2id · v1 (planned)",
-    "aes-256-gcm (planned)",
+    "argon2id · v1 candidate",
+    "aes-256-gcm",
     isUnlocked ? `${recordCount} records in memory` : "0 records in memory",
   ];
   if (isUnlocked && secondsUntilAutoLock !== null) {
@@ -32,7 +32,7 @@ export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: 
             </React.Fragment>
           ))}
         </div>
-        <span className="shrink-0 text-amber-300/80">VAULT ENCRYPTION PENDING</span>
+        <span className="shrink-0 text-amber-300/80">PHASE 5 · LOCAL LIFECYCLE</span>
       </div>
     </footer>
   );

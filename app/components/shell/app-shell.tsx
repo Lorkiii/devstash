@@ -20,7 +20,7 @@ export function AppShell({ children, session }: AppShellProps) {
       refetchInterval={AUTH_SESSION_POLICY.clientRefreshSeconds}
       refetchOnWindowFocus
     >
-      <VaultSessionProvider>
+      <VaultSessionProvider ownerId={session.user.id}>
         <ShellFrame>{children}</ShellFrame>
       </VaultSessionProvider>
     </SessionProvider>
@@ -53,7 +53,7 @@ function ShellFrame({ children }: ShellFrameProps) {
   }, [session]);
 
   const handleSignOut = useCallback(async () => {
-    session.lock();
+    session.prepareForSignOut();
     setIsPaletteOpen(false);
     setSignOutError(null);
     try {
@@ -68,14 +68,14 @@ function ShellFrame({ children }: ShellFrameProps) {
     }
   }, [session, router]);
 
-  const lock = session.lock;
+  const prepareForSignOut = session.prepareForSignOut;
   useEffect(() => {
     if (status === "unauthenticated") {
-      lock();
+      prepareForSignOut();
       router.replace(AUTH_ROUTES.login);
       router.refresh();
     }
-  }, [status, lock, router]);
+  }, [status, prepareForSignOut, router]);
 
   useEffect(() => {
     if (!isUnlocked) return;

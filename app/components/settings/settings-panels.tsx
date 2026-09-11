@@ -1,24 +1,21 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
-import { Download, KeyRound, LogOut, Upload } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { Download, LogOut, Upload } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { useVaultSession } from "@/app/lib/vault-session";
 import { AUTO_LOCK_OPTIONS_MINUTES } from "@/app/lib/vault-session.types";
-
-// Synthetic identity for the preview; the real value comes from the verified
-// server session in the authentication phase and is never browser-supplied.
-const PREVIEW_IDENTITY = "demo.dev@example.test";
+import { AUTH_ROUTES } from "@/app/lib/auth/config";
+import { VaultSecuritySettings } from "./vault-security-settings";
 
 export function SettingsPanels() {
-  const router = useRouter();
-  const { autoLockMinutes, setAutoLockMinutes, lock } = useVaultSession();
+  const { autoLockMinutes, setAutoLockMinutes, prepareForSignOut } = useVaultSession();
 
-  const handleSignOut = () => {
-    lock();
-    router.push("/");
+  const handleSignOut = async () => {
+    prepareForSignOut();
+    await signOut({ redirectTo: AUTH_ROUTES.login });
   };
 
   return (
@@ -73,20 +70,7 @@ export function SettingsPanels() {
           </div>
         </ConsolePanel>
 
-        <ConsolePanel title="VAULT PASSPHRASE" status="LOCAL ONLY" tone="amber">
-          <p className="text-xs text-[#e8eefb]/65 mb-3">
-            Changing the passphrase derives a new key and rewraps the same data key. Records are not
-            re-encrypted. There is no server-side reset.
-          </p>
-          <button
-            type="button"
-            disabled
-            title="Available after the cryptographic proof phase"
-            className="inline-flex items-center gap-2 rounded border border-amber-400/30 px-3 py-2 font-mono text-xs tracking-wider text-amber-200/60 disabled:cursor-not-allowed"
-          >
-            <KeyRound className="w-3.5 h-3.5" /> CHANGE PASSPHRASE
-          </button>
-        </ConsolePanel>
+        <VaultSecuritySettings />
 
         <ConsolePanel title="BACKUP" status="ENCRYPTED ONLY">
           <p className="text-xs text-[#e8eefb]/65 mb-3">
@@ -113,18 +97,18 @@ export function SettingsPanels() {
           </div>
         </ConsolePanel>
 
-        <ConsolePanel title="SESSION" status="GOOGLE · PREVIEW" className="lg:col-span-2">
+        <ConsolePanel title="SESSION" status="GOOGLE · VERIFIED" className="lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="font-mono">
               <div className="text-[10px] tracking-widest text-[#e8eefb]/45">SIGNED IN AS</div>
-              <div className="text-xs text-[#e8eefb]">{PREVIEW_IDENTITY}</div>
+              <div className="text-xs text-[#e8eefb]">Verified Google session</div>
               <div className="mt-1 text-[10px] text-[#e8eefb]/40">
                 Sign-out clears vault state first, then ends the session. Navigating away alone is not logout.
               </div>
             </div>
             <button
               type="button"
-              onClick={handleSignOut}
+              onClick={() => void handleSignOut()}
               className="inline-flex items-center gap-2 rounded border border-rose-400/40 bg-rose-400/10 px-3 py-2 font-mono text-xs font-semibold tracking-wider text-rose-200 hover:bg-rose-400/20 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> SIGN OUT

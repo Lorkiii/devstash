@@ -15,6 +15,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  vaultProfile  VaultEncryptionProfile?
 }
 
 // Only stable identity is retained; OAuth bearer tokens have no columns.
@@ -45,4 +46,39 @@ model AuthRateLimit {
   id              String   @id
   windowStartedAt DateTime
   count           Int
+}
+
+// Contains only public KDF metadata and authenticated wrapped key ciphertext.
+// Passphrases, Recovery Phrases, and plaintext keys never enter this model.
+model VaultEncryptionProfile {
+  id                       String   @id @db.Uuid
+  ownerId                  String   @unique
+  profileFormatVersion     Int
+  profileRevision          Int
+  passphraseWrapRevision   Int
+  recoveryWrapRevision     Int
+  passphraseEncoding       String
+  kdfAlgorithm             String
+  kdfAlgorithmVersion      Int
+  kdfSalt                  Bytes
+  kdfMemoryKiB             Int
+  kdfIterations            Int
+  kdfParallelism           Int
+  kdfOutputBytes           Int
+  passphraseWrapAlgorithm  String
+  passphraseWrapNonce      Bytes
+  passphraseWrapTagBits    Int
+  passphraseWrappedDek     Bytes
+  recoveryPhraseEncoding   String
+  recoveryKdfAlgorithm     String
+  recoveryKdfSalt          Bytes
+  recoveryKdfInfo          String
+  recoveryKdfOutputBytes   Int
+  recoveryWrapAlgorithm    String
+  recoveryWrapNonce        Bytes
+  recoveryWrapTagBits      Int
+  recoveryWrappedDek       Bytes
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  owner                    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 }

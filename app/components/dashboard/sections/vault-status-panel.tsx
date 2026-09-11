@@ -33,7 +33,7 @@ export function VaultStatusPanel({
   const maxCount = Math.max(1, ...countsByType.map((entry) => entry.count));
 
   const rows = [
-    { label: "profile", value: "argon2id · aes-256-gcm · v1 (planned)" },
+    { label: "profile", value: "argon2id v1 candidate · aes-256-gcm" },
     { label: "unlocked", value: unlockedAt ? formatElapsed(unlockedAt, now) : "—" },
     {
       label: "auto-lock",

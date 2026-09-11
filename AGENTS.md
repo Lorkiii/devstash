@@ -48,7 +48,8 @@ Include Google-only sign-in; a separately locked encrypted vault; login
 credentials, API keys, access tokens, database and SSH credentials, recovery
 codes, generic secrets, .env bundles, projects, private notes, tasks, local
 decrypted search, masking, timed reveal, explicit copy, secure password
-generation, auto-lock, and later encrypted export/import.
+generation, a browser-generated vault Recovery Phrase, auto-lock, and later
+encrypted export/import.
 
 Exclude teams, organizations, roles, collaboration, sharing, public links,
 browser extensions, autofill, mobile or desktop apps, TOTP, credential-rotation
@@ -77,8 +78,10 @@ implement cryptographic algorithms manually.
 ## Security states and authentication
 
 Google authentication establishes a verified identity and session. The Vault
-Passphrase independently derives the key that unlocks vault data. Google
-authentication must never automatically unlock the vault.
+Passphrase independently derives the normal key that unlocks vault data. A
+browser-generated Recovery Phrase may independently recover the same vault only
+through the approved local recovery flow. Google authentication must never
+automatically unlock or recover the vault.
 
 The application has three states:
 
@@ -124,8 +127,9 @@ Write flow: plaintext to client encryption to ciphertext to server to Neon.
 Read flow: Neon to server to ciphertext to browser to client decryption.
 
 - Server Components render only the authenticated shell and server-safe data.
-- Client Components own passphrase input, KDF, encryption and decryption,
-  unlocked state, reveal/copy, local search, and inactivity tracking.
+- Client Components own passphrase and Recovery Phrase input, KDF, encryption
+  and decryption, unlocked state, reveal/copy, local search, and inactivity
+  tracking.
 - Use explicit ciphertext-only Route Handler contracts for V1 encrypted CRUD.
 - Never pass decrypted data through Server Components, Server Actions, Route
   Handlers, RSC payloads, server HTML, or server-bound forms.
@@ -136,21 +140,25 @@ Read flow: Neon to server to ciphertext to browser to client decryption.
 
 ## Passphrase and envelope encryption
 
-The Vault Passphrase exists only to derive key material locally. Never persist
-it or send it to server code, Auth.js, or another service. Never put it in
+The Vault Passphrase and Recovery Phrase exist only to derive key material
+locally. Never persist either secret or send it to server code, Auth.js, or
+another service. Never put either secret or its decoded recovery entropy in
 cookies, localStorage, sessionStorage, IndexedDB, Cache Storage, URLs, logs,
-analytics, errors, or environment variables. Keep it only for the shortest
+analytics, errors, or environment variables. Keep them only for the shortest
 practical derivation period and then remove reachable references. JavaScript
 cannot guarantee physical memory erasure.
 
-Do not store a separate fast passphrase verifier. Authenticated DEK unwrapping
-is the correctness check. Wrong passphrases and corrupt wrapped keys receive the
-same generic local error.
+Do not store a separate fast passphrase or Recovery Phrase verifier.
+Authenticated DEK unwrapping is the correctness check. Wrong credentials and
+corrupt matching wrappers receive the same generic local error for that flow.
 
 Envelope design:
 
 - Vault Passphrase plus a random salt derives a 256-bit KEK with Argon2id.
-- The KEK authentically unwraps a random 256-bit DEK.
+- A browser-generated 24-word Recovery Phrase encodes 256 bits of random
+  entropy; HKDF-SHA-256 derives an independent 256-bit RWK from that entropy.
+- The KEK and RWK independently authenticate and unwrap the same random 256-bit
+  DEK.
 - The DEK encrypts user data with AES-256-GCM.
 
 Cryptographic rules:
@@ -162,12 +170,19 @@ Cryptographic rules:
 - Generate salts, keys, and nonces with secure browser randomness.
 - Never use SHA-256 alone, SHA-1, MD5, Base64, string concatenation, custom
   loops, custom ciphers, XOR storage, or homemade cryptography.
-- Generate a random 256-bit DEK during setup. For V1, wrap it under the KEK with
-  AES-256-GCM authenticated encryption and a fresh nonce.
-- Persist only the wrapped DEK and metadata. Plaintext KEK and DEK remain only
-  in ephemeral client memory.
+- Generate the Recovery Phrase from exactly 256 bits of secure browser
+  randomness and encode it as 24 English BIP-39 words with a checksum. Use only
+  the reviewed entropy-to-mnemonic encoding, not BIP-39 wallet-seed derivation.
+- Generate a random 256-bit DEK during setup. For V1, wrap it independently
+  under the KEK and RWK with AES-256-GCM authenticated encryption and separate
+  fresh nonces.
+- Persist only both wrapped-DEK values and approved metadata. Plaintext KEK,
+  RWK, recovery entropy, and DEK remain only in ephemeral client memory.
 - Changing the passphrase derives a new KEK and rewraps the same DEK; it does not
   re-encrypt every record.
+- Rotating the Recovery Phrase derives a new RWK and recovery wrapper; it does
+  not make an old phrase unable to decrypt an older backup that contains its
+  matching wrapper.
 - Encrypt each record with AES-256-GCM, a fresh random 96-bit nonce per operation
   under a key, and a 128-bit authentication tag. Never reuse a nonce.
 - Bind encryption version, owner, record ID, entity type, and security-relevant
@@ -181,8 +196,10 @@ Cryptographic rules:
 ## Vault lifecycle, recovery, and backup
 
 First setup occurs after authentication: collect and confirm the passphrase
-locally; generate DEK and salt; derive KEK; wrap DEK; persist only wrapped key
-and profile metadata; enter unlocked state after a successful local round trip.
+locally; generate the DEK, salts, and 24-word Recovery Phrase; derive the KEK
+and RWK; independently wrap the same DEK under both; require confirmation from
+the user's saved phrase; persist only both wrapped keys and profile metadata;
+enter unlocked state after successful local round trips.
 
 Unlock by fetching the current user's wrapped DEK and KDF metadata, deriving the
 KEK locally, and unwrapping locally. On failure, discard intermediates and make
@@ -196,9 +213,13 @@ with a 15-minute inactivity default stored as a non-sensitive preference.
 Sign-out cleans vault state, terminates the Auth.js session, then navigates to
 /login. Navigation alone is not logout.
 
-V1 has no server-side passphrase reset or decryption bypass. Losing the
-passphrase means losing encrypted content; Google authentication cannot bypass
-it. Recovery keys, trusted-device unlock, or escrow require a new threat model.
+V1 has no server-side passphrase reset or decryption bypass. After Google
+authentication, the correct Recovery Phrase may unwrap the DEK locally and must
+be followed by creation of a new passphrase wrapper before private screens are
+mounted. Google authentication alone cannot recover the vault. If both the
+Vault Passphrase and Recovery Phrase are lost, the encrypted content is
+permanently unrecoverable through DevStash. Trusted-device unlock, escrow, or
+any other recovery path requires a new threat model.
 
 Encrypted export/import is backup, not recovery. It contains only the encryption
 profile, ciphertext, approved metadata, versions, and integrity-protected
@@ -223,9 +244,9 @@ not substitutes for client-side application encryption.
 Design and review the exact Prisma schema in its approved phase. Conceptually use:
 
 - An authentication user with required Auth.js and Google metadata but no vault
-  passphrase or key.
-- One vault encryption profile per user with KDF metadata, wrap metadata, wrapped
-  DEK, cryptographic version, and timestamps.
+  passphrase, Recovery Phrase, or plaintext key.
+- One vault encryption profile per user with passphrase and recovery KDF
+  metadata, two wrapped-DEK values, cryptographic versions, and timestamps.
 - Clear VaultItem, Project, Note, and Task models with stable ID, owner, approved
   relationships/metadata, encrypted payload, nonce, version, and timestamps.
 
@@ -321,10 +342,12 @@ lifecycle.
    validation conventions, and test setup.
 3. Authentication: Google-only Auth.js, verified Gmail and stable identity,
    sessions, route UX, centralized authorization, and ownership tests.
-4. Cryptographic proof: reviewed Argon2id, versioned formats and AAD, isolated
-   primitives, fixed vectors, negative tests, and CSP proof.
+4. Cryptographic proof: reviewed Argon2id and Recovery Phrase encoding,
+   versioned formats and AAD, isolated primitives, fixed vectors, negative
+   tests, and CSP proof.
 5. Vault lifecycle: setup, unlock, lock, refresh, inactivity, sign-out cleanup,
-   passphrase change, and plaintext-leak verification.
+   lost-passphrase recovery, passphrase change, Recovery Phrase rotation, and
+   plaintext-leak verification.
 6. Vault items: reviewed Prisma schema, ciphertext handlers, and one item type
    end-to-end before generalizing.
 7. Workspace modules: projects and .env, then notes, then tasks.
@@ -343,10 +366,11 @@ For each phase, run and report only relevant checks: npm run lint,
 npm run build, focused tests once present, git diff --check, and manual browser
 QA for visible behavior when available.
 
-Security tests must eventually cover correct/wrong passphrases; corrupt
-ciphertext, tags, nonces, AAD, owner, ID, type, and version; nonce uniqueness;
-Unicode, empty, and maximum-size serialization; passphrase rewrap; lock,
-refresh, inactivity, session loss, multi-tab, and sign-out; unauthorized
+Security tests must eventually cover correct/wrong passphrases and Recovery
+Phrases; corrupt ciphertext, wrappers, tags, nonces, AAD, owner, ID, type, and
+version; nonce uniqueness; Unicode, empty, and maximum-size serialization;
+passphrase rewrap and Recovery Phrase rotation; lock, refresh, inactivity,
+session loss, multi-tab, and sign-out; unauthorized
 identities and IDOR; malformed/oversized API input; absence of plaintext from
 traffic, HTML/RSC, Neon, logs, errors, URLs, cookies, browser storage, and
 caches; XSS, Markdown, unsafe URLs, CSRF, CSP, headers; and encrypted export
@@ -365,7 +389,8 @@ screen-reader feedback without announcing secret values.
 3. Every protected operation authenticates, authorizes, validates, and enforces
    ownership server-side.
 4. Browser-provided owner identifiers are never trusted.
-5. The Vault Passphrase and plaintext KEK/DEK never leave the browser or persist.
+5. The Vault Passphrase, Recovery Phrase, decoded recovery entropy, and
+   plaintext KEK/RWK/DEK never leave the browser or persist.
 6. Vault plaintext never reaches server code, Neon, logs, analytics, URLs,
    caches, or persistent browser storage.
 7. User-authored private content is encrypted by default.

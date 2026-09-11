@@ -1,6 +1,9 @@
 DevStash is an individual developer workspace with Gmail sign-in and a separately
-locked, private vault for each user. Authentication is implemented; client-side
-encryption and real vault setup/unlock are still pending. Use synthetic data only.
+locked, private vault for each user. Authentication and the local Phase 5 vault
+lifecycle are implemented, including setup, unlock, lock, recovery, passphrase
+change, and Recovery Phrase rotation. The vault-profile migration has not been
+applied, browser runtime QA remains pending, and real vault items do not exist
+until Phase 6. Use synthetic data only.
 
 ## Google sign-in setup
 
@@ -48,7 +51,9 @@ encryption and real vault setup/unlock are still pending. Use synthetic data onl
 
 Missing configuration disables sign-in and protected routes redirect to `/login`.
 Sign-in never accepts a vault passphrase or unlocks data. The earlier simulated
-unlock has been removed from the authenticated flow.
+unlock has been replaced by the browser-only lifecycle. Vault setup cannot
+persist until the pending vault-profile migration is reviewed and explicitly
+approved for the intended database.
 
 ### Where the authentication tables are defined
 
@@ -79,17 +84,27 @@ Tests use synthetic identities and an in-memory Auth.js adapter fixture. They
 cover Gmail-only verified claims, stable subject binding, token-free
 account persistence, session ownership, safe redirects, request origin checks,
 minimal session responses, cookie flags, expiration, revocation, and CSRF logout.
-They do not connect to Neon or perform a live Google OAuth exchange.
+They also cover vault setup, wrong credentials, passphrase rewrapping, recovery,
+Recovery Phrase rotation, and strict vault-profile validation. They do not
+connect to Neon, perform a live Google OAuth exchange, or constitute a security audit.
 
 Before enabling real use, verify first/returning Gmail login, denied non-Gmail identities,
 session deletion and revocation against the isolated database, concurrency and
-reset of the database rate limiter, cancellation/error UX, refresh, and sign-out
-across tabs. The polling interval is 60 seconds with focus revalidation; it is
-not instant cross-device revocation of already-rendered UI. Each server route
-revalidates authorization. Vault unlocking remains disabled.
+reset of the database rate limiter, cancellation/error UX, refresh, inactivity,
+and lock/sign-out across tabs. The polling interval is 60 seconds with focus
+revalidation; it is not instant cross-device revocation of already-rendered UI.
+Each server route revalidates authorization.
 
 Read [the authentication architecture review](docs/AUTHENTICATION_ARCHITECTURE.md)
-for the trust boundaries, dependency decisions, and remaining cryptographic work.
+for the identity and session boundaries, and the
+[vault encryption architecture](docs/VAULT_ENCRYPTION_ARCHITECTURE.md) for the
+Phase 1 threat model, metadata classification, cryptographic formats, CSP, and
+supported-browser decisions. The
+[Phase 4 cryptographic proof](docs/VAULT_CRYPTOGRAPHIC_PROOF.md) records the
+implemented primitives, dependency review, vectors, local browser evidence, and
+remaining release gates. The
+[Phase 5 lifecycle record](docs/VAULT_LIFECYCLE_IMPLEMENTATION.md) records the
+current setup, unlock, recovery, profile API, locking, and persistence boundary.
 Hosting access logs must redact OAuth callback query strings. Next.js development
 request logging excludes `/api/auth` and Auth.js diagnostic payloads are suppressed.
 
