@@ -42,16 +42,29 @@ app/
       argon2id.ts              # bounded Argon2id dependency wrapper
       recovery-phrase.ts       # 256-bit entropy and BIP-39 English encoding
       web-crypto.ts            # HKDF, AES-GCM, wrapping, record primitives
+      generic-secret.ts        # V1 Generic Secret payload + record encryption
+      workspace-record.ts      # shared bounded workspace record envelope
+      project.ts               # encrypted project payload
+      env-bundle.ts            # encrypted complete .env payload
+      note.ts                   # encrypted private note payload
+      task.ts                   # encrypted task payload + metadata check
+      task-category.ts          # encrypted custom task-category payload
       operations.ts            # setup, unlock, recovery, and rewrap orchestration
       vault-crypto.worker.ts   # short-lived same-origin cryptography worker
     vault-profile/             # server validation + owner-scoped persistence
+    vault-items/               # server validation + owner-scoped ciphertext CRUD
+    workspace/                 # server validation + owner-scoped workspace CRUD
+    vault-item-client.ts       # ciphertext-only same-origin item transport
+    vault-item.types.ts        # item envelope and client payload contracts
+    workspace-client.ts        # strict ciphertext-only workspace transport
+    workspace.types.ts         # workspace payload and envelope contracts
+    task-categories.ts         # built-in categories + curated color tokens
     vault-profile-client.ts    # ciphertext-only same-origin profile transport
     vault-profile.types.ts     # exact browser/server profile contracts
     vault-data.types.ts        # in-memory shapes of decrypted content
     vault-types.ts             # per-type labels and colors
     vault-session.tsx          # ephemeral locked/unlocked client lifecycle
     vault-session.types.ts
-    mock-vault-data.ts         # synthetic fixtures for the UI preview only
     password-generator.ts      # secure-random generation, no UI
     format.ts                  # deterministic formatters
   components/
@@ -98,6 +111,8 @@ docs/
   VAULT_ENCRYPTION_ARCHITECTURE.md
   VAULT_CRYPTOGRAPHIC_PROOF.md
   VAULT_LIFECYCLE_IMPLEMENTATION.md
+  VAULT_ITEM_IMPLEMENTATION.md
+  WORKSPACE_MODULES_IMPLEMENTATION.md
 public/                        # static assets served at "/"
 ```
 
@@ -123,8 +138,10 @@ app/api/.../route.ts         -> ciphertext-only Route Handlers, no UI
 - `vault-crypto/` is browser-only security-boundary code. Keep encoding, KDF,
   AAD, Web Crypto, worker transport, and lifecycle orchestration distinct; do
   not import these modules from Server Components or Route Handlers.
-- `mock-vault-data.ts` exists only for the UI preview and is removed when
-  client-side decryption of real ciphertext lands.
+- `vault-items/` owns server validation and owner-scoped persistence only. It
+  must never import browser cryptography or plaintext payload types.
+- `workspace/` owns server validation and owner-scoped persistence for projects,
+  `.env` bundles, notes, and tasks. It must remain ciphertext-only.
 
 ## Folder rules
 

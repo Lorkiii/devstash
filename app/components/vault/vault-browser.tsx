@@ -10,7 +10,9 @@ import { TypeBadge } from "@/app/components/ui/type-badge";
 import type { VaultItemType } from "@/app/lib/vault-data.types";
 import { VAULT_TYPE_ORDER } from "@/app/lib/vault-types";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
+import type { GenericSecretInput } from "@/app/lib/vault-item.types";
 import { formatDate } from "@/app/lib/format";
+import { GenericSecretForm } from "./generic-secret-form";
 import { VaultTypeFilter } from "./vault-type-filter";
 import { VaultItemDetail } from "./vault-item-detail";
 
@@ -18,13 +20,22 @@ import { VaultItemDetail } from "./vault-item-detail";
 // memory; the query box filters the already-decrypted list locally.
 export function VaultBrowser() {
   const data = useUnlockedVault();
-  const { touchRecent } = useVaultSession();
+  const {
+    createGenericSecret,
+    deleteVaultItem,
+    touchRecent,
+    updateGenericSecret,
+  } = useVaultSession();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const selectedId = searchParams.get("item");
   const [typeFilter, setTypeFilter] = useState<VaultItemType | "ALL">("ALL");
   const [query, setQuery] = useState<string>("");
+  const [formItemId, setFormItemId] = useState<"new" | string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const counts = useMemo(() => {
     const initial = Object.fromEntries(VAULT_TYPE_ORDER.map((type) => [type, 0])) as Record<VaultItemType, number>;
@@ -56,17 +67,53 @@ export function VaultBrowser() {
   }, [selected, touchRecent]);
 
   const select = (id: string | null) => {
+    setFormItemId(null);
+    setActionError(null);
     router.replace(id ? `/vault?item=${id}` : "/vault");
+  };
+
+  const handleSave = async (input: GenericSecretInput) => {
+    setIsSaving(true);
+    setActionError(null);
+    try {
+      const saved = formItemId === "new"
+        ? await createGenericSecret(input)
+        : await updateGenericSecret(formItemId as string, input);
+      select(saved.id);
+    } catch {
+      setActionError("The encrypted secret could not be saved. No plaintext was sent.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selected || !window.confirm("Permanently delete this encrypted secret? This cannot be undone.")) {
+      return;
+    }
+    setIsDeleting(true);
+    setActionError(null);
+    try {
+      await deleteVaultItem(selected.id);
+      select(null);
+    } catch {
+      setActionError("The encrypted secret could not be deleted.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const newButton = (
     <button
       type="button"
-      disabled
-      title="Creation arrives with the ciphertext API phase"
-      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/30 bg-[#0a1220]/70 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb]/60 disabled:cursor-not-allowed"
+      onClick={() => {
+        router.replace("/vault");
+        setActionError(null);
+        setFormItemId("new");
+      }}
+      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
     >
-      <Plus className="w-3.5 h-3.5" /> NEW SECRET
+      <Plus className="w-3.5 h-3.5" /> NEW GENERIC SECRET
     </button>
   );
 
@@ -75,12 +122,12 @@ export function VaultBrowser() {
       <PageHeading
         eyebrow="VAULT"
         title="Secrets & credentials"
-        description="Logins, API keys, database and SSH credentials, recovery codes, generic secrets. Masked by default."
+        description="Generic secrets are encrypted and decrypted in this tab. Additional credential types arrive in later bounded work."
         actions={newButton}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className={`lg:col-span-5 ${selected ? "hidden lg:block" : ""}`}>
+        <div className={`lg:col-span-5 ${selected || formItemId ? "hidden lg:block" : ""}`}>
           <ConsolePanel title="RECORDS" status={`${visible.length} SHOWN`} className="h-full" bodyClassName="p-0">
             <div className="p-3 space-y-2.5 border-b border-[#6ea8ff]/10">
               <label className="flex items-center gap-2 rounded border border-[#6ea8ff]/20 bg-[#070d18]/80 px-2.5 py-1.5">
@@ -100,7 +147,10 @@ export function VaultBrowser() {
 
             {visible.length === 0 ? (
               <div className="p-3">
-                <EmptyState message="no records match." hint="Clear the filter or search a different tag." />
+                <EmptyState
+                  message={data.secrets.length === 0 ? "no encrypted secrets yet." : "no records match."}
+                  hint={data.secrets.length === 0 ? "Create a generic secret to begin." : "Clear the filter or search a different tag."}
+                />
               </div>
             ) : (
               <ul className="divide-y divide-[#6ea8ff]/10">
@@ -134,12 +184,32 @@ export function VaultBrowser() {
           </ConsolePanel>
         </div>
 
-        <div className={`lg:col-span-7 ${selected ? "" : "hidden lg:block"}`}>
-          {selected ? (
+        <div className={`lg:col-span-7 ${selected || formItemId ? "" : "hidden lg:block"}`}>
+          {formItemId ? (
+            <GenericSecretForm
+              key={formItemId}
+              item={formItemId === "new" ? undefined : selected ?? undefined}
+              projects={data.projects}
+              isSaving={isSaving}
+              requestError={actionError}
+              onCancel={() => {
+                setFormItemId(null);
+                setActionError(null);
+              }}
+              onSubmit={handleSave}
+            />
+          ) : selected ? (
             <VaultItemDetail
               item={selected}
               projectName={projectName(selected.projectId)}
+              isDeleting={isDeleting}
+              actionError={actionError}
               onBack={() => select(null)}
+              onEdit={() => {
+                setActionError(null);
+                setFormItemId(selected.id);
+              }}
+              onDelete={() => void handleDelete()}
             />
           ) : (
             <ConsolePanel title="DETAIL" tone="muted" className="h-full">

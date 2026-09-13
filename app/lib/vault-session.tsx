@@ -9,23 +9,72 @@ import React, {
   useRef,
   useState,
 } from "react";
+import {
+  createVaultItem,
+  fetchVaultItems,
+  removeVaultItem,
+  replaceVaultItem,
+} from "./vault-item-client";
+import { decryptGenericSecret, encryptGenericSecret } from "./vault-crypto/generic-secret";
+import { decryptEnvBundle, encryptEnvBundle } from "./vault-crypto/env-bundle";
+import { decryptNote, encryptNote } from "./vault-crypto/note";
+import { decryptProject, encryptProject } from "./vault-crypto/project";
+import { decryptTask, encryptTask } from "./vault-crypto/task";
+import { decryptTaskCategory, encryptTaskCategory } from "./vault-crypto/task-category";
 import { fetchVaultProfile } from "./vault-profile-client";
-import type { RecentKind, RecentRef, VaultData } from "./vault-data.types";
+import type {
+  EnvBundle,
+  Note,
+  Project,
+  RecentKind,
+  RecentRef,
+  Task,
+  TaskCategory,
+  VaultData,
+} from "./vault-data.types";
+import { BUILT_IN_TASK_CATEGORIES } from "./task-categories";
+import type { GenericSecretInput } from "./vault-item.types";
 import type { VaultEncryptionProfile, VaultLifecycleDraft } from "./vault-profile.types";
 import type { AutoLockMinutes, VaultLockState, VaultSessionValue } from "./vault-session.types";
+import {
+  createEnvBundleRecord,
+  createNoteRecord,
+  createProjectRecord,
+  createTaskRecord,
+  createTaskCategoryRecord,
+  fetchEnvBundles,
+  fetchNotes,
+  fetchProjects,
+  fetchTasks,
+  fetchTaskCategories,
+  removeEnvBundleRecord,
+  removeNoteRecord,
+  removeProjectRecord,
+  removeTaskRecord,
+  removeTaskCategoryRecord,
+  replaceEnvBundleRecord,
+  replaceNoteRecord,
+  replaceProjectRecord,
+  replaceTaskRecord,
+  replaceTaskCategoryRecord,
+} from "./workspace-client";
+import type {
+  EnvBundleInput,
+  NoteInput,
+  ProjectInput,
+  TaskCategoryInput,
+  TaskInput,
+} from "./workspace.types";
 
 const ACTIVITY_EVENTS: (keyof WindowEventMap)[] = ["pointerdown", "keydown", "wheel", "touchstart"];
 const BROADCAST_CHANNEL = "devstash-vault-lifecycle-v1";
 const MAX_RECENTS = 8;
-const EMPTY_VAULT_DATA: VaultData = {
-  secrets: [],
-  envBundles: [],
-  projects: [],
-  notes: [],
-  tasks: [],
-};
 
 const VaultSessionContext = createContext<VaultSessionValue | null>(null);
+
+export class VaultOpenError extends Error {
+  override readonly name = "VaultOpenError";
+}
 
 function assertActiveDek(dek: CryptoKey): void {
   if (
@@ -57,15 +106,24 @@ export function VaultSessionProvider({
   const dekRef = useRef<CryptoKey | null>(null);
   const lastActivityRef = useRef<number>(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const requestControllersRef = useRef(new Set<AbortController>());
+  const operationRevisionRef = useRef(0);
+
+  const abortRequests = useCallback(() => {
+    for (const controller of requestControllersRef.current) controller.abort();
+    requestControllersRef.current.clear();
+  }, []);
 
   const clearUnlockedState = useCallback(() => {
+    operationRevisionRef.current += 1;
+    abortRequests();
     dekRef.current = null;
     setData(null);
     setUnlockedAt(null);
     setSecondsUntilAutoLock(null);
     setRecents([]);
     setLockState(profileRef.current ? "locked" : "no-profile");
-  }, []);
+  }, [abortRequests]);
 
   const lock = useCallback(() => {
     clearUnlockedState();
@@ -78,6 +136,8 @@ export function VaultSessionProvider({
   }, [clearUnlockedState]);
 
   const reloadProfile = useCallback(async () => {
+    operationRevisionRef.current += 1;
+    abortRequests();
     dekRef.current = null;
     setData(null);
     setLockState("loading");
@@ -91,24 +151,81 @@ export function VaultSessionProvider({
       setProfile(null);
       setLockState("load-error");
     }
-  }, []);
+  }, [abortRequests]);
 
-  const openVault = useCallback((draft: VaultLifecycleDraft) => {
+  const openVault = useCallback(async (draft: VaultLifecycleDraft) => {
     assertActiveDek(draft.dek);
-    dekRef.current = draft.dek;
-    profileRef.current = draft.profile;
-    setProfile(draft.profile);
-    setData(EMPTY_VAULT_DATA);
-    const now = Date.now();
-    lastActivityRef.current = now;
-    setUnlockedAt(now);
-    setSecondsUntilAutoLock(autoLockMinutes * 60);
-    setLockState("unlocked");
-  }, [autoLockMinutes]);
+    abortRequests();
+    const controller = new AbortController();
+    const revision = operationRevisionRef.current + 1;
+    operationRevisionRef.current = revision;
+    requestControllersRef.current.add(controller);
+    try {
+      const [
+        encryptedItems,
+        encryptedProjects,
+        encryptedEnvBundles,
+        encryptedNotes,
+        encryptedTaskCategories,
+        encryptedTasks,
+      ] =
+        await Promise.all([
+          fetchVaultItems(controller.signal),
+          fetchProjects(controller.signal),
+          fetchEnvBundles(controller.signal),
+          fetchNotes(controller.signal),
+          fetchTaskCategories(controller.signal),
+          fetchTasks(controller.signal),
+        ]);
+      const [secrets, projects, envBundles, notes, customTaskCategories, tasks] = await Promise.all([
+        Promise.all(encryptedItems.map((item) => decryptGenericSecret(ownerId, draft.dek, item))),
+        Promise.all(encryptedProjects.map((item) => decryptProject(ownerId, draft.dek, item))),
+        Promise.all(encryptedEnvBundles.map((item) => decryptEnvBundle(ownerId, draft.dek, item))),
+        Promise.all(encryptedNotes.map((item) => decryptNote(ownerId, draft.dek, item))),
+        Promise.all(
+          encryptedTaskCategories.map((item) => decryptTaskCategory(ownerId, draft.dek, item)),
+        ),
+        Promise.all(encryptedTasks.map((item) => decryptTask(ownerId, draft.dek, item))),
+      ]);
+      const projectIds = new Set(projects.map((project) => project.id));
+      const taskCategories: TaskCategory[] = [
+        ...BUILT_IN_TASK_CATEGORIES,
+        ...customTaskCategories,
+      ];
+      const taskCategoryIds = new Set(taskCategories.map((category) => category.id));
+      if (
+        secrets.some((item) => item.projectId && !projectIds.has(item.projectId)) ||
+        envBundles.some((bundle) => !projectIds.has(bundle.projectId)) ||
+        notes.some((note) => note.projectId && !projectIds.has(note.projectId)) ||
+        tasks.some((task) => task.projectId && !projectIds.has(task.projectId)) ||
+        tasks.some((task) => task.categoryId && !taskCategoryIds.has(task.categoryId))
+      ) {
+        throw new VaultOpenError("Encrypted workspace relationships are invalid.");
+      }
+      if (revision !== operationRevisionRef.current || controller.signal.aborted) {
+        throw new DOMException("Operation cancelled.", "AbortError");
+      }
+      dekRef.current = draft.dek;
+      profileRef.current = draft.profile;
+      setProfile(draft.profile);
+      setData({ secrets, projects, envBundles, notes, tasks, taskCategories });
+      const now = Date.now();
+      lastActivityRef.current = now;
+      setUnlockedAt(now);
+      setSecondsUntilAutoLock(autoLockMinutes * 60);
+      setLockState("unlocked");
+    } catch (error) {
+      controller.abort();
+      if (error instanceof DOMException && error.name === "AbortError") throw error;
+      throw new VaultOpenError("Encrypted vault data could not be opened.");
+    } finally {
+      requestControllersRef.current.delete(controller);
+    }
+  }, [abortRequests, autoLockMinutes, ownerId]);
 
-  const openVaultAfterProfileChange = useCallback((draft: VaultLifecycleDraft) => {
-    openVault(draft);
+  const openVaultAfterProfileChange = useCallback(async (draft: VaultLifecycleDraft) => {
     channelRef.current?.postMessage({ type: "profile-changed" });
+    await openVault(draft);
   }, [openVault]);
 
   const replaceUnlockedProfile = useCallback((draft: VaultLifecycleDraft) => {
@@ -127,6 +244,249 @@ export function VaultSessionProvider({
       return [{ kind, id, openedAt: Date.now() }, ...withoutSame].slice(0, MAX_RECENTS);
     });
   }, []);
+
+  const runUnlockedOperation = useCallback(async <T,>(
+    operation: (dek: CryptoKey, signal: AbortSignal) => Promise<T>,
+  ): Promise<T> => {
+    const dek = dekRef.current;
+    if (lockState !== "unlocked" || !dek) {
+      throw new Error("The vault must be unlocked.");
+    }
+    const controller = new AbortController();
+    const revision = operationRevisionRef.current;
+    requestControllersRef.current.add(controller);
+    try {
+      const result = await operation(dek, controller.signal);
+      if (revision !== operationRevisionRef.current || controller.signal.aborted) {
+        throw new DOMException("Operation cancelled.", "AbortError");
+      }
+      return result;
+    } finally {
+      requestControllersRef.current.delete(controller);
+    }
+  }, [lockState]);
+
+  const createGenericSecret = useCallback(async (input: GenericSecretInput) => {
+    const created = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptGenericSecret(ownerId, dek, input);
+      return decryptGenericSecret(ownerId, dek, await createVaultItem(encrypted, signal));
+    });
+    setData((current) => current ? { ...current, secrets: [created, ...current.secrets] } : null);
+    return created;
+  }, [ownerId, runUnlockedOperation]);
+
+  const updateGenericSecret = useCallback(async (id: string, input: GenericSecretInput) => {
+    const updated = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptGenericSecret(ownerId, dek, input, id);
+      const stored = await replaceVaultItem(id, {
+        projectId: encrypted.projectId,
+        itemType: encrypted.itemType,
+        envelope: encrypted.envelope,
+      }, signal);
+      return decryptGenericSecret(ownerId, dek, stored);
+    });
+    setData((current) => current ? {
+      ...current,
+      secrets: current.secrets.map((item) => item.id === id ? updated : item),
+    } : null);
+    return updated;
+  }, [ownerId, runUnlockedOperation]);
+
+  const deleteVaultItem = useCallback(async (id: string) => {
+    await runUnlockedOperation((_, signal) => removeVaultItem(id, signal));
+    setData((current) => current ? {
+      ...current,
+      secrets: current.secrets.filter((item) => item.id !== id),
+    } : null);
+    setRecents((current) => current.filter((entry) => entry.id !== id));
+  }, [runUnlockedOperation]);
+
+  const createProject = useCallback(async (input: ProjectInput): Promise<Project> => {
+    const created = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptProject(ownerId, dek, input);
+      return decryptProject(ownerId, dek, await createProjectRecord(encrypted, signal));
+    });
+    setData((current) => current ? { ...current, projects: [created, ...current.projects] } : null);
+    return created;
+  }, [ownerId, runUnlockedOperation]);
+
+  const updateProject = useCallback(async (id: string, input: ProjectInput): Promise<Project> => {
+    const updated = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptProject(ownerId, dek, input, id);
+      const stored = await replaceProjectRecord(id, { envelope: encrypted.envelope }, signal);
+      return decryptProject(ownerId, dek, stored);
+    });
+    setData((current) => current ? {
+      ...current,
+      projects: current.projects.map((project) => project.id === id ? updated : project),
+    } : null);
+    return updated;
+  }, [ownerId, runUnlockedOperation]);
+
+  const deleteProject = useCallback(async (id: string): Promise<void> => {
+    await runUnlockedOperation((_, signal) => removeProjectRecord(id, signal));
+    setData((current) => current ? {
+      ...current,
+      projects: current.projects.filter((project) => project.id !== id),
+    } : null);
+    setRecents((current) => current.filter((entry) => !(entry.kind === "project" && entry.id === id)));
+  }, [runUnlockedOperation]);
+
+  const createEnvBundle = useCallback(async (input: EnvBundleInput): Promise<EnvBundle> => {
+    const created = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptEnvBundle(ownerId, dek, input);
+      return decryptEnvBundle(ownerId, dek, await createEnvBundleRecord(encrypted, signal));
+    });
+    setData((current) => current ? { ...current, envBundles: [created, ...current.envBundles] } : null);
+    return created;
+  }, [ownerId, runUnlockedOperation]);
+
+  const updateEnvBundle = useCallback(async (id: string, input: EnvBundleInput): Promise<EnvBundle> => {
+    const updated = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptEnvBundle(ownerId, dek, input, id);
+      const stored = await replaceEnvBundleRecord(id, {
+        projectId: encrypted.projectId,
+        envelope: encrypted.envelope,
+      }, signal);
+      return decryptEnvBundle(ownerId, dek, stored);
+    });
+    setData((current) => current ? {
+      ...current,
+      envBundles: current.envBundles.map((bundle) => bundle.id === id ? updated : bundle),
+    } : null);
+    return updated;
+  }, [ownerId, runUnlockedOperation]);
+
+  const deleteEnvBundle = useCallback(async (id: string): Promise<void> => {
+    await runUnlockedOperation((_, signal) => removeEnvBundleRecord(id, signal));
+    setData((current) => current ? {
+      ...current,
+      envBundles: current.envBundles.filter((bundle) => bundle.id !== id),
+    } : null);
+  }, [runUnlockedOperation]);
+
+  const createNote = useCallback(async (input: NoteInput): Promise<Note> => {
+    const created = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptNote(ownerId, dek, input);
+      return decryptNote(ownerId, dek, await createNoteRecord(encrypted, signal));
+    });
+    setData((current) => current ? { ...current, notes: [created, ...current.notes] } : null);
+    return created;
+  }, [ownerId, runUnlockedOperation]);
+
+  const updateNote = useCallback(async (id: string, input: NoteInput): Promise<Note> => {
+    const updated = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptNote(ownerId, dek, input, id);
+      const stored = await replaceNoteRecord(id, {
+        projectId: encrypted.projectId,
+        envelope: encrypted.envelope,
+      }, signal);
+      return decryptNote(ownerId, dek, stored);
+    });
+    setData((current) => current ? {
+      ...current,
+      notes: current.notes.map((note) => note.id === id ? updated : note),
+    } : null);
+    return updated;
+  }, [ownerId, runUnlockedOperation]);
+
+  const deleteNote = useCallback(async (id: string): Promise<void> => {
+    await runUnlockedOperation((_, signal) => removeNoteRecord(id, signal));
+    setData((current) => current ? {
+      ...current,
+      notes: current.notes.filter((note) => note.id !== id),
+    } : null);
+    setRecents((current) => current.filter((entry) => !(entry.kind === "note" && entry.id === id)));
+  }, [runUnlockedOperation]);
+
+  const createTask = useCallback(async (input: TaskInput): Promise<Task> => {
+    const created = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptTask(ownerId, dek, input);
+      return decryptTask(ownerId, dek, await createTaskRecord(encrypted, signal));
+    });
+    setData((current) => current ? { ...current, tasks: [created, ...current.tasks] } : null);
+    return created;
+  }, [ownerId, runUnlockedOperation]);
+
+  const updateTask = useCallback(async (id: string, input: TaskInput): Promise<Task> => {
+    const updated = await runUnlockedOperation(async (dek, signal) => {
+      const encrypted = await encryptTask(ownerId, dek, input, id);
+      const stored = await replaceTaskRecord(id, {
+        projectId: encrypted.projectId,
+        categoryId: encrypted.categoryId,
+        done: encrypted.done,
+        sortOrder: encrypted.sortOrder,
+        envelope: encrypted.envelope,
+      }, signal);
+      return decryptTask(ownerId, dek, stored);
+    });
+    setData((current) => current ? {
+      ...current,
+      tasks: current.tasks.map((task) => task.id === id ? updated : task),
+    } : null);
+    return updated;
+  }, [ownerId, runUnlockedOperation]);
+
+  const deleteTask = useCallback(async (id: string): Promise<void> => {
+    await runUnlockedOperation((_, signal) => removeTaskRecord(id, signal));
+    setData((current) => current ? {
+      ...current,
+      tasks: current.tasks.filter((task) => task.id !== id),
+    } : null);
+    setRecents((current) => current.filter((entry) => !(entry.kind === "task" && entry.id === id)));
+  }, [runUnlockedOperation]);
+
+  const createTaskCategory = useCallback(
+    async (input: TaskCategoryInput): Promise<TaskCategory> => {
+      const created = await runUnlockedOperation(async (dek, signal) => {
+        const encrypted = await encryptTaskCategory(ownerId, dek, input);
+        return decryptTaskCategory(
+          ownerId,
+          dek,
+          await createTaskCategoryRecord(encrypted, signal),
+        );
+      });
+      setData((current) => current
+        ? { ...current, taskCategories: [...current.taskCategories, created] }
+        : null);
+      return created;
+    },
+    [ownerId, runUnlockedOperation],
+  );
+
+  const updateTaskCategory = useCallback(
+    async (id: string, input: TaskCategoryInput): Promise<TaskCategory> => {
+      const updated = await runUnlockedOperation(async (dek, signal) => {
+        const encrypted = await encryptTaskCategory(ownerId, dek, input, id);
+        const stored = await replaceTaskCategoryRecord(
+          id,
+          { envelope: encrypted.envelope },
+          signal,
+        );
+        return decryptTaskCategory(ownerId, dek, stored);
+      });
+      setData((current) => current
+        ? {
+            ...current,
+            taskCategories: current.taskCategories.map((category) =>
+              category.id === id ? updated : category
+            ),
+          }
+        : null);
+      return updated;
+    },
+    [ownerId, runUnlockedOperation],
+  );
+
+  const deleteTaskCategory = useCallback(async (id: string): Promise<void> => {
+    await runUnlockedOperation((_, signal) => removeTaskCategoryRecord(id, signal));
+    setData((current) => current
+      ? {
+          ...current,
+          taskCategories: current.taskCategories.filter((category) => category.id !== id),
+        }
+      : null);
+  }, [runUnlockedOperation]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -220,6 +580,24 @@ export function VaultSessionProvider({
       openVault,
       openVaultAfterProfileChange,
       replaceUnlockedProfile,
+      createGenericSecret,
+      updateGenericSecret,
+      deleteVaultItem,
+      createProject,
+      updateProject,
+      deleteProject,
+      createEnvBundle,
+      updateEnvBundle,
+      deleteEnvBundle,
+      createNote,
+      updateNote,
+      deleteNote,
+      createTask,
+      updateTask,
+      deleteTask,
+      createTaskCategory,
+      updateTaskCategory,
+      deleteTaskCategory,
       setAutoLockMinutes,
       touchRecent,
     }),
@@ -238,6 +616,24 @@ export function VaultSessionProvider({
       openVault,
       openVaultAfterProfileChange,
       replaceUnlockedProfile,
+      createGenericSecret,
+      updateGenericSecret,
+      deleteVaultItem,
+      createProject,
+      updateProject,
+      deleteProject,
+      createEnvBundle,
+      updateEnvBundle,
+      deleteEnvBundle,
+      createNote,
+      updateNote,
+      deleteNote,
+      createTask,
+      updateTask,
+      deleteTask,
+      createTaskCategory,
+      updateTaskCategory,
+      deleteTaskCategory,
       touchRecent,
     ],
   );

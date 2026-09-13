@@ -2,23 +2,29 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, Search } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import { formatDate } from "@/app/lib/format";
+import type { NoteInput } from "@/app/lib/workspace.types";
+import { NoteForm } from "./note-form";
 
 // Note bodies are rendered as plain text for now. Markdown rendering waits
 // for a reviewed sanitizer; arbitrary HTML is never rendered.
 export function NotesBrowser() {
   const data = useUnlockedVault();
-  const { touchRecent } = useVaultSession();
+  const { createNote, deleteNote, touchRecent, updateNote } = useVaultSession();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const selectedId = searchParams.get("note");
   const [query, setQuery] = useState<string>("");
+  const [formId, setFormId] = useState<"new" | string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -42,15 +48,52 @@ export function NotesBrowser() {
   }, [selected, touchRecent]);
 
   const select = (id: string | null) => {
+    setFormId(null);
+    setActionError(null);
     router.replace(id ? `/notes?note=${id}` : "/notes");
+  };
+
+  const handleSave = async (input: NoteInput) => {
+    setIsSaving(true);
+    setActionError(null);
+    try {
+      const saved = formId === "new"
+        ? await createNote(input)
+        : formId
+          ? await updateNote(formId, input)
+          : null;
+      if (!saved) return;
+      select(saved.id);
+    } catch {
+      setActionError("The encrypted note could not be saved. No plaintext was sent.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selected || !window.confirm("Permanently delete this encrypted note? This cannot be undone.")) return;
+    setIsDeleting(true);
+    setActionError(null);
+    try {
+      await deleteNote(selected.id);
+      select(null);
+    } catch {
+      setActionError("The encrypted note could not be deleted.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const newButton = (
     <button
       type="button"
-      disabled
-      title="Creation arrives with the ciphertext API phase"
-      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/30 bg-[#0a1220]/70 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb]/60 disabled:cursor-not-allowed"
+      onClick={() => {
+        router.replace("/notes");
+        setActionError(null);
+        setFormId("new");
+      }}
+      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW NOTE
     </button>
@@ -66,7 +109,7 @@ export function NotesBrowser() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className={`lg:col-span-4 ${selected ? "hidden lg:block" : ""}`}>
+        <div className={`lg:col-span-4 ${selected || formId ? "hidden lg:block" : ""}`}>
           <ConsolePanel title="NOTES" status={`${visible.length} SHOWN`} className="h-full" bodyClassName="p-0">
             <div className="p-3 border-b border-[#6ea8ff]/10">
               <label className="flex items-center gap-2 rounded border border-[#6ea8ff]/20 bg-[#070d18]/80 px-2.5 py-1.5">
@@ -115,9 +158,36 @@ export function NotesBrowser() {
           </ConsolePanel>
         </div>
 
-        <div className={`lg:col-span-8 ${selected ? "" : "hidden lg:block"}`}>
-          {selected ? (
-            <ConsolePanel title="NOTE" status={`updated ${formatDate(selected.updatedAt)}`} className="h-full">
+        <div className={`lg:col-span-8 ${selected || formId ? "" : "hidden lg:block"}`}>
+          {formId ? (
+            <NoteForm
+              key={formId}
+              note={formId === "new" ? undefined : selected ?? undefined}
+              projects={data.projects}
+              isSaving={isSaving}
+              requestError={actionError}
+              onCancel={() => {
+                setFormId(null);
+                setActionError(null);
+              }}
+              onSubmit={handleSave}
+            />
+          ) : selected ? (
+            <ConsolePanel
+              title="NOTE"
+              status={`updated ${formatDate(selected.updatedAt)}`}
+              className="h-full"
+              action={(
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setFormId(selected.id)} disabled={isDeleting} className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb] disabled:opacity-50">
+                    <Pencil className="h-3 w-3" /> EDIT
+                  </button>
+                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50">
+                    <Trash2 className="h-3 w-3" /> {isDeleting ? "DELETING…" : "DELETE"}
+                  </button>
+                </div>
+              )}
+            >
               <button
                 type="button"
                 onClick={() => select(null)}
@@ -142,6 +212,7 @@ export function NotesBrowser() {
               <p className="mt-6 text-[10px] text-[#e8eefb]/35 font-mono">
                 Plain-text preview. Sanitized Markdown rendering is a later, reviewed step.
               </p>
+              {actionError && <p role="alert" className="mt-4 text-xs text-rose-300">{actionError}</p>}
             </ConsolePanel>
           ) : (
             <ConsolePanel title="NOTE" tone="muted" className="h-full">

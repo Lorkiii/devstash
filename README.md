@@ -1,9 +1,10 @@
 DevStash is an individual developer workspace with Gmail sign-in and a separately
-locked, private vault for each user. Authentication and the local Phase 5 vault
+locked, private vault for each user. Authentication and the local Phase 7 vault
 lifecycle are implemented, including setup, unlock, lock, recovery, passphrase
-change, and Recovery Phrase rotation. The vault-profile migration has not been
-applied, browser runtime QA remains pending, and real vault items do not exist
-until Phase 6. Use synthetic data only.
+change, Recovery Phrase rotation, Generic Secret CRUD, and encrypted Projects,
+`.env` bundles, Notes, Tasks, and custom task categories. The vault-profile, vault-item, and workspace
+migrations have not been applied, browser runtime QA remains pending, and this
+project is not approved for real credentials. Use synthetic data only.
 
 ## Google sign-in setup
 
@@ -51,9 +52,9 @@ until Phase 6. Use synthetic data only.
 
 Missing configuration disables sign-in and protected routes redirect to `/login`.
 Sign-in never accepts a vault passphrase or unlocks data. The earlier simulated
-unlock has been replaced by the browser-only lifecycle. Vault setup cannot
-persist until the pending vault-profile migration is reviewed and explicitly
-approved for the intended database.
+unlock has been replaced by the browser-only lifecycle. Vault setup and item
+persistence cannot run until the pending vault-profile, vault-item, and workspace
+migrations are reviewed and explicitly approved for the intended database.
 
 ### Where the authentication tables are defined
 
@@ -85,7 +86,8 @@ cover Gmail-only verified claims, stable subject binding, token-free
 account persistence, session ownership, safe redirects, request origin checks,
 minimal session responses, cookie flags, expiration, revocation, and CSRF logout.
 They also cover vault setup, wrong credentials, passphrase rewrapping, recovery,
-Recovery Phrase rotation, and strict vault-profile validation. They do not
+Recovery Phrase rotation, Generic Secret and workspace encryption/decryption,
+relationship and metadata tamper failure, curated category colors, and strict ciphertext validation. They do not
 connect to Neon, perform a live Google OAuth exchange, or constitute a security audit.
 
 Before enabling real use, verify first/returning Gmail login, denied non-Gmail identities,
@@ -104,7 +106,13 @@ supported-browser decisions. The
 implemented primitives, dependency review, vectors, local browser evidence, and
 remaining release gates. The
 [Phase 5 lifecycle record](docs/VAULT_LIFECYCLE_IMPLEMENTATION.md) records the
-current setup, unlock, recovery, profile API, locking, and persistence boundary.
+setup, unlock, recovery, profile API, locking, and persistence boundary. The
+[Phase 6 vault-item record](docs/VAULT_ITEM_IMPLEMENTATION.md) defines the first
+Generic Secret payload, ciphertext API, ownership boundary, and pending database
+activation work. The
+[Phase 7 workspace record](docs/WORKSPACE_MODULES_IMPLEMENTATION.md) defines
+encrypted Projects, complete `.env` bundles, Notes, Tasks, same-owner
+relationships, and their pending database activation work.
 Hosting access logs must redact OAuth callback query strings. Next.js development
 request logging excludes `/api/auth` and Auth.js diagnostic payloads are suppressed.
 

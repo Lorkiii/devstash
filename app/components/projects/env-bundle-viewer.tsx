@@ -1,14 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Check, Copy, Eye, EyeOff } from "lucide-react";
-import type { EnvBundle } from "@/app/lib/vault-data.types";
+import { Check, Copy, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import { formatDate } from "@/app/lib/format";
-
-interface EnvBundleViewerProps {
-  bundle: EnvBundle;
-  revealSeconds?: number;
-}
+import type { EnvBundleViewerProps } from "./env-bundle-viewer.types";
 
 interface EnvLine {
   number: number;
@@ -37,10 +32,16 @@ function parseEnv(content: string): EnvLine[] {
   });
 }
 
-// Monospace .env view. Variable names and values are both private; values are
-// masked per line with a bundle-wide timed reveal. "Copy .env" copies the
+// Monospace .env view. The complete file, including names and comments, stays
+// masked until the bundle-wide timed reveal. "Copy .env" copies the
 // decrypted plaintext from memory; nothing is uploaded.
-export function EnvBundleViewer({ bundle, revealSeconds = 15 }: EnvBundleViewerProps) {
+export function EnvBundleViewer({
+  bundle,
+  revealSeconds = 15,
+  isDeleting,
+  onEdit,
+  onDelete,
+}: EnvBundleViewerProps) {
   const [revealed, setRevealed] = useState<boolean>(false);
   const [remaining, setRemaining] = useState<number>(revealSeconds);
   const [copied, setCopied] = useState<boolean>(false);
@@ -114,6 +115,24 @@ export function EnvBundleViewer({ bundle, revealSeconds = 15 }: EnvBundleViewerP
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             {copied ? "COPIED" : "COPY .ENV"}
           </button>
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={isDeleting}
+            aria-label="Edit environment bundle"
+            className="rounded border border-[#6ea8ff]/20 p-1 text-[#e8eefb]/65 hover:text-[#6ea8ff] disabled:opacity-50"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={isDeleting}
+            aria-label="Delete environment bundle"
+            className="rounded border border-rose-400/20 p-1 text-rose-300/70 hover:text-rose-200 disabled:opacity-50"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
         </div>
       </div>
 
@@ -121,15 +140,17 @@ export function EnvBundleViewer({ bundle, revealSeconds = 15 }: EnvBundleViewerP
         {lines.map((line) => (
           <li key={line.number} className="grid grid-cols-[40px_1fr] hover:bg-[#6ea8ff]/5">
             <span className="text-right pr-3 text-[#e8eefb]/25 select-none">{line.number}</span>
-            {line.raw !== null ? (
+            {!revealed ? (
+              <span aria-label="Environment line masked" className="text-[#e8eefb]/35 tracking-widest">
+                {line.raw === "" ? " " : MASK}
+              </span>
+            ) : line.raw !== null ? (
               <span className="text-[#e8eefb]/40 whitespace-pre">{line.raw || " "}</span>
             ) : (
               <span className="whitespace-nowrap pr-3">
                 <span className="text-[#6ea8ff]">{line.key}</span>
                 <span className="text-[#e8eefb]/40">=</span>
-                <span className={revealed ? "text-[#e8eefb]" : "text-[#e8eefb]/35 tracking-widest"}>
-                  {revealed ? line.value : MASK}
-                </span>
+                <span className="text-[#e8eefb]">{line.value}</span>
               </span>
             )}
           </li>

@@ -5,36 +5,38 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { MaskedValue } from "@/app/components/ui/masked-value";
 import { TypeBadge } from "@/app/components/ui/type-badge";
-import type { VaultItem } from "@/app/lib/vault-data.types";
 import { VAULT_TYPE_META } from "@/app/lib/vault-types";
 import { formatDate } from "@/app/lib/format";
+import type { VaultItemDetailProps } from "./vault-item-detail.types";
 
-interface VaultItemDetailProps {
-  item: VaultItem;
-  projectName?: string;
-  onBack: () => void;
-}
-
-export function VaultItemDetail({ item, projectName, onBack }: VaultItemDetailProps) {
+export function VaultItemDetail({
+  item,
+  projectName,
+  isDeleting,
+  actionError,
+  onBack,
+  onEdit,
+  onDelete,
+}: VaultItemDetailProps) {
   const meta = VAULT_TYPE_META[item.type];
 
   const actions = (
     <div className="flex items-center gap-1">
       <button
         type="button"
-        disabled
-        title="Editing arrives with the ciphertext API phase"
-        className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/50 disabled:cursor-not-allowed"
+        onClick={onEdit}
+        disabled={isDeleting}
+        className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Pencil className="w-3 h-3" /> EDIT
       </button>
       <button
         type="button"
-        disabled
-        title="Deletion arrives with the ciphertext API phase"
-        className="inline-flex items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/50 disabled:cursor-not-allowed"
+        onClick={onDelete}
+        disabled={isDeleting}
+        className="inline-flex items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <Trash2 className="w-3 h-3" /> DELETE
+        <Trash2 className="w-3 h-3" /> {isDeleting ? "DELETING…" : "DELETE"}
       </button>
     </div>
   );
@@ -83,6 +85,8 @@ export function VaultItemDetail({ item, projectName, onBack }: VaultItemDetailPr
           <p className="text-xs text-[#e8eefb]/75 whitespace-pre-wrap">{item.notes}</p>
         </div>
       )}
+
+      {actionError && <p role="alert" className="mt-4 text-xs text-rose-300">{actionError}</p>}
 
       <p className="mt-4 text-[10px] text-[#e8eefb]/35">
         Reveal auto-hides after 10s. Copy is explicit; clipboard clearing is best-effort and not guaranteed.

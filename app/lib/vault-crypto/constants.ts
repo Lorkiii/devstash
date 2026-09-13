@@ -23,6 +23,7 @@ export const ENCRYPTED_ENTITY_TYPES = [
   "note",
   "task",
   "env-bundle",
+  "task-category",
 ] as const;
 
 export type EncryptedEntityType = (typeof ENCRYPTED_ENTITY_TYPES)[number];

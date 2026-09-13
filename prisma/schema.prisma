@@ -16,6 +16,12 @@ model User {
   accounts      Account[]
   sessions      Session[]
   vaultProfile  VaultEncryptionProfile?
+  vaultItems    VaultItem[]
+  projects      Project[]   @relation("ProjectOwner")
+  envBundles    EnvBundle[] @relation("EnvBundleOwner")
+  notes         Note[]      @relation("NoteOwner")
+  tasks         Task[]      @relation("TaskOwner")
+  taskCategories TaskCategory[] @relation("TaskCategoryOwner")
 }
 
 // Only stable identity is retained; OAuth bearer tokens have no columns.
@@ -81,4 +87,130 @@ model VaultEncryptionProfile {
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
   owner                    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+}
+
+// Stores only authenticated ciphertext and the minimum metadata required to
+// authorize and decrypt a vault item in the browser.
+model VaultItem {
+  id              String   @id @db.Uuid
+  ownerId         String
+  projectId       String?  @db.Uuid
+  itemType        String
+  envelopeVersion Int
+  algorithm       String
+  nonce           Bytes
+  tagBits         Int
+  ciphertext      Bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project         Project? @relation(fields: [projectId, ownerId], references: [id, ownerId], onDelete: Restrict)
+
+  @@index([ownerId, updatedAt(sort: Desc)])
+  @@index([ownerId, projectId])
+}
+
+// User-authored project fields are stored only inside the authenticated
+// ciphertext. The compound key lets child records enforce the same owner.
+model Project {
+  id              String      @id @db.Uuid
+  ownerId         String
+  envelopeVersion Int
+  algorithm       String
+  nonce           Bytes
+  tagBits         Int
+  ciphertext      Bytes
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  owner           User        @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  envBundles      EnvBundle[]
+  vaultItems      VaultItem[]
+  notes           Note[]
+  tasks           Task[]
+
+  @@unique([id, ownerId])
+  @@index([ownerId, updatedAt(sort: Desc)])
+}
+
+// Environment names and complete .env contents are encrypted together.
+model EnvBundle {
+  id              String   @id @db.Uuid
+  ownerId         String
+  projectId       String   @db.Uuid
+  envelopeVersion Int
+  algorithm       String
+  nonce           Bytes
+  tagBits         Int
+  ciphertext      Bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  owner           User     @relation("EnvBundleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project         Project  @relation(fields: [projectId, ownerId], references: [id, ownerId], onDelete: Restrict)
+
+  @@index([ownerId, projectId, updatedAt(sort: Desc)])
+}
+
+// Project membership is approved relationship metadata. Title, body, and tags
+// exist only inside the ciphertext.
+model Note {
+  id              String   @id @db.Uuid
+  ownerId         String
+  projectId       String?  @db.Uuid
+  envelopeVersion Int
+  algorithm       String
+  nonce           Bytes
+  tagBits         Int
+  ciphertext      Bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  owner           User     @relation("NoteOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project         Project? @relation(fields: [projectId, ownerId], references: [id, ownerId], onDelete: Restrict)
+
+  @@index([ownerId, updatedAt(sort: Desc)])
+  @@index([ownerId, projectId])
+}
+
+// Built-in task categories are public application constants. Custom category
+// names and palette tokens exist only inside this authenticated ciphertext.
+model TaskCategory {
+  id              String   @id @db.Uuid
+  ownerId         String
+  envelopeVersion Int
+  algorithm       String
+  nonce           Bytes
+  tagBits         Int
+  ciphertext      Bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  owner           User     @relation("TaskCategoryOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks           Task[]
+
+  @@unique([id, ownerId])
+  @@index([ownerId, updatedAt(sort: Desc)])
+}
+
+// Completion and sort order are the only task-specific plaintext metadata.
+// They are duplicated inside the authenticated payload and checked on decrypt.
+model Task {
+  id              String   @id @db.Uuid
+  ownerId         String
+  projectId       String?  @db.Uuid
+  builtInCategory String?
+  customCategoryId String? @db.Uuid
+  done            Boolean  @default(false)
+  sortOrder       Int
+  envelopeVersion Int
+  algorithm       String
+  nonce           Bytes
+  tagBits         Int
+  ciphertext      Bytes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  owner           User     @relation("TaskOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  project         Project? @relation(fields: [projectId, ownerId], references: [id, ownerId], onDelete: Restrict)
+  category        TaskCategory? @relation(fields: [customCategoryId, ownerId], references: [id, ownerId], onDelete: Restrict)
+
+  @@index([ownerId, done, sortOrder])
+  @@index([ownerId, projectId])
+  @@index([ownerId, customCategoryId])
 }

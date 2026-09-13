@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { KeyRound, LoaderCircle, RotateCcw, ShieldCheck } from "lucide-react";
 import { ShieldLockIcon } from "@/app/components/ui/icons";
-import { useVaultSession } from "@/app/lib/vault-session";
+import { VaultOpenError, useVaultSession } from "@/app/lib/vault-session";
 import {
   VaultProfileRequestError,
   persistNewVaultProfile,
@@ -26,6 +26,9 @@ const PRIMARY_BUTTON_CLASS = "inline-flex min-h-10 items-center justify-center g
 
 function operationError(error: unknown, fallback: string): string {
   if (error instanceof DOMException && error.name === "AbortError") return "Operation cancelled.";
+  if (error instanceof VaultOpenError) {
+    return "Encrypted vault items could not be opened. Your vault remains locked.";
+  }
   if (error instanceof VaultProfileRequestError) {
     return error.status === 409
       ? "The vault profile changed in another tab. Review the current profile and try again."
@@ -110,7 +113,7 @@ export function VaultLockPanel() {
     setError(null);
     try {
       const persisted = await persistNewVaultProfile(setupDraft.profile);
-      session.openVaultAfterProfileChange({ profile: persisted, dek: setupDraft.dek });
+      await session.openVaultAfterProfileChange({ profile: persisted, dek: setupDraft.dek });
       setSetupDraft(null);
       resetSensitiveForm();
     } catch (failure) {
@@ -132,7 +135,7 @@ export function VaultLockPanel() {
         signal: controller.signal,
       });
       setPassphrase("");
-      session.openVault(draft);
+      await session.openVault(draft);
     } catch (failure) {
       setPassphrase("");
       setError(operationError(failure, GENERIC_UNLOCK_ERROR));
@@ -169,7 +172,7 @@ export function VaultLockPanel() {
     resetSensitiveForm();
     try {
       const persisted = await persistPassphraseReplacement(previousProfile, draft.profile);
-      session.openVaultAfterProfileChange({ profile: persisted, dek: draft.dek });
+      await session.openVaultAfterProfileChange({ profile: persisted, dek: draft.dek });
     } catch (failure) {
       await session.reloadProfile();
       setError(operationError(failure, GENERIC_RECOVERY_ERROR));

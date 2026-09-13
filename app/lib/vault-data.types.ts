@@ -57,11 +57,30 @@ export interface Note {
 export interface Task {
   id: string;
   projectId?: string;
+  categoryId?: string;
   title: string;
   description?: string;
   done: boolean;
   dueDate?: string;
   sortOrder: number;
+  updatedAt: string;
+}
+
+export type TaskCategoryColorToken =
+  | "blue"
+  | "cyan"
+  | "violet"
+  | "emerald"
+  | "amber"
+  | "rose"
+  | "slate";
+
+export interface TaskCategory {
+  id: string;
+  name: string;
+  colorToken: TaskCategoryColorToken;
+  builtIn: boolean;
+  updatedAt?: string;
 }
 
 export interface VaultData {
@@ -70,6 +89,7 @@ export interface VaultData {
   projects: Project[];
   notes: Note[];
   tasks: Task[];
+  taskCategories: TaskCategory[];
 }
 
 export type RecentKind = "secret" | "project" | "note" | "task";

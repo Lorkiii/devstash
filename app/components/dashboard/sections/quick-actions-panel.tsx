@@ -14,8 +14,8 @@ interface QuickAction {
   icon: LucideIcon;
 }
 
-// Creation forms arrive with the ciphertext API phase; for now every action
-// lands on the matching section.
+// Phase 6 enables Generic Secret creation on the vault page. Later item and
+// workspace types still land on their matching section without implying CRUD.
 const QUICK_ACTIONS: QuickAction[] = [
   { id: "secret", label: "+ SECRET", hint: "login, key, db, ssh", href: "/vault", icon: KeyRound },
   { id: "env", label: "+ .ENV", hint: "whole file, one record", href: "/projects", icon: FileCode2 },

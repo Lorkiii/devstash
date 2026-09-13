@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { FolderKanban } from "lucide-react";
+import { EmptyState } from "@/app/components/ui/empty-state";
 import type { VaultData } from "@/app/lib/vault-data.types";
 import { formatDate } from "@/app/lib/format";
 
@@ -11,6 +12,10 @@ interface ProjectCardGridProps {
 }
 
 export function ProjectCardGrid({ data }: ProjectCardGridProps) {
+  if (data.projects.length === 0) {
+    return <EmptyState message="no encrypted projects yet." hint="Create a project to add .env bundles, notes, and tasks." />;
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
       {data.projects.map((project) => {

@@ -32,7 +32,7 @@ export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: 
             </React.Fragment>
           ))}
         </div>
-        <span className="shrink-0 text-amber-300/80">PHASE 5 · LOCAL LIFECYCLE</span>
+        <span className="shrink-0 text-amber-300/80">PHASE 6 · CIPHERTEXT ITEMS</span>
       </div>
     </footer>
   );

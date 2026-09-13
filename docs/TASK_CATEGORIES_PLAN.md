@@ -1,7 +1,8 @@
 # Task categories plan
 
-Status: design only. Do not implement this plan until the task encryption and
-persistence phase is explicitly approved.
+Status: implemented locally in Phase 7; database activation and authenticated
+browser QA remain pending. See `WORKSPACE_MODULES_IMPLEMENTATION.md` for the
+current ciphertext, ownership, and activation boundaries.
 
 ## Product behavior
 
@@ -28,7 +29,7 @@ persistence phase is explicitly approved.
 - Allow the same color on multiple categories; color is a visual aid and not a
   unique identifier.
 
-## Security and future persistence
+## Security and persistence
 
 - Built-in category definitions may remain non-sensitive application constants.
 - Treat custom category names and chosen color tokens as user-authored private
@@ -39,18 +40,22 @@ persistence phase is explicitly approved.
 - Generate stable category and task IDs before encryption so their owner,
   relationship, entity type, and encryption version can be bound with
   authenticated additional data.
-- Future category and task operations must authenticate the session, enforce
+- Category and task operations authenticate the session, enforce
   ownership near the data layer, validate ciphertext envelopes, and return
   `Cache-Control: no-store`.
 
-## Deferred implementation sequence
+## Implemented sequence
 
 1. Approve the vault encryption profile and encrypted record envelope.
 2. Define the encrypted category and task contracts with ownership constraints.
 3. Add the curated theme palette and accessible badge component.
 4. Add category selection and custom-category management to the task flow.
 5. Add encrypted persistence, deletion reassignment, local filtering, and
-   focused ownership, validation, encryption, and accessibility tests.
+   focused validation and encryption tests. Database ownership and browser
+   accessibility checks remain activation gates.
 
-No Prisma model, migration, task type, mock data, component, or route is changed
-by this plan.
+Phase 7 implements this plan without applying its migration. Built-in category
+definitions remain public constants. Custom names and palette tokens are one
+client-encrypted payload, while task assignment uses an authenticated category
+relationship ID. The server stores a built-in key or owner-scoped custom ID,
+never a category name or CSS value.
