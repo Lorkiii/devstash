@@ -43,8 +43,18 @@ export function SecurityModal({ isOpen, onClose }: SecurityModalProps) {
       isOpen={isOpen}
       onClose={onClose}
       title="DEVSTASH SECURITY INVARIANTS · V1"
-      footerLabel="SPEC: CLIENT-SIDE ENVELOPE ENCRYPTION"
-      footerAction="ACKNOWLEDGE"
+      footer={(
+        <>
+          <span>SPEC: CLIENT-SIDE ENVELOPE ENCRYPTION</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 rounded-lg bg-[#6ea8ff] px-4 py-2 font-bold text-[#05070d] transition-colors hover:bg-[#8ab9ff]"
+          >
+            ACKNOWLEDGE
+          </button>
+        </>
+      )}
       maxWidth="2xl"
     >
       {/* Threat Model Callout */}

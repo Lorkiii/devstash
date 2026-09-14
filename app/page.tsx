@@ -25,9 +25,8 @@ export default function LandingPage() {
   };
 
   return (
-    // Desktop is pinned to one viewport; smaller screens stack and scroll normally.
-    <div className="relative min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-[#05070d] text-[#e8eefb] overflow-x-hidden selection:bg-[#6ea8ff]/30 selection:text-white">
-      <StarfieldCanvas starCount={200} motion="orbit" />
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[#05070d] text-[#e8eefb] selection:bg-[#6ea8ff]/30 selection:text-white">
+      <StarfieldCanvas starCount={520} motion="orbit" />
       <OrbitalHorizon />
 
       <LandingHeader
@@ -36,7 +35,7 @@ export default function LandingPage() {
         onSignInClick={handleGoogleSignIn}
       />
 
-      <main className="relative z-10 flex-1 min-h-0 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center">
+      <main className="relative z-10 flex min-h-0 w-full flex-1 items-center px-4 py-4 sm:px-5 lg:px-6">
         <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           <div className="lg:col-span-7">
             <LandingHeroPanel onOpenSecurityModal={openSecurityModal} />

@@ -9,9 +9,9 @@ export function LandingHeroPanel({ onOpenSecurityModal }: LandingHeroPanelProps)
   return (
     <div className="flex flex-col space-y-4 lg:space-y-5">
       <div className="space-y-2.5">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#6ea8ff]/10 border border-[#6ea8ff]/25 text-[#6ea8ff] font-mono text-[11px] tracking-[0.2em] uppercase">
+        <div className="inline-flex max-w-full items-center gap-2 rounded border border-[#6ea8ff]/25 bg-[#6ea8ff]/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-[#6ea8ff]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#6ea8ff] animate-pulse" />
-          <span>DEVSTASH · CLIENT-SIDE ENCRYPTED · V1</span>
+          <span className="min-w-0">DEVSTASH · CLIENT-SIDE ENCRYPTED · V1</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#e8eefb] leading-[1.06]">

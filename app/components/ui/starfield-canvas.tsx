@@ -1,7 +1,56 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import type { Star, StarHue, StarfieldCanvasProps } from "./starfield-canvas.types";
+import type {
+  OrbitLayer,
+  Star,
+  StarHue,
+  StarfieldCanvasProps,
+} from "./starfield-canvas.types";
+
+const ORBIT_LAYERS: readonly OrbitLayer[] = [
+  {
+    depth: "far",
+    glowScale: 0,
+    minRadius: 0.35,
+    maxRadius: 0.8,
+    minOpacity: 0.28,
+    maxOpacity: 0.5,
+    minSpeed: 0.006,
+    maxSpeed: 0.012,
+  },
+  {
+    depth: "middle",
+    glowScale: 2.6,
+    minRadius: 0.7,
+    maxRadius: 1.3,
+    minOpacity: 0.46,
+    maxOpacity: 0.76,
+    minSpeed: 0.012,
+    maxSpeed: 0.022,
+  },
+  {
+    depth: "near",
+    glowScale: 3.4,
+    minRadius: 1.15,
+    maxRadius: 1.8,
+    minOpacity: 0.7,
+    maxOpacity: 0.96,
+    minSpeed: 0.022,
+    maxSpeed: 0.035,
+  },
+];
+
+const getOrbitLayer = (roll: number) => {
+  if (roll < 0.55) return ORBIT_LAYERS[0];
+  if (roll < 0.9) return ORBIT_LAYERS[1];
+  return ORBIT_LAYERS[2];
+};
+
+const interpolate = (minimum: number, maximum: number, amount: number) =>
+  minimum + (maximum - minimum) * amount;
+
+const REDUCED_ORBIT_SPEED_SCALE = 0.5;
 
 export function StarfieldCanvas({
   className = "absolute inset-0 pointer-events-none",
@@ -17,7 +66,7 @@ export function StarfieldCanvas({
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId: number | null = null;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
@@ -47,10 +96,10 @@ export function StarfieldCanvas({
 
     updateSize();
 
-    // Check prefers-reduced-motion
-    const prefersReducedMotion = window.matchMedia(
+    const motionPreference = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
-    ).matches;
+    );
+    let prefersReducedMotion = motionPreference.matches;
 
     // Seeded-like random generator for consistent aesthetic density
     let seed = 42;
@@ -74,11 +123,25 @@ export function StarfieldCanvas({
       };
 
       if (motion === "orbit") {
+        const layer = getOrbitLayer(rand());
+
+        star.depth = layer.depth;
+        star.r = interpolate(layer.minRadius, layer.maxRadius, rand());
+        star.baseOpacity = interpolate(
+          layer.minOpacity,
+          layer.maxOpacity,
+          rand()
+        );
+        star.glowScale = layer.glowScale;
         star.angle = rand() * Math.PI * 2;
         star.radiusT = rand();
-        // Negative = sweeps leftward across the top of the sky, matching the
-        // old drift direction; 0.005-0.02 rad/s is one orbit every ~5-21 min.
-        star.angularSpeed = -(0.005 + rand() * 0.015);
+        // Negative angular velocity sweeps leftward across the sky. Layered
+        // speeds create depth while keeping the movement calm behind content.
+        star.angularSpeed = -interpolate(
+          layer.minSpeed,
+          layer.maxSpeed,
+          rand()
+        );
       }
 
       return star;
@@ -97,9 +160,12 @@ export function StarfieldCanvas({
       stars.forEach(positionOrbitStar);
     }
 
+    const isMotionEnabled = () =>
+      motion === "orbit" || !prefersReducedMotion;
+
     let lastTime = performance.now();
 
-    const draw = (now: number) => {
+    const draw = (now: number, scheduleNextFrame = true) => {
       const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
@@ -110,11 +176,13 @@ export function StarfieldCanvas({
 
         if (motion === "orbit") {
           if (
-            !prefersReducedMotion &&
             s.angle !== undefined &&
             s.angularSpeed !== undefined
           ) {
-            s.angle += s.angularSpeed * dt;
+            const speedScale = prefersReducedMotion
+              ? REDUCED_ORBIT_SPEED_SCALE
+              : 1;
+            s.angle += s.angularSpeed * speedScale * dt;
           }
           positionOrbitStar(s);
         } else if (!prefersReducedMotion) {
@@ -125,9 +193,15 @@ export function StarfieldCanvas({
           }
         }
 
+        const pulse = Math.abs(Math.sin((now / 1000) * s.f + s.p));
         const twinkle = prefersReducedMotion
-          ? 0.65
-          : 0.22 + 0.72 * Math.abs(Math.sin((now / 1000) * s.f + s.p));
+          ? motion === "orbit"
+            ? (s.baseOpacity ?? 0.65)
+            : 0.65
+          : motion === "orbit"
+            ? (s.baseOpacity ?? 0.65) *
+              (s.depth === "far" ? 0.82 + pulse * 0.18 : 0.62 + pulse * 0.38)
+            : 0.22 + 0.72 * pulse;
 
         ctx.globalAlpha = Math.min(1, Math.max(0.1, twinkle));
 
@@ -143,30 +217,83 @@ export function StarfieldCanvas({
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Add soft glow to larger brighter stars
-        if (s.r > 1.2 && twinkle > 0.6) {
-          ctx.globalAlpha = twinkle * 0.25;
+        const glowScale =
+          motion === "orbit" ? (s.glowScale ?? 0) : s.r > 1.2 ? 2.8 : 0;
+
+        if (glowScale > 0 && twinkle > 0.55) {
+          ctx.globalAlpha = twinkle * (s.depth === "near" ? 0.28 : 0.18);
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r * 2.8, 0, Math.PI * 2);
+          ctx.arc(s.x, s.y, s.r * glowScale, 0, Math.PI * 2);
           ctx.fill();
         }
       }
 
       ctx.globalAlpha = 1;
+
+      if (scheduleNextFrame && isMotionEnabled()) {
+        animationFrameId = requestAnimationFrame(draw);
+      } else {
+        animationFrameId = null;
+      }
+    };
+
+    const startAnimation = () => {
+      if (animationFrameId !== null || !isMotionEnabled()) return;
+
+      lastTime = performance.now();
       animationFrameId = requestAnimationFrame(draw);
     };
 
-    animationFrameId = requestAnimationFrame(draw);
+    const drawStaticFrame = () => {
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+
+      lastTime = performance.now();
+      draw(lastTime, false);
+    };
+
+    if (isMotionEnabled()) {
+      startAnimation();
+    } else {
+      drawStaticFrame();
+    }
 
     const handleResize = () => {
       updateSize();
+
+      if (motion === "orbit") {
+        stars.forEach(positionOrbitStar);
+      }
+
+      if (!isMotionEnabled()) {
+        drawStaticFrame();
+      }
+    };
+
+    const handleMotionPreferenceChange = (event: MediaQueryListEvent) => {
+      prefersReducedMotion = event.matches;
+
+      if (isMotionEnabled()) {
+        startAnimation();
+      } else {
+        drawStaticFrame();
+      }
     };
 
     window.addEventListener("resize", handleResize);
+    motionPreference.addEventListener("change", handleMotionPreferenceChange);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
       window.removeEventListener("resize", handleResize);
+      motionPreference.removeEventListener(
+        "change",
+        handleMotionPreferenceChange
+      );
     };
   }, [starCount, motion]);
 

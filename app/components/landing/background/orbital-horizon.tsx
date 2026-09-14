@@ -6,6 +6,9 @@ export function OrbitalHorizon() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden select-none"
     >
+      {/* Slow local-gradient haze adds depth without loading remote artwork. */}
+      <div className="orbital-galaxy-haze" />
+
       {/* Planetary Horizon Sphere Curve */}
       <div
         className="orbital-horizon-sphere absolute left-1/2 -translate-x-1/2 rounded-[50%] transition-transform duration-1000"

@@ -62,7 +62,50 @@ body {
   animation: fadeIn 0.18s ease-out forwards;
 }
 
+.devstash-modal::backdrop {
+  background: rgba(2, 5, 10, 0.84);
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devstash-modal {
+    animation: none;
+  }
+}
+
 /* Static classes keep the decorative landing layers compatible with style-src-attr 'none'. */
+@keyframes orbitalGalaxyDrift {
+  0% {
+    opacity: 0.3;
+    transform: translate3d(-1.5%, 1%, 0) scale(1);
+  }
+  50% {
+    opacity: 0.42;
+    transform: translate3d(1%, -1.5%, 0) scale(1.045);
+  }
+  100% {
+    opacity: 0.34;
+    transform: translate3d(2%, 0.5%, 0) scale(1.02);
+  }
+}
+
+.orbital-galaxy-haze {
+  position: absolute;
+  right: -18%;
+  bottom: -24%;
+  left: -18%;
+  height: 78%;
+  background:
+    radial-gradient(ellipse 34% 30% at 28% 68%, rgba(110, 168, 255, 0.2), transparent 72%),
+    radial-gradient(ellipse 38% 34% at 72% 72%, rgba(90, 126, 255, 0.15), transparent 74%),
+    radial-gradient(ellipse 52% 28% at 50% 82%, rgba(151, 131, 255, 0.1), transparent 78%);
+  filter: blur(30px);
+  opacity: 0.34;
+  transform-origin: 50% 80%;
+  animation: orbitalGalaxyDrift 28s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
 .orbital-horizon-sphere {
   bottom: -1500px;
   width: 2400px;
@@ -78,6 +121,15 @@ body {
 
 .orbital-top-vignette {
   background: linear-gradient(to bottom, rgba(5, 7, 13, 0.8) 0%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbital-galaxy-haze {
+    animation: none;
+    opacity: 0.34;
+    transform: none;
+    will-change: auto;
+  }
 }
 
 .vault-type-progress {

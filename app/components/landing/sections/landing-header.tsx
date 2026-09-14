@@ -10,7 +10,7 @@ export function LandingHeader({
 }: LandingHeaderProps) {
   return (
     <header className="w-full relative z-20 border-b border-[#6ea8ff]/15 bg-[#05070d]/70 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div className="flex h-14 w-full items-center justify-between px-4 sm:px-5 lg:px-6">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-bold tracking-[0.08em] text-lg sm:text-xl text-[#e8eefb]">
             <span>DEVSTASH</span>

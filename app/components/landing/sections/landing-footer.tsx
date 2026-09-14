@@ -5,8 +5,8 @@ import type { LandingFooterProps } from "./landing-footer.types";
 
 export function LandingFooter({ onOpenSecurityModal }: LandingFooterProps) {
   return (
-    <footer className="relative z-10 border-t border-[#6ea8ff]/15 bg-[#05070d]/80 backdrop-blur-sm py-2.5 px-4 sm:px-8 font-mono text-[11px] text-[#e8eefb]/50">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
+    <footer className="relative z-10 border-t border-[#6ea8ff]/15 bg-[#05070d]/80 px-4 py-2.5 font-mono text-[11px] text-[#e8eefb]/50 backdrop-blur-sm sm:px-5 lg:px-6">
+      <div className="flex w-full flex-col items-center justify-between gap-2 text-center sm:flex-row sm:flex-wrap sm:text-left">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
           <span>DEVSTASH · CLIENT-SIDE ENCRYPTED BY DESIGN</span>
