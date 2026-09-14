@@ -82,7 +82,7 @@ export function SettingsPanels() {
         </ConsolePanel>
 
         <ConsolePanel title="APPEARANCE" status="FIXED">
-          <div className="flex items-center justify-between rounded border border-[#6ea8ff]/15 bg-[#070d18]/60 px-3 py-2.5">
+          <div className="flex flex-col items-start gap-3 rounded border border-[#6ea8ff]/15 bg-[#070d18]/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-xs text-[#e8eefb]">Theme</div>
               <div className="text-[10px] text-[#e8eefb]/45">Dark console is the only theme in V1.</div>

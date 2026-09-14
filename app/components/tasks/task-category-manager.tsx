@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
+import { Modal } from "@/app/components/ui/modal";
 import { TaskCategoryBadge } from "@/app/components/ui/task-category-badge";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import type { TaskCategoryInput, TaskInput } from "@/app/lib/workspace.types";
@@ -79,16 +80,27 @@ export function TaskCategoryManager() {
 
   return (
     <div className="space-y-3">
-      {formId && (
-        <TaskCategoryForm
-          key={formId}
-          category={selectedCategory}
-          isSaving={busyId !== null}
-          requestError={actionError}
-          onCancel={closeForm}
-          onSubmit={save}
-        />
-      )}
+      <Modal
+        isOpen={formId !== null}
+        onClose={closeForm}
+        title={formId === "new" ? "NEW CATEGORY" : "EDIT CATEGORY"}
+        status="NAME + COLOR ENCRYPTED"
+        description="Custom category names and palette choices are encrypted locally before saving."
+        icon={formId === "new" ? <Plus className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        maxWidth="md"
+        closeDisabled={busyId !== null}
+      >
+        {formId && (
+          <TaskCategoryForm
+            key={formId}
+            category={selectedCategory}
+            isSaving={busyId !== null}
+            requestError={actionError}
+            onCancel={closeForm}
+            onSubmit={save}
+          />
+        )}
+      </Modal>
       <ConsolePanel
         title="TASK CATEGORIES"
         status={`${customCategories.length} CUSTOM`}

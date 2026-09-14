@@ -2,9 +2,10 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search } from "lucide-react";
+import { KeyRound, Plus, Search } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
+import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { TypeBadge } from "@/app/components/ui/type-badge";
 import type { VaultItemType } from "@/app/lib/vault-data.types";
@@ -111,7 +112,7 @@ export function VaultBrowser() {
         setActionError(null);
         setFormItemId("new");
       }}
-      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW GENERIC SECRET
     </button>
@@ -126,8 +127,37 @@ export function VaultBrowser() {
         actions={newButton}
       />
 
+      <Modal
+        isOpen={formItemId !== null}
+        onClose={() => {
+          setFormItemId(null);
+          setActionError(null);
+        }}
+        title={formItemId === "new" ? "NEW GENERIC SECRET" : "EDIT GENERIC SECRET"}
+        status="ENCRYPTS IN THIS TAB"
+        description="The complete form is encrypted locally as one payload. The optional project link is authenticated relationship metadata."
+        icon={<KeyRound className="h-4 w-4" />}
+        maxWidth="2xl"
+        closeDisabled={isSaving}
+      >
+        {formItemId && (
+          <GenericSecretForm
+            key={formItemId}
+            item={formItemId === "new" ? undefined : selected ?? undefined}
+            projects={data.projects}
+            isSaving={isSaving}
+            requestError={actionError}
+            onCancel={() => {
+              setFormItemId(null);
+              setActionError(null);
+            }}
+            onSubmit={handleSave}
+          />
+        )}
+      </Modal>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className={`lg:col-span-5 ${selected || formItemId ? "hidden lg:block" : ""}`}>
+        <div className={`lg:col-span-5 ${selected ? "hidden lg:block" : ""}`}>
           <ConsolePanel title="RECORDS" status={`${visible.length} SHOWN`} className="h-full" bodyClassName="p-0">
             <div className="p-3 space-y-2.5 border-b border-[#6ea8ff]/10">
               <label className="flex items-center gap-2 rounded border border-[#6ea8ff]/20 bg-[#070d18]/80 px-2.5 py-1.5">
@@ -184,21 +214,8 @@ export function VaultBrowser() {
           </ConsolePanel>
         </div>
 
-        <div className={`lg:col-span-7 ${selected || formItemId ? "" : "hidden lg:block"}`}>
-          {formItemId ? (
-            <GenericSecretForm
-              key={formItemId}
-              item={formItemId === "new" ? undefined : selected ?? undefined}
-              projects={data.projects}
-              isSaving={isSaving}
-              requestError={actionError}
-              onCancel={() => {
-                setFormItemId(null);
-                setActionError(null);
-              }}
-              onSubmit={handleSave}
-            />
-          ) : selected ? (
+        <div className={`lg:col-span-7 ${selected ? "" : "hidden lg:block"}`}>
+          {selected ? (
             <VaultItemDetail
               key={`${selected.id}:${selected.updatedAt}`}
               item={selected}

@@ -47,14 +47,14 @@ export function EnvBundleViewer({
 
   return (
     <div className="rounded border border-[#6ea8ff]/20 bg-[#070d18]/90 overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-[#6ea8ff]/10">
+      <div className="flex flex-col items-stretch gap-3 border-b border-[#6ea8ff]/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-mono text-xs text-[#e8eefb] truncate">.env.{bundle.environment}</span>
           <span className="font-mono text-[10px] text-[#e8eefb]/40">
             {lines.filter((line) => line.raw === null).length} vars · {formatDate(bundle.updatedAt)}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:justify-end">
           <button
             type="button"
             onClick={controls.toggleReveal}

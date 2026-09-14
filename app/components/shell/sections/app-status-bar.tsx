@@ -22,7 +22,7 @@ export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: 
 
   return (
     <footer className="relative z-20 h-7 shrink-0 border-t border-[#6ea8ff]/15 bg-[#05070d]/85 backdrop-blur-md">
-      <div className="h-full px-3 sm:px-4 lg:px-6 flex items-center justify-between font-mono text-[10px] tracking-wider text-[#e8eefb]/50">
+      <div className="flex h-full items-center justify-between px-4 font-mono text-[10px] tracking-wider text-[#e8eefb]/50 sm:px-5 lg:px-6">
         <div className="flex items-center gap-2 min-w-0 truncate">
           <span className="text-[#6ea8ff]">◇</span>
           {segments.map((segment, index) => (
@@ -32,7 +32,7 @@ export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: 
             </React.Fragment>
           ))}
         </div>
-        <span className="shrink-0 text-amber-300/80">PHASE 6 · CIPHERTEXT ITEMS</span>
+        <span className="hidden shrink-0 text-amber-300/80 sm:block">PHASE 6 · CIPHERTEXT ITEMS</span>
       </div>
     </footer>
   );

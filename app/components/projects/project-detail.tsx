@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
+import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { TypeBadge } from "@/app/components/ui/type-badge";
 import { TaskCategoryBadge } from "@/app/components/ui/task-category-badge";
@@ -80,8 +81,8 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   };
 
   const tabList = (
-    <div className="flex flex-wrap items-center justify-end gap-1">
-      <div role="tablist" aria-label="Project sections" className="flex items-center gap-1">
+    <div className="flex w-full flex-wrap items-center gap-1 sm:w-auto sm:justify-end">
+      <div role="tablist" aria-label="Project sections" className="flex max-w-full flex-wrap items-center gap-1">
         {TABS.map((entry) => {
           const active = tab === entry.id;
           return (
@@ -91,7 +92,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
               type="button"
               aria-selected={active}
               onClick={() => setTab(entry.id)}
-              className={`rounded px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
+              className={`min-h-10 rounded px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
                 active ? "bg-[#6ea8ff]/15 text-[#e8eefb]" : "text-[#e8eefb]/50 hover:text-[#e8eefb]"
               }`}
             >
@@ -107,7 +108,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             setActionError(null);
             setEnvFormId("new");
           }}
-          className="inline-flex items-center gap-1 rounded border border-[#38bdf8]/30 px-2 py-1 text-[10px] tracking-widest text-[#38bdf8] hover:bg-[#38bdf8]/10"
+          className="inline-flex min-h-10 items-center gap-1 rounded border border-[#38bdf8]/30 px-2 py-1 text-[10px] tracking-widest text-[#38bdf8] hover:bg-[#38bdf8]/10"
         >
           <Plus className="h-3 w-3" /> ADD .ENV
         </button>
@@ -116,8 +117,15 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   );
 
   const projectActions = (
-    <div className="flex items-center gap-1">
-      <button type="button" onClick={() => setEditingProject(true)} className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb]">
+    <div className="flex flex-wrap items-center gap-1">
+      <button
+        type="button"
+        onClick={() => {
+          setActionError(null);
+          setEditingProject(true);
+        }}
+        className="inline-flex min-h-10 items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb]"
+      >
         <Pencil className="h-3 w-3" /> EDIT
       </button>
       <button
@@ -138,7 +146,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             setDeletingId(null);
           }
         }}
-        className="inline-flex items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50"
+        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50"
       >
         <Trash2 className="h-3 w-3" /> DELETE
       </button>
@@ -178,7 +186,19 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
       <BackLink />
       <PageHeading eyebrow="PROJECT" title={project.name} description={project.description} actions={projectActions} />
 
-      {editingProject && (
+      <Modal
+        isOpen={editingProject}
+        onClose={() => {
+          setEditingProject(false);
+          setActionError(null);
+        }}
+        title="EDIT PROJECT"
+        status="ENCRYPTS IN THIS TAB"
+        description="Update the locally encrypted project payload without changing its linked records."
+        icon={<Pencil className="h-4 w-4" />}
+        maxWidth="lg"
+        closeDisabled={isSaving}
+      >
         <ProjectForm
           key={project.id}
           project={project}
@@ -190,7 +210,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           }}
           onSubmit={handleProjectSave}
         />
-      )}
+      </Modal>
 
       {actionError && !editingProject && !envFormId && <p role="alert" className="text-xs text-rose-300">{actionError}</p>}
 
@@ -266,10 +286,10 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                 <li key={note.id}>
                   <Link
                     href={`/notes?note=${note.id}`}
-                    className="flex items-center justify-between gap-3 py-2.5 text-xs text-[#e8eefb]/85 hover:text-[#6ea8ff] transition-colors"
+                    className="flex flex-col items-start gap-1 py-2.5 text-xs text-[#e8eefb]/85 transition-colors hover:text-[#6ea8ff] sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                   >
-                    <span className="truncate">{note.title}</span>
-                    <span className="text-[10px] text-[#e8eefb]/40 shrink-0">
+                    <span className="max-w-full break-words">{note.title}</span>
+                    <span className="max-w-full break-words text-[10px] text-[#e8eefb]/40 sm:shrink-0">
                       {note.tags.map((tag) => `#${tag}`).join(" ")}
                     </span>
                   </Link>
@@ -284,18 +304,20 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           ) : (
             <ul className="divide-y divide-[#6ea8ff]/10">
               {tasks.map((task) => (
-                <li key={task.id} className="flex items-center gap-3 py-2.5 text-xs">
+                <li key={task.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2.5 text-xs">
                   <span
                     aria-hidden="true"
                     className={`w-3.5 h-3.5 rounded-sm border shrink-0 ${
                       task.done ? "border-emerald-400/60 bg-emerald-400/30" : "border-[#6ea8ff]/40"
                     }`}
                   />
-                  <span className={`flex-1 truncate ${task.done ? "text-[#e8eefb]/40 line-through" : "text-[#e8eefb]/85"}`}>
+                  <span className={`min-w-0 flex-1 break-words ${task.done ? "text-[#e8eefb]/40 line-through" : "text-[#e8eefb]/85"}`}>
                     {task.title}
                   </span>
-                  <TaskCategoryBadge category={taskCategory(task.categoryId)} className="shrink-0" />
-                  <span className="text-[10px] text-[#e8eefb]/45 shrink-0">{task.dueDate ?? ""}</span>
+                  <span className="ml-6 flex w-full flex-wrap items-center gap-2 sm:ml-0 sm:w-auto sm:shrink-0">
+                    <TaskCategoryBadge category={taskCategory(task.categoryId)} />
+                    <span className="text-[10px] text-[#e8eefb]/45">{task.dueDate ?? ""}</span>
+                  </span>
                 </li>
               ))}
             </ul>

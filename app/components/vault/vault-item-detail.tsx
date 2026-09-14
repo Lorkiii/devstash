@@ -21,12 +21,12 @@ export function VaultItemDetail({
   const meta = VAULT_TYPE_META[item.type];
 
   const actions = (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
       <button
         type="button"
         onClick={onEdit}
         disabled={isDeleting}
-        className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb] disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-10 items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Pencil className="w-3 h-3" /> EDIT
       </button>
@@ -34,7 +34,7 @@ export function VaultItemDetail({
         type="button"
         onClick={onDelete}
         disabled={isDeleting}
-        className="inline-flex items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Trash2 className="w-3 h-3" /> {isDeleting ? "DELETING…" : "DELETE"}
       </button>

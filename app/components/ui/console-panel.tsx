@@ -37,12 +37,12 @@ export function ConsolePanel({
     <section
       className={`rounded-lg border border-[#6ea8ff]/25 bg-[#0a1220]/85 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.45)] font-mono text-[#e8eefb] flex flex-col min-h-0 ${className}`}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-[#6ea8ff]/15 px-4 py-2.5">
+      <header className="flex flex-col items-start gap-2 border-b border-[#6ea8ff]/15 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-2 h-2 rounded-full shrink-0 ${DOT_CLASS[tone]}`} />
           <h2 className="text-[11px] font-bold tracking-widest text-[#6ea8ff] truncate">{title}</h2>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:shrink-0 sm:justify-end">
           {action}
           {status && (
             <span className="text-[10px] tracking-wider text-[#e8eefb]/55 whitespace-nowrap">{status}</span>

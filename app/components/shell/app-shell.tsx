@@ -114,9 +114,9 @@ function ShellFrame({ children }: ShellFrameProps) {
         <main className="flex-1 min-w-0 min-h-0 overflow-y-auto">
           {signOutError && <p role="alert" className="relative p-4 text-sm text-amber-200">{signOutError}</p>}
           {isUnlocked ? (
-            <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-7xl mx-auto">{children}</div>
+            <div className="w-full px-4 py-4 sm:px-5 lg:px-6 lg:py-5">{children}</div>
           ) : (
-            <div className="h-full flex items-center justify-center px-4 py-8">
+            <div className="flex min-h-full items-center justify-center px-4 py-8 sm:px-5 lg:px-6">
               <VaultLockPanel />
             </div>
           )}

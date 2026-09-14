@@ -95,7 +95,7 @@ export function PasswordGenerator() {
               </button>
             </div>
 
-            <dl className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-mono">
+            <dl className="mt-4 grid grid-cols-1 gap-2 font-mono text-[10px] sm:grid-cols-3">
               <Stat label="alphabet" value={`${alphabetSize} chars`} />
               <Stat label="length" value={`${options.length}`} />
               <Stat label="entropy" value={`${bits} bits`} valueClass={strength.className} />

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
+import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { ProjectCardGrid } from "@/app/components/projects/project-card-grid";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
@@ -35,7 +36,7 @@ export function ProjectsOverview() {
         setActionError(null);
         setShowForm(true);
       }}
-      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW PROJECT
     </button>
@@ -49,7 +50,19 @@ export function ProjectsOverview() {
         description="Each project groups its .env bundles, linked secrets, notes, and tasks. Names and descriptions are encrypted."
         actions={newButton}
       />
-      {showForm && (
+      <Modal
+        isOpen={showForm}
+        onClose={() => {
+          setShowForm(false);
+          setActionError(null);
+        }}
+        title="NEW PROJECT"
+        status="ENCRYPTS IN THIS TAB"
+        description="The project name and description are encrypted locally as one payload before saving."
+        icon={<Plus className="h-4 w-4" />}
+        maxWidth="lg"
+        closeDisabled={isSaving}
+      >
         <ProjectForm
           isSaving={isSaving}
           requestError={actionError}
@@ -59,7 +72,7 @@ export function ProjectsOverview() {
           }}
           onSubmit={handleSave}
         />
-      )}
+      </Modal>
       <ProjectCardGrid data={data} />
     </div>
   );

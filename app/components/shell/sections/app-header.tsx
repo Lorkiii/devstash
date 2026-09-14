@@ -22,13 +22,13 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <header className="relative z-20 h-14 shrink-0 border-b border-[#6ea8ff]/15 bg-[#05070d]/70 backdrop-blur-md">
-      <div className="h-full px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex h-full items-center justify-between gap-2 px-4 sm:gap-3 sm:px-5 lg:px-6">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onOpenMobileNav}
             aria-label="Open navigation"
-            className="md:hidden p-1.5 rounded text-[#e8eefb]/70 hover:text-[#e8eefb] cursor-pointer"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded text-[#e8eefb]/70 hover:text-[#e8eefb] cursor-pointer md:hidden"
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -54,17 +54,18 @@ export function AppHeader({
           </kbd>
         </button>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <div
-            className={`flex items-center gap-2 rounded border px-2.5 py-1 font-mono text-[10px] tracking-widest ${
+            className={`flex min-h-10 min-w-10 items-center justify-center gap-2 rounded border px-2.5 py-1 font-mono text-[10px] tracking-widest sm:min-h-0 sm:min-w-0 sm:justify-start ${
               isUnlocked
                 ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
                 : "border-amber-400/40 bg-amber-400/10 text-amber-300"
             }`}
+            aria-label={isUnlocked ? "Vault unlocked" : "Vault locked"}
             aria-live="polite"
           >
             {isUnlocked ? <LockOpen className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-            <span>{isUnlocked ? "UNLOCKED" : "LOCKED"}</span>
+            <span className="hidden sm:inline">{isUnlocked ? "UNLOCKED" : "LOCKED"}</span>
             {isUnlocked && secondsUntilAutoLock !== null && (
               <span className="hidden sm:inline text-emerald-200/70">
                 · {formatCountdown(secondsUntilAutoLock)}
@@ -76,7 +77,7 @@ export function AppHeader({
             onClick={onSignOut}
             aria-label="Sign out"
             title="Sign out"
-            className="p-1.5 rounded border border-[#6ea8ff]/20 text-[#e8eefb]/60 hover:text-[#e8eefb] hover:border-[#6ea8ff]/50 transition-colors cursor-pointer"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 text-[#e8eefb]/60 transition-colors hover:border-[#6ea8ff]/50 hover:text-[#e8eefb] cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>

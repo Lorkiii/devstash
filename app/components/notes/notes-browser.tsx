@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
+import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import { formatDate } from "@/app/lib/format";
@@ -40,6 +41,9 @@ export function NotesBrowser() {
   }, [data.notes, query]);
 
   const selected = data.notes.find((note) => note.id === selectedId) ?? null;
+  const formNote = formId && formId !== "new"
+    ? data.notes.find((note) => note.id === formId)
+    : undefined;
   const projectName = (projectId?: string) =>
     data.projects.find((project) => project.id === projectId)?.name;
 
@@ -93,7 +97,7 @@ export function NotesBrowser() {
         setActionError(null);
         setFormId("new");
       }}
-      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW NOTE
     </button>
@@ -108,8 +112,37 @@ export function NotesBrowser() {
         actions={newButton}
       />
 
+      <Modal
+        isOpen={formId !== null}
+        onClose={() => {
+          setFormId(null);
+          setActionError(null);
+        }}
+        title={formId === "new" ? "NEW NOTE" : "EDIT NOTE"}
+        status="ENCRYPTS IN THIS TAB"
+        description="The title, body, tags, and optional project link are encrypted locally before saving."
+        icon={formId === "new" ? <Plus className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        maxWidth="2xl"
+        closeDisabled={isSaving}
+      >
+        {formId && (
+          <NoteForm
+            key={formId}
+            note={formNote}
+            projects={data.projects}
+            isSaving={isSaving}
+            requestError={actionError}
+            onCancel={() => {
+              setFormId(null);
+              setActionError(null);
+            }}
+            onSubmit={handleSave}
+          />
+        )}
+      </Modal>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className={`lg:col-span-4 ${selected || formId ? "hidden lg:block" : ""}`}>
+        <div className={`lg:col-span-4 ${selected ? "hidden lg:block" : ""}`}>
           <ConsolePanel title="NOTES" status={`${visible.length} SHOWN`} className="h-full" bodyClassName="p-0">
             <div className="p-3 border-b border-[#6ea8ff]/10">
               <label className="flex items-center gap-2 rounded border border-[#6ea8ff]/20 bg-[#070d18]/80 px-2.5 py-1.5">
@@ -158,31 +191,18 @@ export function NotesBrowser() {
           </ConsolePanel>
         </div>
 
-        <div className={`lg:col-span-8 ${selected || formId ? "" : "hidden lg:block"}`}>
-          {formId ? (
-            <NoteForm
-              key={formId}
-              note={formId === "new" ? undefined : selected ?? undefined}
-              projects={data.projects}
-              isSaving={isSaving}
-              requestError={actionError}
-              onCancel={() => {
-                setFormId(null);
-                setActionError(null);
-              }}
-              onSubmit={handleSave}
-            />
-          ) : selected ? (
+        <div className={`lg:col-span-8 ${selected ? "" : "hidden lg:block"}`}>
+          {selected ? (
             <ConsolePanel
               title="NOTE"
               status={`updated ${formatDate(selected.updatedAt)}`}
               className="h-full"
               action={(
-                <div className="flex items-center gap-1">
-                  <button type="button" onClick={() => setFormId(selected.id)} disabled={isDeleting} className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb] disabled:opacity-50">
+                <div className="flex flex-wrap items-center gap-1">
+                  <button type="button" onClick={() => setFormId(selected.id)} disabled={isDeleting} className="inline-flex min-h-10 items-center gap-1 rounded border border-[#6ea8ff]/20 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#e8eefb] disabled:opacity-50">
                     <Pencil className="h-3 w-3" /> EDIT
                   </button>
-                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50">
+                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50">
                     <Trash2 className="h-3 w-3" /> {isDeleting ? "DELETING…" : "DELETE"}
                   </button>
                 </div>

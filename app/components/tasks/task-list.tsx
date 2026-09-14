@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
+import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { TaskCategoryBadge } from "@/app/components/ui/task-category-badge";
 import type { Task } from "@/app/lib/vault-data.types";
@@ -55,6 +56,9 @@ export function TaskList() {
     data.projects.find((project) => project.id === projectId)?.name ?? "unassigned";
   const taskCategory = (categoryId?: string) =>
     data.taskCategories.find((category) => category.id === categoryId) ?? null;
+  const formTask = formId && formId !== "new"
+    ? tasks.find((task) => task.id === formId)
+    : undefined;
 
   const openCount = tasks.filter((task) => !task.done).length;
   const defaultSortOrder = Math.min(
@@ -80,7 +84,7 @@ export function TaskList() {
         setActionError(null);
         setFormId("new");
       }}
-      className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW TASK
     </button>
@@ -145,22 +149,36 @@ export function TaskList() {
         actions={newButton}
       />
 
-      {formId && (
-        <TaskForm
-          key={formId}
-          task={formId === "new" ? undefined : tasks.find((task) => task.id === formId)}
-          projects={data.projects}
-          categories={data.taskCategories}
-          defaultSortOrder={defaultSortOrder}
-          isSaving={busyId !== null}
-          requestError={actionError}
-          onCancel={() => {
-            setFormId(null);
-            setActionError(null);
-          }}
-          onSubmit={handleSave}
-        />
-      )}
+      <Modal
+        isOpen={formId !== null}
+        onClose={() => {
+          setFormId(null);
+          setActionError(null);
+        }}
+        title={formId === "new" ? "NEW TASK" : "EDIT TASK"}
+        status="ENCRYPTS IN THIS TAB"
+        description="The title, description, due date, and relationships are encrypted locally before saving."
+        icon={formId === "new" ? <Plus className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        maxWidth="2xl"
+        closeDisabled={busyId !== null}
+      >
+        {formId && (
+          <TaskForm
+            key={formId}
+            task={formTask}
+            projects={data.projects}
+            categories={data.taskCategories}
+            defaultSortOrder={defaultSortOrder}
+            isSaving={busyId !== null}
+            requestError={actionError}
+            onCancel={() => {
+              setFormId(null);
+              setActionError(null);
+            }}
+            onSubmit={handleSave}
+          />
+        )}
+      </Modal>
 
       {actionError && !formId && <p role="alert" className="text-xs text-rose-300">{actionError}</p>}
 
@@ -219,7 +237,7 @@ export function TaskList() {
         ) : (
           <ul className="divide-y divide-[#6ea8ff]/10">
             {visible.map((task) => (
-              <li key={task.id} className="flex items-start gap-3 px-3 py-2.5">
+              <li key={task.id} className="flex flex-wrap items-start gap-x-3 gap-y-2 px-3 py-2.5">
                 <button
                   type="button"
                   role="checkbox"
@@ -227,7 +245,7 @@ export function TaskList() {
                   aria-label={task.done ? "Mark as not done" : "Mark as done"}
                   onClick={() => void toggle(task)}
                   disabled={busyId === task.id}
-                  className={`mt-0.5 w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors cursor-pointer ${
                     task.done
                       ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-300"
                       : "border-[#6ea8ff]/40 hover:border-[#6ea8ff]"
@@ -240,17 +258,17 @@ export function TaskList() {
                     {task.title}
                   </div>
                   {task.description && (
-                    <p className="text-[11px] text-[#e8eefb]/50 mt-0.5">{task.description}</p>
+                    <p className="mt-0.5 break-words text-[11px] text-[#e8eefb]/50">{task.description}</p>
                   )}
                   <TaskCategoryBadge category={taskCategory(task.categoryId)} className="mt-1" />
                 </div>
-                <div className="flex flex-col items-end gap-0.5 shrink-0 text-[10px] font-mono">
+                <div className="order-4 ml-7 flex w-[calc(100%_-_1.75rem)] items-center justify-between gap-2 font-mono text-[10px] sm:order-none sm:ml-0 sm:w-auto sm:shrink-0 sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
                   <span className="text-[#e8eefb]/45 truncate max-w-32">{projectName(task.projectId)}</span>
                   <span className={task.dueDate ? "text-[#e8eefb]/65" : "text-[#e8eefb]/30"}>
                     {task.dueDate ?? "no date"}
                   </span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -260,7 +278,7 @@ export function TaskList() {
                     }}
                     disabled={busyId === task.id}
                     aria-label="Edit task"
-                    className="rounded border border-[#6ea8ff]/20 p-1 text-[#e8eefb]/60 hover:text-[#6ea8ff] disabled:opacity-50"
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 p-1 text-[#e8eefb]/60 hover:text-[#6ea8ff] disabled:opacity-50"
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
@@ -276,7 +294,7 @@ export function TaskList() {
                     }}
                     disabled={busyId === task.id}
                     aria-label="Delete task"
-                    className="rounded border border-rose-400/20 p-1 text-rose-300/65 hover:text-rose-200 disabled:opacity-50"
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-300/65 hover:text-rose-200 disabled:opacity-50"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
