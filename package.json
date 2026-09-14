@@ -11,7 +11,8 @@
     "test:crypto:browser:build": "node tests/browser/build-vault-crypto-proof.mjs",
     "test:crypto:browser:serve": "node tests/browser/serve-vault-crypto-proof.mjs",
     "db:generate": "prisma generate",
-    "db:validate": "prisma validate"
+    "db:validate": "prisma validate",
+    "check:deployment": "node scripts/check-deployment-readiness.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

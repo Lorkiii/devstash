@@ -11,7 +11,6 @@ import React, {
 } from "react";
 import {
   createVaultItem,
-  fetchVaultItems,
   removeVaultItem,
   replaceVaultItem,
 } from "./vault-item-client";
@@ -22,6 +21,10 @@ import { decryptProject, encryptProject } from "./vault-crypto/project";
 import { decryptTask, encryptTask } from "./vault-crypto/task";
 import { decryptTaskCategory, encryptTaskCategory } from "./vault-crypto/task-category";
 import { fetchVaultProfile } from "./vault-profile-client";
+import { createEncryptedVaultBackup } from "./vault-crypto/backup";
+import { fetchVaultBackupSnapshot } from "./vault-backup-client";
+import { decryptVaultSnapshot } from "./vault-snapshot";
+import { clearSensitiveClipboardIfUnchanged } from "./sensitive-clipboard";
 import type {
   EnvBundle,
   Note,
@@ -32,7 +35,6 @@ import type {
   TaskCategory,
   VaultData,
 } from "./vault-data.types";
-import { BUILT_IN_TASK_CATEGORIES } from "./task-categories";
 import type { GenericSecretInput } from "./vault-item.types";
 import type { VaultEncryptionProfile, VaultLifecycleDraft } from "./vault-profile.types";
 import type { AutoLockMinutes, VaultLockState, VaultSessionValue } from "./vault-session.types";
@@ -42,11 +44,6 @@ import {
   createProjectRecord,
   createTaskRecord,
   createTaskCategoryRecord,
-  fetchEnvBundles,
-  fetchNotes,
-  fetchProjects,
-  fetchTasks,
-  fetchTaskCategories,
   removeEnvBundleRecord,
   removeNoteRecord,
   removeProjectRecord,
@@ -123,6 +120,7 @@ export function VaultSessionProvider({
     setSecondsUntilAutoLock(null);
     setRecents([]);
     setLockState(profileRef.current ? "locked" : "no-profile");
+    void clearSensitiveClipboardIfUnchanged();
   }, [abortRequests]);
 
   const lock = useCallback(() => {
@@ -161,54 +159,18 @@ export function VaultSessionProvider({
     operationRevisionRef.current = revision;
     requestControllersRef.current.add(controller);
     try {
-      const [
-        encryptedItems,
-        encryptedProjects,
-        encryptedEnvBundles,
-        encryptedNotes,
-        encryptedTaskCategories,
-        encryptedTasks,
-      ] =
-        await Promise.all([
-          fetchVaultItems(controller.signal),
-          fetchProjects(controller.signal),
-          fetchEnvBundles(controller.signal),
-          fetchNotes(controller.signal),
-          fetchTaskCategories(controller.signal),
-          fetchTasks(controller.signal),
-        ]);
-      const [secrets, projects, envBundles, notes, customTaskCategories, tasks] = await Promise.all([
-        Promise.all(encryptedItems.map((item) => decryptGenericSecret(ownerId, draft.dek, item))),
-        Promise.all(encryptedProjects.map((item) => decryptProject(ownerId, draft.dek, item))),
-        Promise.all(encryptedEnvBundles.map((item) => decryptEnvBundle(ownerId, draft.dek, item))),
-        Promise.all(encryptedNotes.map((item) => decryptNote(ownerId, draft.dek, item))),
-        Promise.all(
-          encryptedTaskCategories.map((item) => decryptTaskCategory(ownerId, draft.dek, item)),
-        ),
-        Promise.all(encryptedTasks.map((item) => decryptTask(ownerId, draft.dek, item))),
-      ]);
-      const projectIds = new Set(projects.map((project) => project.id));
-      const taskCategories: TaskCategory[] = [
-        ...BUILT_IN_TASK_CATEGORIES,
-        ...customTaskCategories,
-      ];
-      const taskCategoryIds = new Set(taskCategories.map((category) => category.id));
-      if (
-        secrets.some((item) => item.projectId && !projectIds.has(item.projectId)) ||
-        envBundles.some((bundle) => !projectIds.has(bundle.projectId)) ||
-        notes.some((note) => note.projectId && !projectIds.has(note.projectId)) ||
-        tasks.some((task) => task.projectId && !projectIds.has(task.projectId)) ||
-        tasks.some((task) => task.categoryId && !taskCategoryIds.has(task.categoryId))
-      ) {
-        throw new VaultOpenError("Encrypted workspace relationships are invalid.");
+      const snapshot = await fetchVaultBackupSnapshot(controller.signal);
+      if (JSON.stringify(snapshot.profile) !== JSON.stringify(draft.profile)) {
+        throw new VaultOpenError("Vault profile changed during unlock.");
       }
+      const decrypted = await decryptVaultSnapshot(ownerId, draft.dek, snapshot.records);
       if (revision !== operationRevisionRef.current || controller.signal.aborted) {
         throw new DOMException("Operation cancelled.", "AbortError");
       }
       dekRef.current = draft.dek;
       profileRef.current = draft.profile;
       setProfile(draft.profile);
-      setData({ secrets, projects, envBundles, notes, tasks, taskCategories });
+      setData(decrypted);
       const now = Date.now();
       lastActivityRef.current = now;
       setUnlockedAt(now);
@@ -265,6 +227,17 @@ export function VaultSessionProvider({
       requestControllersRef.current.delete(controller);
     }
   }, [lockState]);
+
+  const exportEncryptedBackup = useCallback(async () => runUnlockedOperation(
+    async (dek, signal) => {
+      const snapshot = await fetchVaultBackupSnapshot(signal);
+      if (!profileRef.current || JSON.stringify(snapshot.profile) !== JSON.stringify(profileRef.current)) {
+        throw new Error("Vault profile changed during export.");
+      }
+      await decryptVaultSnapshot(ownerId, dek, snapshot.records);
+      return createEncryptedVaultBackup(ownerId, dek, snapshot);
+    },
+  ), [ownerId, runUnlockedOperation]);
 
   const createGenericSecret = useCallback(async (input: GenericSecretInput) => {
     const created = await runUnlockedOperation(async (dek, signal) => {
@@ -598,6 +571,7 @@ export function VaultSessionProvider({
       createTaskCategory,
       updateTaskCategory,
       deleteTaskCategory,
+      exportEncryptedBackup,
       setAutoLockMinutes,
       touchRecent,
     }),
@@ -634,6 +608,7 @@ export function VaultSessionProvider({
       createTaskCategory,
       updateTaskCategory,
       deleteTaskCategory,
+      exportEncryptedBackup,
       touchRecent,
     ],
   );

@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { AUTH_ACTIONS, AUTH_RATE_LIMIT_POLICIES, AUTH_ROUTES } from "../app/lib/auth/config";
 import { allowAuthAttempt, getRateLimitedAuthAction } from "../app/lib/auth/rate-limit";
-import type { AuthRateLimitRepository } from "../app/lib/auth/rate-limit-repository";
+import type { RateLimitRepository } from "../app/lib/rate-limit";
 
 function repository(
-  behavior: Partial<Record<keyof AuthRateLimitRepository, boolean>>,
+  behavior: Partial<Record<keyof RateLimitRepository, boolean>>,
   calls: string[],
-): AuthRateLimitRepository {
+): RateLimitRepository {
   return {
     async resetExpiredWindow() {
       calls.push("reset");
@@ -62,7 +62,7 @@ test("an active window increments only below its configured maximum", async () =
 test("a concurrent first request retries the conditional increment", async () => {
   const calls: string[] = [];
   let incrementCalls = 0;
-  const fake: AuthRateLimitRepository = {
+  const fake: RateLimitRepository = {
     async resetExpiredWindow() { calls.push("reset"); return false; },
     async incrementActiveWindow() {
       calls.push("increment");
@@ -79,4 +79,16 @@ test("a full active window rejects another attempt", async () => {
   const calls: string[] = [];
   assert.equal(await allowAuthAttempt(repository({}, calls), AUTH_ACTIONS.signIn), false);
   assert.deepEqual(calls, ["reset", "increment", "create", "increment"]);
+});
+
+test("a rate-limit persistence failure rejects instead of allowing the request", async () => {
+  const failure: RateLimitRepository = {
+    async resetExpiredWindow() { throw new Error("synthetic persistence failure"); },
+    async incrementActiveWindow() { return true; },
+    async createWindow() { return true; },
+  };
+  await assert.rejects(
+    allowAuthAttempt(failure, AUTH_ACTIONS.signIn),
+    /synthetic persistence failure/u,
+  );
 });

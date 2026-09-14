@@ -5,7 +5,7 @@ import {
   AUTH_ROUTES,
   type RateLimitedAuthAction,
 } from "./config";
-import type { AuthRateLimitRepository } from "./rate-limit-repository";
+import { allowRateLimitedRequest, type RateLimitRepository } from "../rate-limit";
 
 export function getRateLimitedAuthAction(pathname: string): RateLimitedAuthAction | null {
   const action = pathname.startsWith(`${AUTH_ROUTES.api}/`)
@@ -18,17 +18,9 @@ export function getRateLimitedAuthAction(pathname: string): RateLimitedAuthActio
 }
 
 export async function allowAuthAttempt(
-  repository: AuthRateLimitRepository,
+  repository: RateLimitRepository,
   action: RateLimitedAuthAction,
   now = new Date(),
 ) {
-  const policy = AUTH_RATE_LIMIT_POLICIES[action];
-  const expiredBefore = new Date(now.valueOf() - policy.windowMs);
-
-  if (await repository.resetExpiredWindow(action, expiredBefore, now)) return true;
-  if (await repository.incrementActiveWindow(action, expiredBefore, policy.maxAttempts)) return true;
-  if (await repository.createWindow(action, now)) return true;
-
-  // Another request may have created the window between the first write and create.
-  return repository.incrementActiveWindow(action, expiredBefore, policy.maxAttempts);
+  return allowRateLimitedRequest(repository, action, AUTH_RATE_LIMIT_POLICIES[action], now);
 }

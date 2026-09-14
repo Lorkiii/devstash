@@ -80,7 +80,7 @@ function parseTimestamp(value: unknown): string {
   return value;
 }
 
-function parseVaultItem(value: unknown): VaultItemCiphertext {
+export function parseVaultItemCiphertext(value: unknown): VaultItemCiphertext {
   if (!isRecord(value) || !hasExactKeys(value, [
     "id",
     "projectId",
@@ -136,7 +136,7 @@ export async function fetchVaultItems(signal?: AbortSignal): Promise<VaultItemCi
   });
   const data = await readResponse(response);
   if (!Array.isArray(data)) throw new VaultItemRequestError(500);
-  return data.map(parseVaultItem);
+  return data.map(parseVaultItemCiphertext);
 }
 
 export async function createVaultItem(
@@ -151,7 +151,7 @@ export async function createVaultItem(
     body: JSON.stringify({ item }),
     signal,
   });
-  return parseVaultItem(await readResponse(response));
+  return parseVaultItemCiphertext(await readResponse(response));
 }
 
 export async function replaceVaultItem(
@@ -167,7 +167,7 @@ export async function replaceVaultItem(
     body: JSON.stringify({ item }),
     signal,
   });
-  return parseVaultItem(await readResponse(response));
+  return parseVaultItemCiphertext(await readResponse(response));
 }
 
 export async function removeVaultItem(id: string, signal?: AbortSignal): Promise<void> {

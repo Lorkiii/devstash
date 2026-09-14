@@ -31,7 +31,7 @@ function encodeBytes(value: Uint8Array): string {
   return Buffer.from(value).toString("base64url");
 }
 
-function toProfileDto(profile: VaultEncryptionProfileModel): VaultEncryptionProfile {
+export function toVaultProfileDto(profile: VaultEncryptionProfileModel): VaultEncryptionProfile {
   const result = vaultEncryptionProfileSchema.safeParse({
     profileId: profile.id,
     profileFormatVersion: profile.profileFormatVersion,
@@ -76,7 +76,7 @@ function toProfileDto(profile: VaultEncryptionProfileModel): VaultEncryptionProf
 
 export async function findVaultProfile(ownerId: string): Promise<VaultEncryptionProfile | null> {
   const profile = await database().vaultEncryptionProfile.findUnique({ where: { ownerId } });
-  return profile ? toProfileDto(profile) : null;
+  return profile ? toVaultProfileDto(profile) : null;
 }
 
 export async function createVaultProfile(
@@ -116,7 +116,7 @@ export async function createVaultProfile(
         recoveryWrappedDek: decodeBytes(profile.recovery.keyWrap.wrappedDek),
       },
     });
-    return toProfileDto(created);
+    return toVaultProfileDto(created);
   } catch (error) {
     if (typeof error === "object" && error !== null && "code" in error && error.code === "P2002") {
       throw new VaultProfileConflictError();
@@ -175,5 +175,5 @@ export async function updateVaultProfile(
       });
 
   if (updatedProfiles.length !== 1) throw new VaultProfileConflictError();
-  return toProfileDto(updatedProfiles[0]);
+  return toVaultProfileDto(updatedProfiles[0]);
 }

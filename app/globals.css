@@ -61,3 +61,42 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.18s ease-out forwards;
 }
+
+/* Static classes keep the decorative landing layers compatible with style-src-attr 'none'. */
+.orbital-horizon-sphere {
+  bottom: -1500px;
+  width: 2400px;
+  height: 1800px;
+  background: radial-gradient(ellipse at 50% 0%, #0c182c 0%, #070c16 45%, #05070d 85%);
+  border-top: 1px solid rgba(110, 168, 255, 0.45);
+  box-shadow: 0 -40px 160px rgba(110, 168, 255, 0.2), inset 0 2px 30px rgba(110, 168, 255, 0.12);
+}
+
+.orbital-horizon-bloom {
+  background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(110, 168, 255, 0.18), transparent 70%);
+}
+
+.orbital-top-vignette {
+  background: linear-gradient(to bottom, rgba(5, 7, 13, 0.8) 0%, transparent 100%);
+}
+
+.vault-type-progress {
+  appearance: none;
+  overflow: hidden;
+  border: 0;
+  background: #070d18;
+}
+
+.vault-type-progress::-webkit-progress-bar {
+  background: #070d18;
+}
+
+.vault-type-progress::-webkit-progress-value {
+  border-radius: 9999px;
+  background: currentColor;
+}
+
+.vault-type-progress::-moz-progress-bar {
+  border-radius: 9999px;
+  background: currentColor;
+}

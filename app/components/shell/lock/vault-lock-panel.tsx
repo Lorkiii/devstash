@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { KeyRound, LoaderCircle, RotateCcw, ShieldCheck } from "lucide-react";
+import { KeyRound, LoaderCircle, RotateCcw, ShieldCheck, Upload } from "lucide-react";
 import { ShieldLockIcon } from "@/app/components/ui/icons";
 import { VaultOpenError, useVaultSession } from "@/app/lib/vault-session";
 import {
@@ -16,11 +16,18 @@ import {
 } from "@/app/lib/vault-crypto/worker-client";
 import { normalizeRecoveryPhrase } from "@/app/lib/vault-crypto/recovery-phrase";
 import type { VaultSetupDraft } from "@/app/lib/vault-profile.types";
+import {
+  persistEncryptedVaultBackup,
+  readEncryptedVaultBackupFile,
+} from "@/app/lib/vault-backup-client";
+import { verifyEncryptedVaultBackup } from "@/app/lib/vault-crypto/backup";
+import { decryptVaultSnapshot } from "@/app/lib/vault-snapshot";
 
-type LockPanelMode = "unlock" | "recover";
+type LockPanelMode = "unlock" | "recover" | "restore";
 
 const GENERIC_UNLOCK_ERROR = "Unable to unlock the vault. Check your passphrase and try again.";
 const GENERIC_RECOVERY_ERROR = "Unable to recover the vault with that Recovery Phrase.";
+const GENERIC_RESTORE_ERROR = "Unable to restore that encrypted backup with the provided passphrase.";
 const FIELD_CLASS = "w-full rounded border border-[#6ea8ff]/25 bg-[#05070d]/80 px-3 py-2.5 font-mono text-sm text-[#e8eefb] outline-none placeholder:text-[#e8eefb]/25 focus:border-[#6ea8ff]/70";
 const PRIMARY_BUTTON_CLASS = "inline-flex min-h-10 items-center justify-center gap-2 rounded border border-[#6ea8ff]/50 bg-[#6ea8ff]/15 px-4 py-2 font-mono text-xs font-semibold tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/25 disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -46,6 +53,9 @@ export function VaultLockPanel() {
   const [setupDraft, setSetupDraft] = useState<VaultSetupDraft | null>(null);
   const [savedPhraseConfirmation, setSavedPhraseConfirmation] = useState("");
   const [acknowledgedLossWarning, setAcknowledgedLossWarning] = useState(false);
+  const [backupFile, setBackupFile] = useState<File | null>(null);
+  const [backupInputVersion, setBackupInputVersion] = useState(0);
+  const [acknowledgedRestore, setAcknowledgedRestore] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -58,6 +68,9 @@ export function VaultLockPanel() {
     setRecoveryPhrase("");
     setSavedPhraseConfirmation("");
     setAcknowledgedLossWarning(false);
+    setBackupFile(null);
+    setBackupInputVersion((current) => current + 1);
+    setAcknowledgedRestore(false);
   };
 
   const beginOperation = () => {
@@ -181,6 +194,48 @@ export function VaultLockPanel() {
     }
   };
 
+  const handleRestore = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!backupFile || !acknowledgedRestore) {
+      setError("Select an encrypted backup and acknowledge that restore replaces this vault.");
+      return;
+    }
+    const controller = beginOperation();
+    let restoreSubmitted = false;
+    try {
+      const backup = await readEncryptedVaultBackupFile(backupFile);
+      const draft = await unlockVaultInWorker(session.ownerId, backup.profile, passphrase, {
+        signal: controller.signal,
+      });
+      await verifyEncryptedVaultBackup(session.ownerId, draft.dek, backup);
+      await decryptVaultSnapshot(session.ownerId, draft.dek, backup.records);
+      if (controller.signal.aborted) throw new DOMException("Operation cancelled.", "AbortError");
+      restoreSubmitted = true;
+      const expectedProfile = session.profile
+        ? {
+            profileId: session.profile.profileId,
+            profileRevision: session.profile.profileRevision,
+          }
+        : null;
+      const restored = await persistEncryptedVaultBackup(backup, expectedProfile, controller.signal);
+      if (JSON.stringify(restored.profile) !== JSON.stringify(backup.profile)) {
+        throw new Error("Restored profile did not match the backup.");
+      }
+      resetSensitiveForm();
+      await session.openVaultAfterProfileChange({ profile: restored.profile, dek: draft.dek });
+    } catch {
+      resetSensitiveForm();
+      if (restoreSubmitted) {
+        await session.reloadProfile();
+        setError("Restore status could not be confirmed. The vault remains locked; retry or unlock the active profile.");
+      } else {
+        setError(GENERIC_RESTORE_ERROR);
+      }
+    } finally {
+      finishOperation();
+    }
+  };
+
   if (session.lockState === "loading") {
     return (
       <PanelFrame status="CHECKING PROFILE">
@@ -207,6 +262,29 @@ export function VaultLockPanel() {
   }
 
   if (session.lockState === "no-profile") {
+    if (mode === "restore") {
+      return (
+        <PanelFrame status="ENCRYPTED RESTORE">
+          <RestoreForm
+            passphrase={passphrase}
+            backupSelected={backupFile !== null}
+            acknowledged={acknowledgedRestore}
+            isWorking={isWorking}
+            error={error}
+            inputVersion={backupInputVersion}
+            onPassphraseChange={setPassphrase}
+            onFileChange={setBackupFile}
+            onAcknowledgedChange={setAcknowledgedRestore}
+            onSubmit={handleRestore}
+            onCancel={() => {
+              resetSensitiveForm();
+              setError(null);
+              setMode("unlock");
+            }}
+          />
+        </PanelFrame>
+      );
+    }
     return setupDraft ? (
       <RecoveryPhraseConfirmation
         draft={setupDraft}
@@ -244,15 +322,27 @@ export function VaultLockPanel() {
             {isWorking ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
             GENERATE RECOVERY PHRASE
           </button>
+          <button
+            type="button"
+            disabled={isWorking}
+            onClick={() => {
+              resetSensitiveForm();
+              setError(null);
+              setMode("restore");
+            }}
+            className="ml-2 min-h-10 rounded border border-[#6ea8ff]/25 px-4 py-2 font-mono text-xs text-[#e8eefb]/65 hover:border-[#6ea8ff]/60 hover:text-[#e8eefb] disabled:opacity-50"
+          >
+            RESTORE ENCRYPTED BACKUP
+          </button>
         </form>
       </PanelFrame>
     );
   }
 
   return (
-    <PanelFrame status={mode === "unlock" ? "SIGNED IN · LOCKED" : "LOCAL RECOVERY"}>
+    <PanelFrame status={mode === "unlock" ? "SIGNED IN · LOCKED" : mode === "recover" ? "LOCAL RECOVERY" : "ENCRYPTED RESTORE"}>
       <div className="mb-4 flex rounded border border-[#6ea8ff]/15 bg-[#05070d]/50 p-1" role="tablist" aria-label="Vault access method">
-        {(["unlock", "recover"] as const).map((candidate) => (
+        {(["unlock", "recover", "restore"] as const).map((candidate) => (
           <button
             key={candidate}
             type="button"
@@ -267,7 +357,7 @@ export function VaultLockPanel() {
             }}
             className={`flex-1 rounded px-3 py-2 font-mono text-[10px] tracking-widest ${mode === candidate ? "bg-[#6ea8ff]/15 text-[#e8eefb]" : "text-[#e8eefb]/45"}`}
           >
-            {candidate === "unlock" ? "PASSPHRASE" : "RECOVERY PHRASE"}
+            {candidate === "unlock" ? "PASSPHRASE" : candidate === "recover" ? "RECOVERY PHRASE" : "RESTORE BACKUP"}
           </button>
         ))}
       </div>
@@ -279,7 +369,7 @@ export function VaultLockPanel() {
           onPassphraseChange={setPassphrase}
           onSubmit={handleUnlock}
         />
-      ) : (
+      ) : mode === "recover" ? (
         <RecoveryForm
           recoveryPhrase={recoveryPhrase}
           passphrase={passphrase}
@@ -290,6 +380,19 @@ export function VaultLockPanel() {
           onPassphraseChange={setPassphrase}
           onConfirmationChange={setConfirmation}
           onSubmit={handleRecovery}
+        />
+      ) : (
+        <RestoreForm
+          passphrase={passphrase}
+          backupSelected={backupFile !== null}
+          acknowledged={acknowledgedRestore}
+          isWorking={isWorking}
+          error={error}
+          inputVersion={backupInputVersion}
+          onPassphraseChange={setPassphrase}
+          onFileChange={setBackupFile}
+          onAcknowledgedChange={setAcknowledgedRestore}
+          onSubmit={handleRestore}
         />
       )}
       <p className="mt-4 border-t border-[#6ea8ff]/15 pt-3 text-[10px] leading-relaxed text-[#e8eefb]/40">
@@ -549,6 +652,104 @@ function RecoveryForm(props: RecoveryFormProps) {
         {props.isWorking ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
         RECOVER AND REPLACE PASSPHRASE
       </button>
+    </form>
+  );
+}
+
+interface RestoreFormProps {
+  passphrase: string;
+  backupSelected: boolean;
+  acknowledged: boolean;
+  isWorking: boolean;
+  error: string | null;
+  inputVersion: number;
+  onPassphraseChange: (value: string) => void;
+  onFileChange: (file: File | null) => void;
+  onAcknowledgedChange: (value: boolean) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onCancel?: () => void;
+}
+
+function RestoreForm(props: RestoreFormProps) {
+  return (
+    <form
+      id="vault-access-restore-panel"
+      aria-label="Encrypted backup restore"
+      onSubmit={props.onSubmit}
+      className="space-y-4"
+      role="tabpanel"
+    >
+      <div>
+        <h2 id="vault-lock-title" className="text-lg font-semibold">Restore an encrypted backup</h2>
+        <p className="mt-2 text-sm leading-relaxed text-[#e8eefb]/65">
+          The backup profile is unlocked and every record is authenticated locally before the server atomically replaces ciphertext.
+        </p>
+      </div>
+      <div>
+        <input
+          key={props.inputVersion}
+          id="encrypted-backup-file"
+          type="file"
+          accept="application/json,.json"
+          disabled={props.isWorking}
+          onChange={(event) => props.onFileChange(event.target.files?.item(0) ?? null)}
+          className="sr-only"
+        />
+        <label
+          htmlFor="encrypted-backup-file"
+          className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded border border-[#6ea8ff]/35 px-4 py-2 font-mono text-xs tracking-wider text-[#e8eefb]/80 hover:border-[#6ea8ff]"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          {props.backupSelected ? "ENCRYPTED BACKUP SELECTED" : "SELECT ENCRYPTED BACKUP"}
+        </label>
+      </div>
+      <label className="block">
+        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">
+          BACKUP VAULT PASSPHRASE
+        </span>
+        <input
+          type="password"
+          value={props.passphrase}
+          onChange={(event) => props.onPassphraseChange(event.target.value)}
+          autoComplete="current-password"
+          required
+          className={FIELD_CLASS}
+        />
+      </label>
+      <label className="flex items-start gap-2 text-xs leading-relaxed text-amber-100/75">
+        <input
+          type="checkbox"
+          checked={props.acknowledged}
+          onChange={(event) => props.onAcknowledgedChange(event.target.checked)}
+          required
+          className="mt-0.5"
+        />
+        <span>I understand this replaces all current encrypted records and the current encryption profile.</span>
+      </label>
+      {props.error && <p role="alert" className="text-xs text-rose-300">{props.error}</p>}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="submit"
+          disabled={props.isWorking || !props.backupSelected}
+          className={PRIMARY_BUTTON_CLASS}
+        >
+          {props.isWorking ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+          VERIFY AND RESTORE
+        </button>
+        {props.onCancel && (
+          <button
+            type="button"
+            disabled={props.isWorking}
+            onClick={props.onCancel}
+            className="min-h-10 rounded border border-[#6ea8ff]/20 px-4 py-2 font-mono text-xs text-[#e8eefb]/60 disabled:opacity-50"
+          >
+            CANCEL
+          </button>
+        )}
+      </div>
+      <p className="text-[10px] leading-relaxed text-[#e8eefb]/40">
+        The backup is not a recovery bypass. A matching passphrase is required, and no plaintext file is ever created.
+      </p>
     </form>
   );
 }

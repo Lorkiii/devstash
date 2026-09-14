@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Check, Copy, RefreshCw } from "lucide-react";
+import React, { useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
+import { MaskedValue } from "@/app/components/ui/masked-value";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import {
   DEFAULT_PASSWORD_OPTIONS,
@@ -13,8 +14,6 @@ import {
   generatePassword,
   type PasswordOptions,
 } from "@/app/lib/password-generator";
-
-const COPIED_FEEDBACK_MS = 2000;
 
 type ToggleKey = Exclude<keyof PasswordOptions, "length">;
 
@@ -38,8 +37,7 @@ export function PasswordGenerator() {
   // This page only mounts while unlocked, i.e. client-side, so the lazy
   // initializer never runs during server rendering.
   const [password, setPassword] = useState<string>(() => generatePassword(DEFAULT_PASSWORD_OPTIONS));
-  const [copied, setCopied] = useState<boolean>(false);
-  const copiedTimer = useRef<number | null>(null);
+  const [generation, setGeneration] = useState(0);
 
   const alphabetSize = buildAlphabet(options).length;
   const bits = entropyBits(options);
@@ -48,31 +46,17 @@ export function PasswordGenerator() {
   const generateFor = (next: PasswordOptions) =>
     buildAlphabet(next).length === 0 ? "" : generatePassword(next);
 
-  const regenerate = () => setPassword(generateFor(options));
+  const regenerate = () => {
+    setPassword(generateFor(options));
+    setGeneration((current) => current + 1);
+  };
 
   // Options and output change together so the shown password always matches
   // the selected settings.
   const updateOptions = (next: PasswordOptions) => {
     setOptions(next);
     setPassword(generateFor(next));
-  };
-
-  useEffect(() => {
-    return () => {
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-    };
-  }, []);
-
-  const handleCopy = async () => {
-    if (!password) return;
-    try {
-      await navigator.clipboard.writeText(password);
-      setCopied(true);
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-      copiedTimer.current = window.setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
-    } catch {
-      // Clipboard denied; no confirmation shown.
-    }
+    setGeneration((current) => current + 1);
   };
 
   return (
@@ -86,12 +70,19 @@ export function PasswordGenerator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className="lg:col-span-7">
           <ConsolePanel title="OUTPUT" status={`${bits} BITS · ${strength.label}`} tone="green" className="h-full">
-            <div
-              aria-live="off"
-              className="rounded border border-[#6ea8ff]/20 bg-[#070d18] px-4 py-4 font-mono text-base sm:text-lg text-[#e8eefb] break-all leading-relaxed min-h-16 selection:bg-[#6ea8ff]/40"
-            >
-              {password || <span className="text-[#e8eefb]/30">select at least one character set</span>}
-            </div>
+            {password ? (
+              <MaskedValue
+                key={generation}
+                value={password}
+                label="Generated password"
+                revealSeconds={15}
+                wrap
+              />
+            ) : (
+              <div className="rounded border border-[#6ea8ff]/20 bg-[#070d18] px-4 py-4 font-mono text-sm text-[#e8eefb]/30 min-h-16">
+                select at least one character set
+              </div>
+            )}
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
@@ -102,19 +93,6 @@ export function PasswordGenerator() {
               >
                 <RefreshCw className="w-3.5 h-3.5" /> REGENERATE
               </button>
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!password}
-                className={`inline-flex items-center gap-2 rounded border px-4 py-2 font-mono text-xs font-semibold tracking-wider transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-                  copied
-                    ? "border-emerald-400/60 text-emerald-300"
-                    : "border-[#6ea8ff]/40 text-[#e8eefb] hover:border-[#6ea8ff]"
-                }`}
-              >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "COPIED" : "COPY"}
-              </button>
             </div>
 
             <dl className="mt-4 grid grid-cols-3 gap-2 text-[10px] font-mono">
@@ -124,7 +102,7 @@ export function PasswordGenerator() {
             </dl>
 
             <p className="mt-3 text-[10px] text-[#e8eefb]/35 font-mono">
-              Clipboard clearing is best-effort and not guaranteed. Paste into a vault record, then lock.
+              Output is masked by default. Reveal and copy are explicit; clipboard clearing after 30 seconds is best-effort, not guaranteed.
             </p>
           </ConsolePanel>
         </div>

@@ -105,21 +105,21 @@ function parseBase(
   };
 }
 
-function parseProject(value: unknown): ProjectCiphertext {
+export function parseProjectCiphertext(value: unknown): ProjectCiphertext {
   if (!isRecord(value) || !hasExactKeys(value, ["id", "envelope", "createdAt", "updatedAt"])) {
     throw new WorkspaceRequestError(500);
   }
   return parseBase(value, WORKSPACE_CIPHERTEXT_LIMITS.project);
 }
 
-function parseEnvBundle(value: unknown): EnvBundleCiphertext {
+export function parseEnvBundleCiphertext(value: unknown): EnvBundleCiphertext {
   if (!isRecord(value) || !hasExactKeys(value, ["id", "projectId", "envelope", "createdAt", "updatedAt"])) {
     throw new WorkspaceRequestError(500);
   }
   return { ...parseBase(value, WORKSPACE_CIPHERTEXT_LIMITS.envBundle), projectId: parseId(value.projectId) };
 }
 
-function parseNote(value: unknown): NoteCiphertext {
+export function parseNoteCiphertext(value: unknown): NoteCiphertext {
   if (!isRecord(value) || !hasExactKeys(value, ["id", "projectId", "envelope", "createdAt", "updatedAt"])) {
     throw new WorkspaceRequestError(500);
   }
@@ -129,7 +129,7 @@ function parseNote(value: unknown): NoteCiphertext {
   };
 }
 
-function parseTask(value: unknown): TaskCiphertext {
+export function parseTaskCiphertext(value: unknown): TaskCiphertext {
   if (!isRecord(value) || !hasExactKeys(value, [
     "id",
     "projectId",
@@ -160,7 +160,7 @@ function parseTask(value: unknown): TaskCiphertext {
   };
 }
 
-function parseTaskCategory(value: unknown): TaskCategoryCiphertext {
+export function parseTaskCategoryCiphertext(value: unknown): TaskCategoryCiphertext {
   if (!isRecord(value) || !hasExactKeys(value, ["id", "envelope", "createdAt", "updatedAt"])) {
     throw new WorkspaceRequestError(500);
   }
@@ -227,45 +227,45 @@ async function remove(path: string, id: string, signal?: AbortSignal): Promise<v
   }
 }
 
-export const fetchProjects = (signal?: AbortSignal) => list("/api/projects", parseProject, signal);
-export const fetchEnvBundles = (signal?: AbortSignal) => list("/api/env-bundles", parseEnvBundle, signal);
-export const fetchNotes = (signal?: AbortSignal) => list("/api/notes", parseNote, signal);
-export const fetchTasks = (signal?: AbortSignal) => list("/api/tasks", parseTask, signal);
+export const fetchProjects = (signal?: AbortSignal) => list("/api/projects", parseProjectCiphertext, signal);
+export const fetchEnvBundles = (signal?: AbortSignal) => list("/api/env-bundles", parseEnvBundleCiphertext, signal);
+export const fetchNotes = (signal?: AbortSignal) => list("/api/notes", parseNoteCiphertext, signal);
+export const fetchTasks = (signal?: AbortSignal) => list("/api/tasks", parseTaskCiphertext, signal);
 export const fetchTaskCategories = (signal?: AbortSignal) =>
-  list("/api/task-categories", parseTaskCategory, signal);
+  list("/api/task-categories", parseTaskCategoryCiphertext, signal);
 
 export const createProjectRecord = (project: NewProjectCiphertext, signal?: AbortSignal) =>
-  mutate("/api/projects", "POST", { project }, parseProject, signal);
+  mutate("/api/projects", "POST", { project }, parseProjectCiphertext, signal);
 export const replaceProjectRecord = (id: string, project: ReplaceProjectCiphertext, signal?: AbortSignal) =>
-  mutate(`/api/projects/${encodeURIComponent(id)}`, "PATCH", { project }, parseProject, signal);
+  mutate(`/api/projects/${encodeURIComponent(id)}`, "PATCH", { project }, parseProjectCiphertext, signal);
 export const removeProjectRecord = (id: string, signal?: AbortSignal) =>
   remove(`/api/projects/${encodeURIComponent(id)}`, id, signal);
 
 export const createEnvBundleRecord = (bundle: NewEnvBundleCiphertext, signal?: AbortSignal) =>
-  mutate("/api/env-bundles", "POST", { bundle }, parseEnvBundle, signal);
+  mutate("/api/env-bundles", "POST", { bundle }, parseEnvBundleCiphertext, signal);
 export const replaceEnvBundleRecord = (id: string, bundle: ReplaceEnvBundleCiphertext, signal?: AbortSignal) =>
-  mutate(`/api/env-bundles/${encodeURIComponent(id)}`, "PATCH", { bundle }, parseEnvBundle, signal);
+  mutate(`/api/env-bundles/${encodeURIComponent(id)}`, "PATCH", { bundle }, parseEnvBundleCiphertext, signal);
 export const removeEnvBundleRecord = (id: string, signal?: AbortSignal) =>
   remove(`/api/env-bundles/${encodeURIComponent(id)}`, id, signal);
 
 export const createNoteRecord = (note: NewNoteCiphertext, signal?: AbortSignal) =>
-  mutate("/api/notes", "POST", { note }, parseNote, signal);
+  mutate("/api/notes", "POST", { note }, parseNoteCiphertext, signal);
 export const replaceNoteRecord = (id: string, note: ReplaceNoteCiphertext, signal?: AbortSignal) =>
-  mutate(`/api/notes/${encodeURIComponent(id)}`, "PATCH", { note }, parseNote, signal);
+  mutate(`/api/notes/${encodeURIComponent(id)}`, "PATCH", { note }, parseNoteCiphertext, signal);
 export const removeNoteRecord = (id: string, signal?: AbortSignal) =>
   remove(`/api/notes/${encodeURIComponent(id)}`, id, signal);
 
 export const createTaskRecord = (task: NewTaskCiphertext, signal?: AbortSignal) =>
-  mutate("/api/tasks", "POST", { task }, parseTask, signal);
+  mutate("/api/tasks", "POST", { task }, parseTaskCiphertext, signal);
 export const replaceTaskRecord = (id: string, task: ReplaceTaskCiphertext, signal?: AbortSignal) =>
-  mutate(`/api/tasks/${encodeURIComponent(id)}`, "PATCH", { task }, parseTask, signal);
+  mutate(`/api/tasks/${encodeURIComponent(id)}`, "PATCH", { task }, parseTaskCiphertext, signal);
 export const removeTaskRecord = (id: string, signal?: AbortSignal) =>
   remove(`/api/tasks/${encodeURIComponent(id)}`, id, signal);
 
 export const createTaskCategoryRecord = (
   category: NewTaskCategoryCiphertext,
   signal?: AbortSignal,
-) => mutate("/api/task-categories", "POST", { category }, parseTaskCategory, signal);
+) => mutate("/api/task-categories", "POST", { category }, parseTaskCategoryCiphertext, signal);
 export const replaceTaskCategoryRecord = (
   id: string,
   category: ReplaceTaskCategoryCiphertext,
@@ -274,7 +274,7 @@ export const replaceTaskCategoryRecord = (
   `/api/task-categories/${encodeURIComponent(id)}`,
   "PATCH",
   { category },
-  parseTaskCategory,
+  parseTaskCategoryCiphertext,
   signal,
 );
 export const removeTaskCategoryRecord = (id: string, signal?: AbortSignal) =>

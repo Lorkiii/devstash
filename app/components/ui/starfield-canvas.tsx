@@ -37,8 +37,6 @@ export function StarfieldCanvas({
       height = window.innerHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       orbitCenterX = width / 2;
@@ -176,15 +174,7 @@ export function StarfieldCanvas({
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className={className}
-      style={{
-        display: "block",
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-      }}
+      className={`block size-full ${className}`}
     />
   );
 }

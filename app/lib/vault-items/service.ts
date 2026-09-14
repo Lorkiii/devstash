@@ -32,7 +32,7 @@ function encodeBytes(value: Uint8Array): string {
   return Buffer.from(value).toString("base64url");
 }
 
-function toVaultItemDto(item: VaultItemModel): VaultItemCiphertext {
+export function toVaultItemDto(item: VaultItemModel): VaultItemCiphertext {
   const parsed = createVaultItemSchema.safeParse({
     item: {
       id: item.id,

@@ -63,12 +63,12 @@ export function VaultStatusPanel({
           return (
             <li key={type} className="grid grid-cols-[72px_1fr_20px] items-center gap-2 text-[10px]">
               <span className={`tracking-widest ${meta.textClass}`}>{meta.short}</span>
-              <span className="h-1.5 rounded-full bg-[#070d18] overflow-hidden">
-                <span
-                  className={`block h-full rounded-full ${meta.barClass}`}
-                  style={{ width: `${(count / maxCount) * 100}%` }}
-                />
-              </span>
+              <progress
+                aria-label={`${meta.label}: ${count}`}
+                className={`vault-type-progress h-1.5 w-full rounded-full ${meta.textClass}`}
+                max={maxCount}
+                value={count}
+              />
               <span className="text-right text-[#e8eefb]/70">{count}</span>
             </li>
           );

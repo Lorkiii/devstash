@@ -25,6 +25,8 @@ app/
   layout.tsx                   # root shell: fonts, metadata, <html>/<body>
   layout.types.ts              # root layout props
   page.tsx                     # "/" landing page: composition only
+  ../proxy.ts                  # per-request nonce CSP for document routes
+  ../scripts/                  # offline release and repository checks
   globals.css                  # design tokens and global styles
   favicon.ico
   (app)/                       # route group: authenticated shell, not in URL
@@ -38,12 +40,17 @@ app/
     generator/page.tsx
     settings/page.tsx
   lib/                         # shared non-UI modules (types, session, helpers)
+    security/                  # CSP construction and shared security headers
+    rate-limit.ts              # atomic fixed-window policy flow
+    rate-limit-repository.ts   # Prisma-backed conditional limiter writes
+    api/rate-limit.ts          # abuse-prone private endpoint policies
     vault-crypto/              # browser-only, versioned cryptography + lifecycle
       argon2id.ts              # bounded Argon2id dependency wrapper
       recovery-phrase.ts       # 256-bit entropy and BIP-39 English encoding
       web-crypto.ts            # HKDF, AES-GCM, wrapping, record primitives
       generic-secret.ts        # V1 Generic Secret payload + record encryption
       workspace-record.ts      # shared bounded workspace record envelope
+      backup.ts                # authenticated encrypted-backup manifest
       project.ts               # encrypted project payload
       env-bundle.ts            # encrypted complete .env payload
       note.ts                   # encrypted private note payload
@@ -54,10 +61,18 @@ app/
     vault-profile/             # server validation + owner-scoped persistence
     vault-items/               # server validation + owner-scoped ciphertext CRUD
     workspace/                 # server validation + owner-scoped workspace CRUD
+    vault-backup/              # strict backup validation + atomic ciphertext restore
     vault-item-client.ts       # ciphertext-only same-origin item transport
     vault-item.types.ts        # item envelope and client payload contracts
     workspace-client.ts        # strict ciphertext-only workspace transport
     workspace.types.ts         # workspace payload and envelope contracts
+    vault-backup-client.ts     # encrypted snapshot/export/restore transport
+    vault-backup.types.ts      # versioned ciphertext backup contracts
+    vault-backup-validation.ts # cross-record relationship validation
+    vault-snapshot.ts          # all-or-nothing local collection decryption
+    local-search.ts            # unlocked in-memory search index and ranking
+    sensitive-clipboard.ts     # digest-bound best-effort clipboard clearing
+    sensitive-value-controls.ts # shared timed reveal and copy state
     task-categories.ts         # built-in categories + curated color tokens
     vault-profile-client.ts    # ciphertext-only same-origin profile transport
     vault-profile.types.ts     # exact browser/server profile contracts
@@ -113,6 +128,8 @@ docs/
   VAULT_LIFECYCLE_IMPLEMENTATION.md
   VAULT_ITEM_IMPLEMENTATION.md
   WORKSPACE_MODULES_IMPLEMENTATION.md
+  SAFETY_PRODUCTIVITY_IMPLEMENTATION.md
+  SECURITY_HARDENING_IMPLEMENTATION.md
 public/                        # static assets served at "/"
 ```
 
@@ -142,6 +159,9 @@ app/api/.../route.ts         -> ciphertext-only Route Handlers, no UI
   must never import browser cryptography or plaintext payload types.
 - `workspace/` owns server validation and owner-scoped persistence for projects,
   `.env` bundles, notes, and tasks. It must remain ciphertext-only.
+- `vault-backup/` owns the server-side snapshot and atomic restore transaction.
+  It accepts and returns only the versioned encryption profile, ciphertext, and
+  approved metadata; manifest verification and record decryption stay local.
 
 ## Folder rules
 

@@ -181,3 +181,8 @@ export async function decryptRecordBytes(
   }
   return decryptAesGcm(dek, ciphertext, nonce, additionalData);
 }
+
+export async function digestSha256(value: Uint8Array): Promise<Uint8Array> {
+  const digest = await subtleCrypto().digest("SHA-256", toArrayBuffer(value));
+  return new Uint8Array(digest);
+}

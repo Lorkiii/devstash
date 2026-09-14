@@ -28,6 +28,12 @@ function assertRevision(revision: number): void {
   }
 }
 
+function assertCanonicalTimestamp(value: string): void {
+  if (!Number.isFinite(Date.parse(value)) || new Date(value).toISOString() !== value) {
+    throw new VaultCryptoValidationError("Timestamp is invalid.");
+  }
+}
+
 function createProfileWrapAad(
   wrapType: "passphrase-wrap" | "recovery-wrap",
   ownerId: string,
@@ -93,5 +99,26 @@ export function buildRecordAad(
     recordId,
     entityType,
     relationshipIds,
+  ]));
+}
+
+export function buildBackupManifestAad(
+  ownerId: string,
+  profileId: string,
+  profileRevision: number,
+  exportedAt: string,
+): Uint8Array {
+  assertOwnerId(ownerId);
+  assertUuidV4(profileId, "Profile ID");
+  assertRevision(profileRevision);
+  assertCanonicalTimestamp(exportedAt);
+  return encodeUtf8(JSON.stringify([
+    "devstash",
+    "encrypted-backup-manifest",
+    1,
+    ownerId,
+    profileId,
+    profileRevision,
+    exportedAt,
   ]));
 }

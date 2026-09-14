@@ -2,9 +2,9 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CornerDownLeft, Lock, Search } from "lucide-react";
+import { CornerDownLeft, Lock, Search, X } from "lucide-react";
 import type { VaultData } from "@/app/lib/vault-data.types";
-import { VAULT_TYPE_META } from "@/app/lib/vault-types";
+import { buildLocalSearchIndex, searchLocalIndex, type LocalSearchKind } from "@/app/lib/local-search";
 import { NAV_ITEMS } from "../nav-items";
 
 // The parent mounts this only while open, so local state is fresh per open.
@@ -16,7 +16,7 @@ interface CommandPaletteProps {
 
 interface PaletteEntry {
   id: string;
-  group: "Actions" | "Secrets" | "Projects" | "Notes" | "Tasks";
+  group: "Actions" | "Secrets" | "Projects" | "Environments" | "Notes" | "Tasks";
   label: string;
   hint?: string;
   run: () => void;
@@ -24,9 +24,17 @@ interface PaletteEntry {
 
 const MAX_RESULTS = 12;
 
+const SEARCH_GROUPS: Record<LocalSearchKind, PaletteEntry["group"]> = {
+  secret: "Secrets",
+  project: "Projects",
+  environment: "Environments",
+  note: "Notes",
+  task: "Tasks",
+};
+
 // Local search over decrypted records already in memory plus navigation
 // commands. Matching happens entirely in the browser; the query is never sent
-// anywhere and secret values are never searched or displayed here.
+// anywhere. Secret values may match, but are never rendered in result rows.
 export function CommandPalette({ onClose, data, onLock }: CommandPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState<string>("");
@@ -37,15 +45,14 @@ export function CommandPalette({ onClose, data, onLock }: CommandPaletteProps) {
     setActiveIndex(0);
   };
 
-  const entries = useMemo<PaletteEntry[]>(() => {
+  const searchIndex = useMemo(() => buildLocalSearchIndex(data), [data]);
+
+  const actions = useMemo<PaletteEntry[]>(() => {
     const go = (href: string) => () => {
       router.push(href);
       onClose();
     };
-    const projectName = (projectId?: string) =>
-      data.projects.find((project) => project.id === projectId)?.name;
-
-    const actions: PaletteEntry[] = [
+    return [
       ...NAV_ITEMS.map((item) => ({
         id: `nav-${item.href}`,
         group: "Actions" as const,
@@ -63,54 +70,21 @@ export function CommandPalette({ onClose, data, onLock }: CommandPaletteProps) {
         },
       },
     ];
-
-    const secrets: PaletteEntry[] = data.secrets.map((item) => ({
-      id: `secret-${item.id}`,
-      group: "Secrets",
-      label: item.title,
-      hint: `${VAULT_TYPE_META[item.type].short}${projectName(item.projectId) ? ` · ${projectName(item.projectId)}` : ""}`,
-      run: go(`/vault?item=${item.id}`),
-    }));
-
-    const projects: PaletteEntry[] = data.projects.map((project) => ({
-      id: `project-${project.id}`,
-      group: "Projects",
-      label: project.name,
-      run: go(`/projects/${project.id}`),
-    }));
-
-    const notes: PaletteEntry[] = data.notes.map((note) => ({
-      id: `note-${note.id}`,
-      group: "Notes",
-      label: note.title,
-      hint: note.tags.join(", "),
-      run: go(`/notes?note=${note.id}`),
-    }));
-
-    const tasks: PaletteEntry[] = data.tasks
-      .filter((task) => !task.done)
-      .map((task) => ({
-        id: `task-${task.id}`,
-        group: "Tasks",
-        label: task.title,
-        hint: projectName(task.projectId),
-        run: go("/tasks"),
-      }));
-
-    return [...actions, ...secrets, ...projects, ...notes, ...tasks];
-  }, [data, router, onClose, onLock]);
+  }, [router, onClose, onLock]);
 
   const results = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return entries.filter((entry) => entry.group === "Actions").slice(0, MAX_RESULTS);
-    return entries
-      .filter(
-        (entry) =>
-          entry.label.toLowerCase().includes(needle) ||
-          (entry.hint ? entry.hint.toLowerCase().includes(needle) : false)
-      )
-      .slice(0, MAX_RESULTS);
-  }, [entries, query]);
+    if (!query.trim()) return actions.slice(0, MAX_RESULTS);
+    return searchLocalIndex(searchIndex, query, MAX_RESULTS).map((result) => ({
+      id: `${result.kind}-${result.id}`,
+      group: SEARCH_GROUPS[result.kind],
+      label: result.label,
+      hint: result.context,
+      run: () => {
+        router.push(result.href);
+        onClose();
+      },
+    }));
+  }, [actions, onClose, query, router, searchIndex]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") {
@@ -127,8 +101,6 @@ export function CommandPalette({ onClose, data, onLock }: CommandPaletteProps) {
       results[activeIndex]?.run();
     }
   };
-
-  let lastGroup: PaletteEntry["group"] | null = null;
 
   return (
     <div
@@ -153,29 +125,40 @@ export function CommandPalette({ onClose, data, onLock }: CommandPaletteProps) {
             aria-label="Search records or commands"
             autoComplete="off"
             spellCheck={false}
+            aria-controls="command-palette-results"
+            aria-activedescendant={results[activeIndex] ? `command-result-${results[activeIndex].id}` : undefined}
             className="flex-1 bg-transparent text-sm text-[#e8eefb] placeholder:text-[#e8eefb]/30 focus:outline-none"
           />
           <kbd className="rounded border border-[#6ea8ff]/25 px-1.5 py-0.5 text-[10px] text-[#e8eefb]/50">ESC</kbd>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close command palette"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 text-[#e8eefb]/65 hover:border-[#6ea8ff]/50 hover:text-[#6ea8ff]"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
-        <ul role="listbox" aria-label="Results" className="max-h-[50vh] overflow-y-auto py-2">
+        <p className="sr-only" role="status">{results.length} local results</p>
+        <ul id="command-palette-results" role="listbox" aria-label="Results" className="max-h-[50vh] overflow-y-auto py-2">
           {results.length === 0 && (
             <li className="px-4 py-6 text-xs text-[#e8eefb]/50">
               <span className="text-[#6ea8ff]/70 mr-2">&gt;</span>no matches in memory
             </li>
           )}
           {results.map((entry, index) => {
-            const showGroup = entry.group !== lastGroup;
-            lastGroup = entry.group;
+            const showGroup = index === 0 || results[index - 1]?.group !== entry.group;
             const active = index === activeIndex;
             return (
               <React.Fragment key={entry.id}>
                 {showGroup && (
-                  <li aria-hidden="true" className="px-4 pt-2 pb-1 text-[10px] tracking-widest text-[#e8eefb]/40">
+                  <li role="presentation" aria-hidden="true" className="px-4 pt-2 pb-1 text-[10px] tracking-widest text-[#e8eefb]/40">
                     {entry.group.toUpperCase()}
                   </li>
                 )}
                 <li
+                  id={`command-result-${entry.id}`}
                   role="option"
                   aria-selected={active}
                   onMouseEnter={() => setActiveIndex(index)}

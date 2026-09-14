@@ -216,7 +216,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             ) : (
               envBundles.map((bundle) => (
                 <EnvBundleViewer
-                  key={bundle.id}
+                  key={`${bundle.id}:${bundle.updatedAt}`}
                   bundle={bundle}
                   isDeleting={deletingId === bundle.id}
                   onEdit={() => {

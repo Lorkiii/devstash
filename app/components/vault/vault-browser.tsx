@@ -200,6 +200,7 @@ export function VaultBrowser() {
             />
           ) : selected ? (
             <VaultItemDetail
+              key={`${selected.id}:${selected.updatedAt}`}
               item={selected}
               projectName={projectName(selected.projectId)}
               isDeleting={isDeleting}

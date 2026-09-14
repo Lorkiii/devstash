@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type { RootLayoutProps } from "./layout.types";
 import "./globals.css";
 
+// Nonce-based CSP requires request-time rendering so every response gets a fresh nonce.
+export const dynamic = "force-dynamic";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

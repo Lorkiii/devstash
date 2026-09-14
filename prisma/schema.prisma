@@ -47,7 +47,7 @@ model Session {
   @@index([userId])
 }
 
-// Fixed action IDs keep the limiter bounded without persisting IP addresses.
+// Security limiter buckets avoid persisting IP addresses or trusting forwarded-IP headers.
 model AuthRateLimit {
   id              String   @id
   windowStartedAt DateTime

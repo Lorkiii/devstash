@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Check, Copy, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
 import { formatDate } from "@/app/lib/format";
+import { useSensitiveValueControls } from "@/app/lib/sensitive-value-controls";
 import type { EnvBundleViewerProps } from "./env-bundle-viewer.types";
 
 interface EnvLine {
@@ -14,7 +15,6 @@ interface EnvLine {
 }
 
 const MASK = "••••••••";
-const COPIED_FEEDBACK_MS = 2000;
 
 function parseEnv(content: string): EnvLine[] {
   return content.split("\n").map((line, index) => {
@@ -42,47 +42,8 @@ export function EnvBundleViewer({
   onEdit,
   onDelete,
 }: EnvBundleViewerProps) {
-  const [revealed, setRevealed] = useState<boolean>(false);
-  const [remaining, setRemaining] = useState<number>(revealSeconds);
-  const [copied, setCopied] = useState<boolean>(false);
-  const copiedTimer = useRef<number | null>(null);
+  const controls = useSensitiveValueControls(bundle.content, revealSeconds);
   const lines = parseEnv(bundle.content);
-
-  const toggleReveal = () => {
-    setRemaining(revealSeconds);
-    setRevealed((current) => !current);
-  };
-
-  useEffect(() => {
-    if (!revealed) return;
-    const tick = window.setInterval(() => {
-      setRemaining((current) => {
-        if (current <= 1) {
-          setRevealed(false);
-          return revealSeconds;
-        }
-        return current - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(tick);
-  }, [revealed, revealSeconds]);
-
-  useEffect(() => {
-    return () => {
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-    };
-  }, []);
-
-  const handleCopyAll = async () => {
-    try {
-      await navigator.clipboard.writeText(bundle.content);
-      setCopied(true);
-      if (copiedTimer.current) window.clearTimeout(copiedTimer.current);
-      copiedTimer.current = window.setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
-    } catch {
-      // Clipboard denied; no confirmation shown.
-    }
-  };
 
   return (
     <div className="rounded border border-[#6ea8ff]/20 bg-[#070d18]/90 overflow-hidden">
@@ -96,31 +57,35 @@ export function EnvBundleViewer({
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
-            onClick={toggleReveal}
-            aria-pressed={revealed}
-            className="inline-flex items-center gap-1.5 rounded border border-[#6ea8ff]/20 px-2 py-1 font-mono text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#6ea8ff] hover:border-[#6ea8ff]/50 transition-colors cursor-pointer"
+            onClick={controls.toggleReveal}
+            aria-label={controls.revealed ? "Hide environment bundle" : "Reveal environment bundle"}
+            aria-pressed={controls.revealed}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/20 px-2.5 py-1 font-mono text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#6ea8ff] hover:border-[#6ea8ff]/50 transition-colors cursor-pointer"
           >
-            {revealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-            {revealed ? `HIDE · ${remaining}s` : "REVEAL ALL"}
+            {controls.revealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+            {controls.revealed ? `HIDE · ${controls.remainingSeconds}s` : "REVEAL ALL"}
           </button>
           <button
             type="button"
-            onClick={handleCopyAll}
-            className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
-              copied
+            onClick={() => void controls.copy()}
+            aria-label="Copy complete environment bundle"
+            className={`inline-flex min-h-10 items-center gap-1.5 rounded border px-2.5 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
+              controls.copyStatus === "copied"
                 ? "border-emerald-400/50 text-emerald-400"
+                : controls.copyStatus === "error"
+                  ? "border-rose-400/50 text-rose-300"
                 : "border-[#6ea8ff]/20 text-[#e8eefb]/70 hover:text-[#6ea8ff] hover:border-[#6ea8ff]/50"
             }`}
           >
-            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            {copied ? "COPIED" : "COPY .ENV"}
+            {controls.copyStatus === "copied" ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            {controls.copyStatus === "copied" ? "COPIED" : controls.copyStatus === "error" ? "COPY FAILED" : "COPY .ENV"}
           </button>
           <button
             type="button"
             onClick={onEdit}
             disabled={isDeleting}
             aria-label="Edit environment bundle"
-            className="rounded border border-[#6ea8ff]/20 p-1 text-[#e8eefb]/65 hover:text-[#6ea8ff] disabled:opacity-50"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 p-1 text-[#e8eefb]/65 hover:text-[#6ea8ff] disabled:opacity-50"
           >
             <Pencil className="h-3 w-3" />
           </button>
@@ -129,7 +94,7 @@ export function EnvBundleViewer({
             onClick={onDelete}
             disabled={isDeleting}
             aria-label="Delete environment bundle"
-            className="rounded border border-rose-400/20 p-1 text-rose-300/70 hover:text-rose-200 disabled:opacity-50"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-300/70 hover:text-rose-200 disabled:opacity-50"
           >
             <Trash2 className="h-3 w-3" />
           </button>
@@ -140,7 +105,7 @@ export function EnvBundleViewer({
         {lines.map((line) => (
           <li key={line.number} className="grid grid-cols-[40px_1fr] hover:bg-[#6ea8ff]/5">
             <span className="text-right pr-3 text-[#e8eefb]/25 select-none">{line.number}</span>
-            {!revealed ? (
+            {!controls.revealed ? (
               <span aria-label="Environment line masked" className="text-[#e8eefb]/35 tracking-widest">
                 {line.raw === "" ? " " : MASK}
               </span>
@@ -156,6 +121,13 @@ export function EnvBundleViewer({
           </li>
         ))}
       </ol>
+      <span className="sr-only" role="status">
+        {controls.copyStatus === "copied"
+          ? "Environment bundle copied. Clipboard clearing is best effort."
+          : controls.copyStatus === "error"
+            ? "Environment bundle could not be copied."
+            : ""}
+      </span>
     </div>
   );
 }

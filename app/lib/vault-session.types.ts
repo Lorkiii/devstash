@@ -18,6 +18,7 @@ import type {
   TaskCategoryInput,
   TaskInput,
 } from "./workspace.types";
+import type { EncryptedVaultBackup } from "./vault-backup.types";
 
 export type VaultLockState = "loading" | "load-error" | "no-profile" | "locked" | "unlocked";
 
@@ -59,6 +60,7 @@ export interface VaultSessionValue {
   createTaskCategory: (input: TaskCategoryInput) => Promise<TaskCategory>;
   updateTaskCategory: (id: string, input: TaskCategoryInput) => Promise<TaskCategory>;
   deleteTaskCategory: (id: string) => Promise<void>;
+  exportEncryptedBackup: () => Promise<EncryptedVaultBackup>;
   setAutoLockMinutes: (minutes: AutoLockMinutes) => void;
   touchRecent: (kind: RecentKind, id: string) => void;
 }

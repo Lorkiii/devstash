@@ -7,7 +7,7 @@ import { AUTH_ACTIONS, AUTH_RESPONSE_POLICY } from "./config";
 import { getAuthEnvironment } from "./environment";
 import { isTrustedAuthRequest } from "./policy";
 import { allowAuthAttempt, getRateLimitedAuthAction } from "./rate-limit";
-import { createAuthRateLimitRepository } from "./rate-limit-repository";
+import { createRateLimitRepository } from "../rate-limit-repository";
 
 function applyPrivateHeaders(response: Response) {
   response.headers.set("Cache-Control", AUTH_RESPONSE_POLICY.cacheControl);
@@ -32,7 +32,7 @@ export async function handleAuthRequest(request: NextRequest) {
   try {
     const prisma = getPrisma(environment.databaseUrl);
     const action = getRateLimitedAuthAction(request.nextUrl.pathname);
-    if (action && !await allowAuthAttempt(createAuthRateLimitRepository(prisma), action)) {
+    if (action && !await allowAuthAttempt(createRateLimitRepository(prisma), action)) {
       const response = authenticationFailure(AUTH_RESPONSE_POLICY.status.tooManyRequests);
       response.headers.set("Retry-After", String(AUTH_RESPONSE_POLICY.retryAfterSeconds));
       return response;

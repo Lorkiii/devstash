@@ -89,7 +89,7 @@ function storedEnvelope(record: {
   };
 }
 
-function toProjectDto(record: ProjectModel): ProjectCiphertext {
+export function toProjectDto(record: ProjectModel): ProjectCiphertext {
   const parsed = createProjectSchema.safeParse({
     project: { id: record.id, envelope: storedEnvelope(record) },
   });
@@ -101,7 +101,7 @@ function toProjectDto(record: ProjectModel): ProjectCiphertext {
   };
 }
 
-function toEnvBundleDto(record: EnvBundleModel): EnvBundleCiphertext {
+export function toEnvBundleDto(record: EnvBundleModel): EnvBundleCiphertext {
   const parsed = createEnvBundleSchema.safeParse({
     bundle: { id: record.id, projectId: record.projectId, envelope: storedEnvelope(record) },
   });
@@ -113,7 +113,7 @@ function toEnvBundleDto(record: EnvBundleModel): EnvBundleCiphertext {
   };
 }
 
-function toNoteDto(record: NoteModel): NoteCiphertext {
+export function toNoteDto(record: NoteModel): NoteCiphertext {
   const parsed = createNoteSchema.safeParse({
     note: { id: record.id, projectId: record.projectId, envelope: storedEnvelope(record) },
   });
@@ -125,7 +125,7 @@ function toNoteDto(record: NoteModel): NoteCiphertext {
   };
 }
 
-function toTaskDto(record: TaskModel): TaskCiphertext {
+export function toTaskDto(record: TaskModel): TaskCiphertext {
   const categoryId = storedTaskCategoryId(record);
   const parsed = createTaskSchema.safeParse({
     task: {
@@ -145,7 +145,7 @@ function toTaskDto(record: TaskModel): TaskCiphertext {
   };
 }
 
-function toTaskCategoryDto(record: TaskCategoryModel): TaskCategoryCiphertext {
+export function toTaskCategoryDto(record: TaskCategoryModel): TaskCategoryCiphertext {
   const parsed = createTaskCategorySchema.safeParse({
     category: { id: record.id, envelope: storedEnvelope(record) },
   });
