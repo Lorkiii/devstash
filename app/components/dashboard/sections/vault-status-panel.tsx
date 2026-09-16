@@ -56,7 +56,7 @@ export function VaultStatusPanel({
   return (
     <section
       aria-labelledby="dashboard-title"
-      className="relative isolate overflow-hidden rounded-xl border border-accent/25 bg-surface/90 shadow-[0_24px_80px_rgba(0,0,0,0.48)]"
+      className="relative isolate overflow-hidden rounded-xl border border-accent/25 bg-surface/90 shadow-[0_10px_32px_rgba(0,0,0,0.14)]"
     >
       <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(110,168,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(110,168,255,0.08)_1px,transparent_1px)] [background-size:32px_32px] [mask-image:linear-gradient(to_right,black,transparent_76%)]" />
       <div className="pointer-events-none absolute -right-28 -top-52 h-[520px] w-[520px] rounded-full border border-accent/15 bg-accent/5 blur-[1px]" />

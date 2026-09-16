@@ -27,7 +27,7 @@ export function OpenTasksPanel({ data, limit = 5 }: OpenTasksPanelProps) {
     data.taskCategories.find((category) => category.id === categoryId);
 
   return (
-    <section aria-labelledby="focus-queue-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+    <section aria-labelledby="focus-queue-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
       <header className="border-b border-accent/15 px-4 py-4 sm:px-5">
         <div className="flex items-end justify-between gap-4">
           <div>

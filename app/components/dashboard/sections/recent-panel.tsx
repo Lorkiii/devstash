@@ -98,7 +98,7 @@ export function RecentPanel({ data, recents }: RecentPanelProps) {
   }).slice(0, 6);
 
   return (
-    <section aria-labelledby="session-trail-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+    <section aria-labelledby="session-trail-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-accent/15 px-4 py-4 sm:px-5">
         <div>
           <p className="font-mono text-[9px] tracking-[0.2em] text-accent">EPHEMERAL NAVIGATION LOG</p>

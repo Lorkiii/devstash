@@ -53,7 +53,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 
 export function QuickActionsPanel() {
   return (
-    <section aria-labelledby="capture-dock-title" className="overflow-hidden rounded-xl border border-accent/20 bg-surface/85 font-mono shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+    <section aria-labelledby="capture-dock-title" className="overflow-hidden rounded-xl border border-accent/20 bg-surface/85 font-mono shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
       <header className="flex flex-col gap-2 border-b border-accent/15 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(110,168,255,0.9)]" />

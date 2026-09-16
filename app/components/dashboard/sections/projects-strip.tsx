@@ -25,7 +25,7 @@ export function ProjectsStrip({ data, limit = 6 }: ProjectsStripProps) {
   const remainingProjects = Math.max(0, data.projects.length - projects.length);
 
   return (
-    <section aria-labelledby="project-constellation-title" className="overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+    <section aria-labelledby="project-constellation-title" className="overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
       <header className="flex flex-col gap-3 border-b border-accent/15 px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-5">
         <div>
           <p className="font-mono text-[9px] tracking-[0.2em] text-violet-300/60">CONNECTED PRIVATE WORKSPACES</p>
