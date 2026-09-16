@@ -7,17 +7,14 @@ import { OrbitalHorizon } from "./components/landing/background/orbital-horizon"
 import { LandingHeader } from "./components/landing/sections/landing-header";
 import { LandingHeroPanel } from "./components/landing/sections/landing-hero-panel";
 import { LandingFooter } from "./components/landing/sections/landing-footer";
-import { SecurityModal } from "./components/landing/modals/security-modal";
 import { EnvelopeModal } from "./components/landing/modals/envelope-modal";
 import { AuthTerminalPanel } from "./components/auth/auth-terminal-panel";
 import { AUTH_ROUTES } from "./lib/auth/config";
 
 export default function LandingPage() {
   const router = useRouter();
-  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState<boolean>(false);
   const [isEnvelopeModalOpen, setIsEnvelopeModalOpen] = useState<boolean>(false);
 
-  const openSecurityModal = () => setIsSecurityModalOpen(true);
   const openEnvelopeModal = () => setIsEnvelopeModalOpen(true);
 
   const handleGoogleSignIn = () => {
@@ -25,34 +22,33 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-[#05070d] text-[#e8eefb] selection:bg-[#6ea8ff]/30 selection:text-white">
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-background text-foreground selection:bg-accent/30 selection:text-foreground">
       <StarfieldCanvas starCount={520} motion="orbit" />
       <OrbitalHorizon />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[34rem] bg-[radial-gradient(circle_at_18%_18%,rgba(110,168,255,0.12),transparent_38%)]" />
 
       <LandingHeader
-        onOpenSecurityModal={openSecurityModal}
         onOpenEnvelopeModal={openEnvelopeModal}
         onSignInClick={handleGoogleSignIn}
       />
 
-      <main className="relative z-10 flex min-h-0 w-full flex-1 items-center px-4 py-4 sm:px-5 lg:px-6">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <main className="relative z-10 flex min-h-0 w-full flex-1 items-center px-4 py-8 sm:px-5 sm:py-10 lg:px-6 lg:py-12">
+        <div className="grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-14">
           <div className="lg:col-span-7">
-            <LandingHeroPanel onOpenSecurityModal={openSecurityModal} />
+            <LandingHeroPanel
+              onOpenEnvelopeModal={openEnvelopeModal}
+              onSignInClick={handleGoogleSignIn}
+            />
           </div>
 
-          <div className="lg:col-span-5">
+          <div className="relative lg:col-span-5">
+            <div className="pointer-events-none absolute -inset-4 -z-10 rounded-[2rem] bg-accent/5 blur-2xl" />
             <AuthTerminalPanel />
           </div>
         </div>
       </main>
 
-      <LandingFooter onOpenSecurityModal={openSecurityModal} />
-
-      <SecurityModal
-        isOpen={isSecurityModalOpen}
-        onClose={() => setIsSecurityModalOpen(false)}
-      />
+      <LandingFooter />
 
       <EnvelopeModal
         isOpen={isEnvelopeModalOpen}

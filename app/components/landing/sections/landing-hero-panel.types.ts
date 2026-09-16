@@ -1,3 +1,4 @@
 export interface LandingHeroPanelProps {
-  onOpenSecurityModal: () => void;
+  onOpenEnvelopeModal: () => void;
+  onSignInClick: () => void;
 }

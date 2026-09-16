@@ -12,7 +12,7 @@ const ENVELOPE_STEPS: Step[] = [
     badge: "EPHEMERAL",
     detail:
       "Collected locally to derive keys. Never sent over the network, never stored in cookies, localStorage, or server logs.",
-    icon: <KeyIcon className="w-4 h-4 text-[#6ea8ff]" />,
+    icon: <KeyIcon className="w-4 h-4 text-accent" />,
     clientOnly: true,
   },
   {
@@ -22,7 +22,7 @@ const ENVELOPE_STEPS: Step[] = [
     badge: "CLIENT KDF",
     detail:
       "Derives a 256-bit Key Encryption Key (KEK) using a cryptographically secure random salt directly in the browser WebAssembly runtime.",
-    icon: <CpuIcon className="w-4 h-4 text-[#38bdf8]" />,
+    icon: <CpuIcon className="h-4 w-4 text-sky-600 dark:text-sky-400" />,
     clientOnly: true,
   },
   {
@@ -32,7 +32,7 @@ const ENVELOPE_STEPS: Step[] = [
     badge: "LOCAL UNWRAP",
     detail:
       "The KEK authentically unwraps the Data Encryption Key (DEK). DEK remains strictly in transient browser memory while the vault is unlocked.",
-    icon: <UnlockIcon className="w-4 h-4 text-[#6ea8ff]" />,
+    icon: <UnlockIcon className="w-4 h-4 text-accent" />,
     clientOnly: true,
   },
   {
@@ -42,7 +42,7 @@ const ENVELOPE_STEPS: Step[] = [
     badge: "128-BIT AUTH TAG",
     detail:
       "Every secret, .env bundle, note, and task is encrypted with a unique 96-bit random nonce and bound with Authenticated Additional Data (AAD).",
-    icon: <ShieldLockIcon className="w-4 h-4 text-[#10b981]" />,
+    icon: <ShieldLockIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />,
     clientOnly: true,
   },
   {
@@ -52,7 +52,7 @@ const ENVELOPE_STEPS: Step[] = [
     badge: "CIPHERTEXT ONLY",
     detail:
       "The server and Neon Postgres database receive and store only ciphertext, salts, and nonces. The server has no ability to decrypt.",
-    icon: <DatabaseIcon className="w-4 h-4 text-[#a78bfa]" />,
+    icon: <DatabaseIcon className="h-4 w-4 text-violet-600 dark:text-violet-400" />,
     clientOnly: false,
   },
 ];
@@ -62,7 +62,7 @@ export function EnvelopeDiagram() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-[11px] font-mono tracking-wider text-[#6ea8ff]">
+      <div className="flex items-center justify-between text-[11px] font-mono tracking-wider text-accent">
         <span>ENVELOPE ENCRYPTION ARCHITECTURE</span>
         <span className="text-zinc-500">AES-256-GCM + ARGON2ID</span>
       </div>
@@ -77,8 +77,8 @@ export function EnvelopeDiagram() {
               onClick={() => setActiveStep(idx)}
               className={`text-left p-2.5 rounded transition-all duration-200 border flex flex-col justify-between ${
                 isSelected
-                  ? "bg-[#0f1d36] border-[#6ea8ff] shadow-[0_0_12px_rgba(110,168,255,0.25)]"
-                  : "bg-[#0a1220]/70 border-[#6ea8ff]/15 hover:border-[#6ea8ff]/35 hover:bg-[#0d182a]"
+                  ? "border-accent bg-accent/12 shadow-[0_0_12px_rgba(110,168,255,0.25)]"
+                  : "border-accent/15 bg-surface/70 hover:border-accent/35 hover:bg-surface-strong"
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
@@ -86,17 +86,17 @@ export function EnvelopeDiagram() {
                 <span
                   className={`text-[9px] font-mono px-1 py-0.5 rounded uppercase ${
                     step.clientOnly
-                      ? "text-[#6ea8ff] bg-[#6ea8ff]/10 border border-[#6ea8ff]/20"
+                      ? "text-accent bg-accent/10 border border-accent/20"
                       : "text-amber-400 bg-amber-400/10 border border-amber-400/20"
                   }`}
                 >
                   {step.clientOnly ? "BROWSER" : "NEON"}
                 </span>
               </div>
-              <div className="text-xs font-semibold text-[#e8eefb] truncate">
+              <div className="text-xs font-semibold text-foreground truncate">
                 {step.title}
               </div>
-              <div className="text-[10px] font-mono text-[#e8eefb]/50 truncate mt-0.5">
+              <div className="text-[10px] font-mono text-subtle-foreground truncate mt-0.5">
                 {step.subtitle}
               </div>
             </button>
@@ -105,20 +105,20 @@ export function EnvelopeDiagram() {
       </div>
 
       {/* Active Step Deep Dive Box */}
-      <div className="p-3.5 rounded border border-[#6ea8ff]/25 bg-[#0a1424]/90 backdrop-blur-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#6ea8ff]/5 rounded-full blur-2xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded border border-accent/25 bg-surface-muted/90 p-3.5 backdrop-blur-sm">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full blur-2xl pointer-events-none" />
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#6ea8ff] animate-pulse" />
-            <h4 className="text-xs font-mono font-bold tracking-wider text-[#e8eefb] uppercase">
+            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <h4 className="text-xs font-mono font-bold tracking-wider text-foreground uppercase">
               {ENVELOPE_STEPS[activeStep].title} — {ENVELOPE_STEPS[activeStep].subtitle}
             </h4>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#6ea8ff]/15 text-[#6ea8ff] border border-[#6ea8ff]/30">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent/15 text-accent border border-accent/30">
             {ENVELOPE_STEPS[activeStep].badge}
           </span>
         </div>
-        <p className="text-xs text-[#e8eefb]/75 leading-relaxed font-sans">
+        <p className="text-xs text-muted-foreground leading-relaxed font-sans">
           {ENVELOPE_STEPS[activeStep].detail}
         </p>
       </div>

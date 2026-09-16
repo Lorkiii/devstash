@@ -2,45 +2,76 @@
 
 import React from "react";
 import { FeaturePillars } from "./feature-pillars";
-import { ArrowUpRightIcon } from "@/app/components/ui/icons";
+import { ArrowUpRightIcon, CheckIcon } from "@/app/components/ui/icons";
 import type { LandingHeroPanelProps } from "./landing-hero-panel.types";
 
-export function LandingHeroPanel({ onOpenSecurityModal }: LandingHeroPanelProps) {
+const TRUST_SIGNALS = [
+  "IDENTITY AND VAULT UNLOCK STAY SEPARATE",
+  "PLAINTEXT STAYS IN BROWSER MEMORY",
+  "THE SERVER STORES CIPHERTEXT ONLY",
+];
+
+export function LandingHeroPanel({
+  onOpenEnvelopeModal,
+  onSignInClick,
+}: LandingHeroPanelProps) {
   return (
-    <div className="flex flex-col space-y-4 lg:space-y-5">
-      <div className="space-y-2.5">
-        <div className="inline-flex max-w-full items-center gap-2 rounded border border-[#6ea8ff]/25 bg-[#6ea8ff]/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-[#6ea8ff]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#6ea8ff] animate-pulse" />
-          <span className="min-w-0">DEVSTASH · CLIENT-SIDE ENCRYPTED · V1</span>
+    <div className="flex flex-col gap-6 lg:gap-7">
+      <div className="space-y-4">
+        <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-accent-strong shadow-[inset_0_0_16px_rgba(110,168,255,0.06)]">
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.8)]" />
+          <span className="min-w-0">CLIENT-SIDE ENCRYPTED · PRIVATE BY DESIGN</span>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#e8eefb] leading-[1.06]">
-          Client-encrypted<br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6ea8ff] via-[#8ab9ff] to-[#dbe7ff]">
-            by design.
+        <h1 className="max-w-3xl text-4xl font-extrabold leading-[0.98] tracking-[-0.04em] text-foreground sm:text-5xl lg:text-6xl xl:text-7xl">
+          Your private work,
+          <br />
+          <span className="bg-gradient-to-r from-accent via-accent-strong to-foreground bg-clip-text text-transparent">
+            encrypted first.
           </span>
         </h1>
 
-        <p className="text-sm sm:text-base text-[#e8eefb]/75 max-w-lg leading-relaxed font-sans">
-          A personal, vault-first developer workspace for encrypted secrets, .env
-          configurations, private notes, and project tasks. Decrypted only in
-          browser memory; plaintext never reaches the server or database.
+        <p className="max-w-2xl text-sm leading-6 text-foreground/68 sm:text-base sm:leading-7">
+          Keep credentials, .env bundles, private notes, projects, and tasks in
+          one vault-first workspace. Google verifies your identity; a separate
+          Vault Passphrase unlocks your encrypted data locally.
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <button
-          onClick={onOpenSecurityModal}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded border border-[#6ea8ff]/30 bg-[#0a1220]/70 text-[#e8eefb] font-semibold text-xs font-mono tracking-wider hover:border-[#6ea8ff]/70 hover:bg-[#0d1b32] transition-all duration-200 cursor-pointer"
+          type="button"
+          onClick={onSignInClick}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-foreground px-5 py-2.5 font-mono text-xs font-bold tracking-[0.12em] text-background shadow-[0_10px_30px_rgba(110,168,255,0.16)] transition-all duration-200 hover:bg-accent-strong hover:text-accent-foreground hover:shadow-[0_12px_36px_rgba(110,168,255,0.28)] cursor-pointer"
         >
-          <span>SECURITY INVARIANTS</span>
-          <ArrowUpRightIcon className="w-3.5 h-3.5 text-[#6ea8ff]" />
+          <span>OPEN YOUR VAULT</span>
+          <ArrowUpRightIcon className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onOpenEnvelopeModal}
+          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-accent/30 bg-surface/70 px-5 py-2.5 font-mono text-xs font-semibold tracking-[0.12em] text-foreground transition-all duration-200 hover:border-accent/70 hover:bg-surface-strong hover:text-foreground cursor-pointer"
+        >
+          SEE THE ENCRYPTION FLOW
         </button>
       </div>
 
-      <div>
-        <div className="text-[11px] font-mono tracking-wider text-[#e8eefb]/50 mb-2">
-          WORKSPACE CAPABILITIES
+      <div className="grid gap-2 sm:grid-cols-3">
+        {TRUST_SIGNALS.map((signal) => (
+          <div
+            key={signal}
+            className="flex items-start gap-2 border-l border-accent/25 px-3 py-1.5 font-mono text-[9px] leading-4 tracking-[0.08em] text-subtle-foreground"
+          >
+            <CheckIcon className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300" />
+            <span>{signal}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 font-mono text-[10px] tracking-[0.16em] text-subtle-foreground">
+          <span>ONE WORKSPACE · FOUR PRIVATE LAYERS</span>
+          <span className="h-px flex-1 bg-gradient-to-r from-accent/25 to-transparent" />
         </div>
         <FeaturePillars />
       </div>

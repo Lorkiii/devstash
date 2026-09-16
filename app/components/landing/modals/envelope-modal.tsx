@@ -13,11 +13,11 @@ export function EnvelopeModal({ isOpen, onClose }: EnvelopeModalProps) {
       title="ENVELOPE ENCRYPTION ARCHITECTURE"
       footer={(
         <>
-          <span>NO SERVER-SIDE PASSPHRASE RECOVERY IN V1</span>
+          <span>NO SERVER-SIDE PASSPHRASE RECOVERY</span>
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 rounded-lg bg-[#6ea8ff] px-4 py-2 font-bold text-[#05070d] transition-colors hover:bg-[#8ab9ff]"
+            className="min-h-11 rounded-lg bg-accent px-4 py-2 font-bold text-accent-foreground transition-colors hover:bg-accent-strong"
           >
             CLOSE
           </button>
