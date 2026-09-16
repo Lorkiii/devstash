@@ -4,6 +4,8 @@ import type { TaskInput } from "@/app/lib/workspace.types";
 export interface TaskFormProps {
   task?: Task;
   projects: Project[];
+  /** Locks the relationship in project-scoped workspaces without a hidden input. */
+  fixedProject?: Pick<Project, "id" | "name">;
   categories: TaskCategory[];
   defaultSortOrder: number;
   isSaving: boolean;
