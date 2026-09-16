@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { StarfieldCanvas } from "@/app/components/ui/starfield-canvas";
+import { AccountProfileProvider, useAccountProfile } from "@/app/components/account/account-profile-provider";
 import { VaultSessionProvider, useVaultSession } from "@/app/lib/vault-session";
 import { AppSidebar } from "./sections/app-sidebar";
 import { AppHeader } from "./sections/app-header";
@@ -20,9 +21,11 @@ export function AppShell({ children, session }: AppShellProps) {
       refetchInterval={AUTH_SESSION_POLICY.clientRefreshSeconds}
       refetchOnWindowFocus
     >
-      <VaultSessionProvider ownerId={session.user.id}>
-        <ShellFrame>{children}</ShellFrame>
-      </VaultSessionProvider>
+      <AccountProfileProvider>
+        <VaultSessionProvider ownerId={session.user.id}>
+          <ShellFrame>{children}</ShellFrame>
+        </VaultSessionProvider>
+      </AccountProfileProvider>
     </SessionProvider>
   );
 }
@@ -33,6 +36,7 @@ export function AppShell({ children, session }: AppShellProps) {
 function ShellFrame({ children }: ShellFrameProps) {
   const router = useRouter();
   const { status } = useSession();
+  const { clear: clearAccountProfile } = useAccountProfile();
   const session = useVaultSession();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
@@ -61,12 +65,13 @@ function ShellFrame({ children }: ShellFrameProps) {
       if (result?.url !== `${window.location.origin}${AUTH_ROUTES.login}`) {
         throw new Error("Sign-out failed");
       }
+      clearAccountProfile();
       router.replace(AUTH_ROUTES.login);
       router.refresh();
     } catch {
       setSignOutError("Sign-out could not be completed. Your vault is locked. Please try again.");
     }
-  }, [session, router]);
+  }, [session, router, clearAccountProfile]);
 
   const prepareForSignOut = session.prepareForSignOut;
   useEffect(() => {

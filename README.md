@@ -39,6 +39,12 @@ Google authentication never unlocks the vault. Refreshing the page can preserve
 the Auth.js session, but it discards the in-memory vault key and returns the user
 to the locked state.
 
+The optional account display name is an explicit plaintext-metadata exception:
+it is stored in `User.name`, may appear in the authenticated shell while the
+vault is locked, and must not contain secrets. It is not a login identifier,
+unique public handle, or encrypted vault record. The verified Gmail address
+remains the Google identity; Google-provided names and photos are not retained.
+
 ### Encryption boundary
 
 - Vault plaintext, the Vault Passphrase, the Recovery Phrase, and plaintext key
@@ -225,7 +231,7 @@ migrations, or prove that a deployment works.
 ```text
 app/
   (app)/                 authenticated pages mounted only after vault unlock
-  api/                   authenticated, ciphertext-only Route Handlers
+  api/                   authenticated handlers; vault CRUD is ciphertext-only
   components/
     <feature>/           page-specific UI grouped by feature
     ui/                  reusable, page-agnostic primitives

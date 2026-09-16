@@ -25,6 +25,7 @@ import { createEncryptedVaultBackup } from "./vault-crypto/backup";
 import { fetchVaultBackupSnapshot } from "./vault-backup-client";
 import { decryptVaultSnapshot } from "./vault-snapshot";
 import { clearSensitiveClipboardIfUnchanged } from "./sensitive-clipboard";
+import { getIdleLockState } from "./vault-inactivity";
 import type {
   EnvBundle,
   Note,
@@ -96,12 +97,13 @@ export function VaultSessionProvider({
   const [profile, setProfile] = useState<VaultEncryptionProfile | null>(null);
   const [data, setData] = useState<VaultData | null>(null);
   const [unlockedAt, setUnlockedAt] = useState<number | null>(null);
-  const [autoLockMinutes, setAutoLockMinutes] = useState<AutoLockMinutes>(15);
+  const [autoLockMinutes, setAutoLockMinutesState] = useState<AutoLockMinutes>(15);
   const [secondsUntilAutoLock, setSecondsUntilAutoLock] = useState<number | null>(null);
   const [recents, setRecents] = useState<RecentRef[]>([]);
   const profileRef = useRef<VaultEncryptionProfile | null>(null);
   const dekRef = useRef<CryptoKey | null>(null);
   const lastActivityRef = useRef<number>(0);
+  const autoLockMinutesRef = useRef<AutoLockMinutes>(15);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const requestControllersRef = useRef(new Set<AbortController>());
   const operationRevisionRef = useRef(0);
@@ -115,6 +117,7 @@ export function VaultSessionProvider({
     operationRevisionRef.current += 1;
     abortRequests();
     dekRef.current = null;
+    lastActivityRef.current = 0;
     setData(null);
     setUnlockedAt(null);
     setSecondsUntilAutoLock(null);
@@ -132,6 +135,19 @@ export function VaultSessionProvider({
     clearUnlockedState();
     channelRef.current?.postMessage({ type: "signed-out" });
   }, [clearUnlockedState]);
+
+  const setAutoLockMinutes = useCallback((minutes: AutoLockMinutes) => {
+    autoLockMinutesRef.current = minutes;
+    setAutoLockMinutesState(minutes);
+    if (dekRef.current === null) return;
+
+    const idle = getIdleLockState(lastActivityRef.current, minutes, Date.now());
+    if (idle.expired) {
+      lock();
+    } else {
+      setSecondsUntilAutoLock(idle.secondsRemaining);
+    }
+  }, [lock]);
 
   const reloadProfile = useCallback(async () => {
     operationRevisionRef.current += 1;
@@ -174,7 +190,7 @@ export function VaultSessionProvider({
       const now = Date.now();
       lastActivityRef.current = now;
       setUnlockedAt(now);
-      setSecondsUntilAutoLock(autoLockMinutes * 60);
+      setSecondsUntilAutoLock(autoLockMinutesRef.current * 60);
       setLockState("unlocked");
     } catch (error) {
       controller.abort();
@@ -183,7 +199,7 @@ export function VaultSessionProvider({
     } finally {
       requestControllersRef.current.delete(controller);
     }
-  }, [abortRequests, autoLockMinutes, ownerId]);
+  }, [abortRequests, ownerId]);
 
   const openVaultAfterProfileChange = useCallback(async (draft: VaultLifecycleDraft) => {
     channelRef.current?.postMessage({ type: "profile-changed" });
@@ -501,38 +517,72 @@ export function VaultSessionProvider({
   }, [clearUnlockedState, reloadProfile]);
 
   useEffect(() => {
-    const clearOnPageExit = () => {
-      dekRef.current = null;
-      setData(null);
+    const clearOnPageExit = () => clearUnlockedState();
+    const clearOnPageRestore = (event: PageTransitionEvent) => {
+      if (event.persisted) clearUnlockedState();
     };
     window.addEventListener("pagehide", clearOnPageExit);
-    return () => window.removeEventListener("pagehide", clearOnPageExit);
-  }, []);
+    window.addEventListener("pageshow", clearOnPageRestore);
+    return () => {
+      window.removeEventListener("pagehide", clearOnPageExit);
+      window.removeEventListener("pageshow", clearOnPageRestore);
+    };
+  }, [clearUnlockedState]);
 
   useEffect(() => {
     if (lockState !== "unlocked") return;
 
-    const markActivity = () => {
-      lastActivityRef.current = Date.now();
+    let expired = false;
+    let lockTimeout: number | null = null;
+
+    const checkInactivity = (now = Date.now()) => {
+      if (expired || dekRef.current === null) return false;
+      const idle = getIdleLockState(lastActivityRef.current, autoLockMinutesRef.current, now);
+      if (idle.expired) {
+        expired = true;
+        lock();
+        return false;
+      }
+      setSecondsUntilAutoLock(idle.secondsRemaining);
+      return true;
     };
-    const checkInactivity = () => {
-      const idleMs = Date.now() - lastActivityRef.current;
-      const remaining = Math.max(0, Math.ceil((autoLockMinutes * 60_000 - idleMs) / 1000));
-      setSecondsUntilAutoLock(remaining);
-      if (remaining === 0) lock();
+
+    const scheduleLock = () => {
+      if (lockTimeout !== null) window.clearTimeout(lockTimeout);
+      const now = Date.now();
+      const idle = getIdleLockState(lastActivityRef.current, autoLockMinutesRef.current, now);
+      lockTimeout = window.setTimeout(() => {
+        if (checkInactivity()) scheduleLock();
+      }, Math.max(0, idle.deadlineMs - now));
+    };
+
+    const markActivity = () => {
+      const now = Date.now();
+      // A late first input must not renew a vault whose timers were suspended.
+      if (!checkInactivity(now)) return;
+      lastActivityRef.current = now;
+      setSecondsUntilAutoLock(autoLockMinutesRef.current * 60);
+      scheduleLock();
     };
     const handleVisibility = () => {
       if (document.visibilityState === "visible") checkInactivity();
     };
+    const handleFocus = () => {
+      checkInactivity();
+    };
     ACTIVITY_EVENTS.forEach((eventName) =>
-      window.addEventListener(eventName, markActivity, { passive: true })
+      window.addEventListener(eventName, markActivity, { capture: true, passive: true })
     );
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+    scheduleLock();
     const tick = window.setInterval(checkInactivity, 1000);
 
     return () => {
-      ACTIVITY_EVENTS.forEach((eventName) => window.removeEventListener(eventName, markActivity));
+      ACTIVITY_EVENTS.forEach((eventName) => window.removeEventListener(eventName, markActivity, true));
       document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+      if (lockTimeout !== null) window.clearTimeout(lockTimeout);
       window.clearInterval(tick);
     };
   }, [lockState, autoLockMinutes, lock]);
@@ -609,6 +659,7 @@ export function VaultSessionProvider({
       updateTaskCategory,
       deleteTaskCategory,
       exportEncryptedBackup,
+      setAutoLockMinutes,
       touchRecent,
     ],
   );

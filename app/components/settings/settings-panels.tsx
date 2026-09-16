@@ -1,7 +1,8 @@
-import { DatabaseBackup, LockKeyhole, MonitorCog, Palette, ShieldCheck } from "lucide-react";
+import { CircleUserRound, DatabaseBackup, LockKeyhole, MonitorCog, Palette, ShieldCheck } from "lucide-react";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { AppearanceSettings } from "./appearance-settings";
 import { BackupSettings } from "./backup-settings";
+import { ProfileSettings } from "./profile-settings";
 import { SessionSettings } from "./session-settings";
 import { SettingsSection } from "./settings-section";
 import { VaultBehaviorSettings } from "./vault-behavior-settings";
@@ -13,8 +14,17 @@ export function SettingsPanels() {
       <PageHeading
         eyebrow="SETTINGS"
         title="Settings"
-        description="Personalize how DevStash looks and behaves, manage vault access, and control this signed-in session."
+        description="Manage your account label, personalize DevStash, and control vault and session behavior."
       />
+
+      <SettingsSection
+        id="profile-settings"
+        title="Profile"
+        description="Choose the label for your account avatar. Your verified Google identity stays unchanged."
+        icon={CircleUserRound}
+      >
+        <ProfileSettings />
+      </SettingsSection>
 
       <SettingsSection
         id="appearance-settings"
