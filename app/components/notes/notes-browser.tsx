@@ -7,6 +7,7 @@ import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
 import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
+import { ProjectBadge } from "@/app/components/ui/project-badge";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import { formatDate } from "@/app/lib/format";
 import type { NoteInput } from "@/app/lib/workspace.types";
@@ -48,6 +49,7 @@ export function NotesBrowser() {
     : undefined;
   const projectName = (projectId?: string) =>
     data.projects.find((project) => project.id === projectId)?.name;
+  const selectedProjectName = selected ? projectName(selected.projectId) : undefined;
 
   useEffect(() => {
     if (selected) touchRecent("note", selected.id);
@@ -145,7 +147,7 @@ export function NotesBrowser() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div className={`lg:col-span-4 ${selected ? "hidden lg:block" : ""}`}>
-          <ConsolePanel title="NOTES" status={`${visible.length} SHOWN`} className="h-full" bodyClassName="p-0">
+          <ConsolePanel title="NOTES" status={`${visible.length} SHOWN`} surface="flat" className="h-full" bodyClassName="p-0">
             <div className="p-3 border-b border-accent/10">
               <label className="flex items-center gap-2 rounded border border-accent/20 bg-surface-muted/80 px-2.5 py-1.5">
                 <Search className="w-3.5 h-3.5 text-accent" />
@@ -168,6 +170,7 @@ export function NotesBrowser() {
               <ul className="divide-y divide-accent/10">
                 {visible.map((note) => {
                   const active = note.id === selectedId;
+                  const assignedProject = projectName(note.projectId);
                   return (
                     <li key={note.id}>
                       <button
@@ -179,10 +182,10 @@ export function NotesBrowser() {
                         }`}
                       >
                         <span className="block text-xs text-foreground truncate">{note.title}</span>
-                        <span className="block text-[10px] text-subtle-foreground truncate mt-0.5">
-                          {formatDate(note.updatedAt)}
-                          {projectName(note.projectId) && ` · ${projectName(note.projectId)}`}
-                          {note.tags.length > 0 && ` · ${note.tags.map((tag) => `#${tag}`).join(" ")}`}
+                        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-subtle-foreground">
+                          <span>{formatDate(note.updatedAt)}</span>
+                          {assignedProject && <ProjectBadge name={assignedProject} />}
+                          {note.tags.length > 0 && <span className="truncate">{note.tags.map((tag) => `#${tag}`).join(" ")}</span>}
                         </span>
                       </button>
                     </li>
@@ -198,6 +201,7 @@ export function NotesBrowser() {
             <ConsolePanel
               title="NOTE"
               status={`updated ${formatDate(selected.updatedAt)}`}
+              surface="flat"
               className="h-full"
               action={(
                 <div className="flex flex-wrap items-center gap-1">
@@ -219,11 +223,7 @@ export function NotesBrowser() {
               </button>
               <h3 className="text-base font-bold text-foreground">{selected.title}</h3>
               <div className="mt-1 mb-4 flex flex-wrap items-center gap-2 text-[10px] text-subtle-foreground">
-                {projectName(selected.projectId) && (
-                  <span className="px-1.5 py-0.5 rounded border border-foreground/15 tracking-widest">
-                    {projectName(selected.projectId)}
-                  </span>
-                )}
+                {selectedProjectName && <ProjectBadge name={selectedProjectName} />}
                 {selected.tags.map((tag) => (
                   <span key={tag}>#{tag}</span>
                 ))}
@@ -237,7 +237,7 @@ export function NotesBrowser() {
               {actionError && <p role="alert" className="mt-4 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
             </ConsolePanel>
           ) : (
-            <ConsolePanel title="NOTE" tone="muted" className="h-full">
+            <ConsolePanel title="NOTE" tone="muted" surface="flat" className="h-full">
               <EmptyState message="select a note to read it." />
             </ConsolePanel>
           )}

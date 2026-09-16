@@ -2,11 +2,12 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
 import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
+import { ProjectBadge } from "@/app/components/ui/project-badge";
 import { TaskCategoryBadge } from "@/app/components/ui/task-category-badge";
 import type { Task } from "@/app/lib/vault-data.types";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
@@ -30,6 +31,10 @@ export function TaskList() {
   const [formId, setFormId] = useState<"new" | string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const effectiveProjectFilter = projectFilter === "ALL" || projectFilter === "NONE" ||
+    data.projects.some((project) => project.id === projectFilter)
+    ? projectFilter
+    : "ALL";
   const effectiveCategoryFilter = categoryFilter === "ALL" || categoryFilter === "NONE" ||
     data.taskCategories.some((category) => category.id === categoryFilter)
     ? categoryFilter
@@ -39,9 +44,9 @@ export function TaskList() {
     () =>
       tasks
         .filter((task) => {
-          if (projectFilter === "ALL") return true;
-          if (projectFilter === "NONE") return !task.projectId;
-          return task.projectId === projectFilter;
+          if (effectiveProjectFilter === "ALL") return true;
+          if (effectiveProjectFilter === "NONE") return !task.projectId;
+          return task.projectId === effectiveProjectFilter;
         })
         .filter((task) => {
           if (effectiveCategoryFilter === "ALL") return true;
@@ -53,11 +58,11 @@ export function TaskList() {
           if (a.done !== b.done) return a.done ? 1 : -1;
           return (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999") || a.sortOrder - b.sortOrder;
         }),
-    [tasks, projectFilter, effectiveCategoryFilter, showDone]
+    [tasks, effectiveProjectFilter, effectiveCategoryFilter, showDone]
   );
 
   const projectName = (projectId?: string) =>
-    data.projects.find((project) => project.id === projectId)?.name ?? "unassigned";
+    data.projects.find((project) => project.id === projectId)?.name;
   const taskCategory = (categoryId?: string) =>
     data.taskCategories.find((category) => category.id === categoryId) ?? null;
   const activeFormId = formId ?? (createRequested ? "new" : null);
@@ -66,20 +71,21 @@ export function TaskList() {
     : undefined;
 
   const openCount = tasks.filter((task) => !task.done).length;
+  const filtersActive = effectiveProjectFilter !== "ALL" || effectiveCategoryFilter !== "ALL" || showDone;
   const defaultSortOrder = Math.min(
     Math.max(0, ...tasks.map((task) => task.sortOrder)) + 1,
     1_000_000,
   );
 
-  const filterChips: { id: ProjectFilter; label: string }[] = [
-    { id: "ALL", label: "ALL" },
-    ...data.projects.map((project) => ({ id: project.id, label: project.name.toUpperCase() })),
-    { id: "NONE", label: "UNASSIGNED" },
+  const projectOptions: { id: ProjectFilter; label: string }[] = [
+    { id: "ALL", label: "All projects" },
+    ...data.projects.map((project) => ({ id: project.id, label: project.name })),
+    { id: "NONE", label: "Unassigned" },
   ];
-  const categoryFilterChips: { id: CategoryFilter; label: string }[] = [
-    { id: "ALL", label: "ALL" },
+  const categoryOptions: { id: CategoryFilter; label: string }[] = [
+    { id: "ALL", label: "All categories" },
     ...data.taskCategories.map((category) => ({ id: category.id, label: category.name })),
-    { id: "NONE", label: "UNCATEGORIZED" },
+    { id: "NONE", label: "Uncategorized" },
   ];
 
   const newButton = (
@@ -93,18 +99,6 @@ export function TaskList() {
     >
       <Plus className="w-3.5 h-3.5" /> NEW TASK
     </button>
-  );
-
-  const showDoneToggle = (
-    <label className="flex items-center gap-1.5 text-[10px] tracking-widest text-muted-foreground cursor-pointer">
-      <input
-        type="checkbox"
-        checked={showDone}
-        onChange={(event) => setShowDone(event.target.checked)}
-        className="accent-accent"
-      />
-      SHOW DONE
-    </label>
   );
 
   const inputForTask = (task: Task, done = task.done): TaskInput => ({
@@ -190,123 +184,135 @@ export function TaskList() {
 
       <TaskCategoryManager />
 
-      <ConsolePanel title="TASK LIST" status={`${openCount} OPEN`} action={showDoneToggle} bodyClassName="p-0">
-        <div className="space-y-2.5 p-3 border-b border-accent/10">
-          <div role="group" aria-label="Filter tasks by project" className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[9px] tracking-widest text-subtle-foreground">PROJECT</span>
-            {filterChips.map((chip) => {
-              const active = projectFilter === chip.id;
-              return (
-                <button
-                  key={chip.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setProjectFilter(chip.id)}
-                  className={`rounded border px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
-                    active
-                      ? "bg-accent/15 border-accent/50 text-foreground"
-                      : "border-accent/15 text-muted-foreground hover:text-foreground hover:border-accent/40"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
+      <ConsolePanel title="TASK LIST" status={`${openCount} OPEN`} surface="flat" bodyClassName="p-0">
+        <div className="border-b border-accent/15 bg-surface-muted/50 p-3 sm:p-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
+            <label className="min-w-0 space-y-1.5">
+              <span className="block font-mono text-[10px] tracking-widest text-muted-foreground">PROJECT</span>
+              <select
+                value={effectiveProjectFilter}
+                onChange={(event) => setProjectFilter(event.target.value)}
+                className="min-h-11 w-full rounded-lg border border-panel-border bg-panel px-3 text-sm text-foreground outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+              >
+                {projectOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="min-w-0 space-y-1.5">
+              <span className="block font-mono text-[10px] tracking-widest text-muted-foreground">CATEGORY</span>
+              <select
+                value={effectiveCategoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className="min-h-11 w-full rounded-lg border border-panel-border bg-panel px-3 text-sm text-foreground outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+              >
+                {categoryOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-panel-border bg-panel px-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={showDone}
+                onChange={(event) => setShowDone(event.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
+              Show done
+            </label>
           </div>
-          <div role="group" aria-label="Filter tasks by category" className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[9px] tracking-widest text-subtle-foreground">CATEGORY</span>
-            {categoryFilterChips.map((chip) => {
-              const active = effectiveCategoryFilter === chip.id;
-              return (
-                <button
-                  key={chip.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setCategoryFilter(chip.id)}
-                  className={`rounded border px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
-                    active
-                      ? "bg-accent/15 border-accent/50 text-foreground"
-                      : "border-accent/15 text-muted-foreground hover:text-foreground hover:border-accent/40"
-                  }`}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+            <span role="status">Showing {visible.length} of {tasks.length} tasks</span>
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setProjectFilter("ALL");
+                  setCategoryFilter("ALL");
+                  setShowDone(false);
+                }}
+                className="min-h-10 rounded-md border border-accent/25 px-3 font-mono text-[10px] tracking-wider text-accent-strong hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                RESET FILTERS
+              </button>
+            )}
           </div>
         </div>
 
         {visible.length === 0 ? (
-          <div className="p-3">
-            <EmptyState message="nothing to do here." hint="Toggle SHOW DONE to see completed tasks." />
+          <div className="p-4">
+            {tasks.length === 0 ? (
+              <EmptyState message="No tasks yet." hint="Create a task to get started." />
+            ) : openCount === 0 && !showDone && !filtersActive ? (
+              <EmptyState message="All tasks are complete." hint="Turn on Show done to view them." />
+            ) : (
+              <EmptyState message="No tasks match these filters." hint="Adjust the filters or reset them." />
+            )}
           </div>
         ) : (
           <ul className="divide-y divide-accent/10">
-            {visible.map((task) => (
-              <li key={task.id} className="flex flex-wrap items-start gap-x-3 gap-y-2 px-3 py-2.5">
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={task.done}
-                  aria-label={task.done ? "Mark as not done" : "Mark as done"}
-                  onClick={() => void toggle(task)}
-                  disabled={busyId === task.id}
-                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors cursor-pointer ${
-                    task.done
-                      ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-700 dark:text-emerald-300"
-                      : "border-accent/40 hover:border-accent"
-                  }`}
-                >
-                  {task.done && <Check className="w-3 h-3" />}
-                </button>
-                <div className="flex-1 min-w-0">
-                  <div className={`text-xs ${task.done ? "text-subtle-foreground line-through" : "text-foreground"}`}>
-                    {task.title}
+            {visible.map((task) => {
+              const assignedProject = projectName(task.projectId);
+              return (
+                <li key={task.id} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 px-3 py-3 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto] sm:px-4">
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={task.done}
+                    aria-label={task.done ? "Mark as not done" : "Mark as done"}
+                    onClick={() => void toggle(task)}
+                    disabled={busyId === task.id}
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-accent/25 text-muted-foreground hover:border-accent/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+                  >
+                    <span className={`flex h-5 w-5 items-center justify-center rounded border ${task.done ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-700 dark:text-emerald-300" : "border-accent/40"}`}>
+                      {task.done && <Check className="h-3 w-3" />}
+                    </span>
+                  </button>
+                  <div className="min-w-0 self-center">
+                    <div className={`break-words text-sm font-medium leading-5 ${task.done ? "text-subtle-foreground line-through" : "text-foreground"}`}>
+                      {task.title}
+                    </div>
+                    {task.description && (
+                      <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">{task.description}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <TaskCategoryBadge category={taskCategory(task.categoryId)} />
+                      {assignedProject && <ProjectBadge name={assignedProject} />}
+                      {task.dueDate && (
+                        <span className="inline-flex items-center gap-1 rounded-md border border-panel-border bg-surface-muted px-2 py-0.5 font-mono text-[10px] leading-4 text-muted-foreground">
+                          <CalendarDays className="h-3 w-3" aria-hidden="true" /> Due {task.dueDate}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {task.description && (
-                    <p className="mt-0.5 break-words text-[11px] text-subtle-foreground">{task.description}</p>
-                  )}
-                  <TaskCategoryBadge category={taskCategory(task.categoryId)} className="mt-1" />
-                </div>
-                <div className="order-4 ml-7 flex w-[calc(100%_-_1.75rem)] items-center justify-between gap-2 font-mono text-[10px] sm:order-none sm:ml-0 sm:w-auto sm:shrink-0 sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
-                  <span className="text-subtle-foreground truncate max-w-32">{projectName(task.projectId)}</span>
-                  <span className={task.dueDate ? "text-muted-foreground" : "text-subtle-foreground"}>
-                    {task.dueDate ?? "no date"}
-                  </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActionError(null);
-                      setFormId(task.id);
-                      touchRecent("task", task.id);
-                    }}
-                    disabled={busyId === task.id}
-                    aria-label="Edit task"
-                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 p-1 text-muted-foreground hover:text-accent disabled:opacity-50"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!window.confirm("Permanently delete this encrypted task? This cannot be undone.")) return;
-                      setBusyId(task.id);
-                      setActionError(null);
-                      void deleteTask(task.id)
-                        .catch(() => setActionError("The encrypted task could not be deleted."))
-                        .finally(() => setBusyId(null));
-                    }}
-                    disabled={busyId === task.id}
-                    aria-label="Delete task"
-                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-700/75 hover:text-rose-800 dark:text-rose-300/65 dark:hover:text-rose-200 disabled:opacity-50"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              </li>
-            ))}
+                  <div className="col-start-2 flex items-center gap-1.5 sm:col-start-3 sm:row-start-1 sm:self-start">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActionError(null);
+                        setFormId(task.id);
+                        touchRecent("task", task.id);
+                      }}
+                      disabled={busyId === task.id}
+                      className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-accent/20 px-2.5 font-mono text-[10px] tracking-wider text-muted-foreground hover:border-accent/45 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" /> EDIT
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!window.confirm("Permanently delete this encrypted task? This cannot be undone.")) return;
+                        setBusyId(task.id);
+                        setActionError(null);
+                        void deleteTask(task.id)
+                          .catch(() => setActionError("The encrypted task could not be deleted."))
+                          .finally(() => setBusyId(null));
+                      }}
+                      disabled={busyId === task.id}
+                      className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-rose-400/20 px-2.5 font-mono text-[10px] tracking-wider text-rose-700 hover:border-rose-400/45 hover:text-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 disabled:opacity-50 dark:text-rose-300 dark:hover:text-rose-200"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> DELETE
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </ConsolePanel>

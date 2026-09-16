@@ -21,6 +21,8 @@ export function TaskCategoryManager() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const customCategories = data.taskCategories.filter((category) => !category.builtIn);
+  const openTasks = data.tasks.filter((task) => !task.done);
+  const uncategorizedOpenCount = openTasks.filter((task) => !task.categoryId).length;
 
   const closeForm = () => {
     setFormId(null);
@@ -104,6 +106,7 @@ export function TaskCategoryManager() {
       <ConsolePanel
         title="TASK CATEGORIES"
         status={`${customCategories.length} CUSTOM`}
+        surface="flat"
         action={(
           <button
             type="button"
@@ -112,19 +115,22 @@ export function TaskCategoryManager() {
               setFormId("new");
             }}
             disabled={busyId !== null}
-            className="inline-flex items-center gap-1 rounded border border-accent/25 px-2 py-1 text-[10px] tracking-widest text-muted-foreground hover:text-accent disabled:opacity-50"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-accent/30 px-3 font-mono text-[10px] tracking-wider text-accent-strong hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
           >
-            <Plus className="h-3 w-3" /> CUSTOM
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" /> NEW CATEGORY
           </button>
         )}
       >
-        <p className="mb-3 text-xs leading-relaxed text-subtle-foreground">
-          Built-ins remain available. Custom names and palette choices are encrypted in this tab.
+        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
+          See open tasks by category. Custom names and colors are encrypted locally.
         </p>
-        <ul className="flex flex-wrap gap-2">
+        <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           {data.taskCategories.map((category) => (
-            <li key={category.id} className="flex items-center gap-1">
-              <TaskCategoryBadge category={category} />
+            <li key={category.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-panel-border bg-surface-muted p-2">
+              <TaskCategoryBadge category={category} className="min-w-0" />
+              <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
+                {openTasks.filter((task) => task.categoryId === category.id).length} open
+              </span>
               {!category.builtIn && (
                 <>
                   <button
@@ -134,24 +140,30 @@ export function TaskCategoryManager() {
                       setFormId(category.id);
                     }}
                     disabled={busyId !== null}
-                    aria-label={`Edit ${category.name} category`}
-                    className="rounded p-1 text-subtle-foreground hover:text-accent disabled:opacity-50"
+                    aria-label="Edit category"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-accent/20 text-muted-foreground hover:border-accent/45 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
                     onClick={() => void remove(category.id, category.name)}
                     disabled={busyId !== null}
-                    aria-label={`Delete ${category.name} category`}
-                    className="rounded p-1 text-rose-700/70 hover:text-rose-800 dark:text-rose-300/60 dark:hover:text-rose-200 disabled:opacity-50"
+                    aria-label="Delete category"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-rose-400/20 text-rose-700 hover:border-rose-400/45 hover:text-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 disabled:opacity-50 dark:text-rose-300 dark:hover:text-rose-200"
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </>
               )}
             </li>
           ))}
+          <li className="flex min-w-0 items-center gap-2 rounded-lg border border-panel-border bg-surface-muted p-2">
+            <TaskCategoryBadge category={null} className="min-w-0" />
+            <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
+              {uncategorizedOpenCount} open
+            </span>
+          </li>
         </ul>
         {actionError && !formId && (
           <p role="alert" className="mt-3 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>

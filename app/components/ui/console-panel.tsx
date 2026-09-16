@@ -1,12 +1,14 @@
 import React from "react";
 
 export type ConsolePanelTone = "blue" | "amber" | "green" | "red" | "muted";
+export type ConsolePanelSurface = "atmospheric" | "flat";
 
 interface ConsolePanelProps {
   title: string;
   /** Short mono text shown on the right of the header row. */
   status?: string;
   tone?: ConsolePanelTone;
+  surface?: ConsolePanelSurface;
   /** Optional control rendered in the header (filters, buttons). */
   action?: React.ReactNode;
   className?: string;
@@ -28,6 +30,7 @@ export function ConsolePanel({
   title,
   status,
   tone = "blue",
+  surface = "atmospheric",
   action,
   className = "",
   bodyClassName = "",
@@ -36,6 +39,7 @@ export function ConsolePanel({
   return (
     <section
       data-panel-tone={tone}
+      data-panel-surface={surface}
       className={`devstash-panel flex min-h-0 flex-col overflow-hidden rounded-2xl border text-foreground ${className}`}
     >
       <header className="devstash-panel-header flex flex-col items-start gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">

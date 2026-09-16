@@ -254,6 +254,18 @@ body {
     linear-gradient(90deg, color-mix(in srgb, var(--panel-accent) 6%, var(--panel-header)), var(--panel-header));
 }
 
+.devstash-panel[data-panel-surface="flat"] {
+  background: var(--panel-surface);
+}
+
+.devstash-panel[data-panel-surface="flat"]::before {
+  display: none;
+}
+
+.devstash-panel[data-panel-surface="flat"] .devstash-panel-header {
+  background: var(--panel-header);
+}
+
 .devstash-panel[data-panel-tone="amber"] {
   --panel-accent: #d68a08;
 }
