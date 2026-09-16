@@ -2,8 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { ConsolePanel } from "@/app/components/ui/console-panel";
+import { ArrowRight, CheckCircle2, CircleDashed } from "lucide-react";
 import { EmptyState } from "@/app/components/ui/empty-state";
+import { TaskCategoryBadge } from "@/app/components/ui/task-category-badge";
 import type { VaultData } from "@/app/lib/vault-data.types";
 
 interface OpenTasksPanelProps {
@@ -12,43 +13,84 @@ interface OpenTasksPanelProps {
 }
 
 export function OpenTasksPanel({ data, limit = 5 }: OpenTasksPanelProps) {
-  const open = data.tasks
+  const openTasks = data.tasks
     .filter((task) => !task.done)
-    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"))
-    .slice(0, limit);
-
+    .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
+  const visibleTasks = openTasks.slice(0, limit);
+  const completedTasks = data.tasks.length - openTasks.length;
+  const completionPercent = data.tasks.length === 0
+    ? 0
+    : Math.round((completedTasks / data.tasks.length) * 100);
   const projectName = (projectId?: string) =>
-    data.projects.find((project) => project.id === projectId)?.name ?? "unassigned";
-
-  const viewAll = (
-    <Link href="/tasks" className="text-[10px] tracking-widest text-[#6ea8ff]/80 hover:text-[#6ea8ff]">
-      VIEW ALL →
-    </Link>
-  );
+    data.projects.find((project) => project.id === projectId)?.name ?? "Unassigned";
+  const taskCategory = (categoryId?: string) =>
+    data.taskCategories.find((category) => category.id === categoryId);
 
   return (
-    <ConsolePanel
-      title="OPEN TASKS"
-      status={`${data.tasks.filter((task) => !task.done).length} OPEN`}
-      action={viewAll}
-      className="h-full"
-    >
-      {open.length === 0 ? (
-        <EmptyState message="no open tasks." />
-      ) : (
-        <ul className="divide-y divide-[#6ea8ff]/10">
-          {open.map((task) => (
-            <li key={task.id} className="flex items-center gap-3 py-2 text-xs">
-              <span className="w-3.5 h-3.5 rounded-sm border border-[#6ea8ff]/40 shrink-0" aria-hidden="true" />
-              <span className="flex-1 min-w-0 truncate text-[#e8eefb]/85">{task.title}</span>
-              <span className="hidden sm:inline text-[10px] text-[#e8eefb]/40 truncate max-w-28">
-                {projectName(task.projectId)}
-              </span>
-              <span className="text-[10px] text-[#e8eefb]/55 shrink-0">{task.dueDate ?? "no date"}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </ConsolePanel>
+    <section aria-labelledby="focus-queue-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+      <header className="border-b border-accent/15 px-4 py-4 sm:px-5">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-mono text-[9px] tracking-[0.2em] text-emerald-300/60">NEXT ACTIONS</p>
+            <h2 id="focus-queue-title" className="mt-1 text-lg font-bold tracking-tight text-foreground">Focus queue</h2>
+          </div>
+          <div className="text-right">
+            <strong className="text-3xl font-black leading-none text-emerald-300">{openTasks.length}</strong>
+            <span className="ml-1.5 font-mono text-[9px] tracking-widest text-subtle-foreground">OPEN</span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-[1fr_auto] items-center gap-3">
+          <progress
+            aria-label={`${completedTasks} of ${data.tasks.length} tasks completed`}
+            className="vault-type-progress h-1.5 w-full rounded-full text-emerald-300"
+            max={Math.max(1, data.tasks.length)}
+            value={completedTasks}
+          />
+          <span className="font-mono text-[9px] tracking-widest text-subtle-foreground">{completionPercent}% CLEARED</span>
+        </div>
+      </header>
+
+      <div className="p-4 sm:p-5">
+        {visibleTasks.length === 0 ? (
+          <EmptyState
+            message="The focus queue is clear."
+            hint="Add a task when there is a private next step worth tracking."
+            className="flex min-h-40 flex-col justify-center"
+          />
+        ) : (
+          <ol className="space-y-2">
+            {visibleTasks.map((task, index) => (
+              <li key={task.id} className="grid grid-cols-[22px_minmax(0,1fr)] gap-3 rounded-lg border border-transparent py-2.5 transition-colors hover:border-accent/10 hover:bg-accent/[0.04]">
+                <span className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-400/25 bg-emerald-400/[0.06] font-mono text-[8px] text-emerald-200/70">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-muted-foreground">{task.title}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <TaskCategoryBadge category={taskCategory(task.categoryId)} />
+                    <span className="max-w-28 truncate font-mono text-[9px] tracking-wider text-subtle-foreground">{projectName(task.projectId)}</span>
+                    <span className={`font-mono text-[9px] tracking-wider ${task.dueDate ? "text-accent-strong" : "text-subtle-foreground"}`}>
+                      {task.dueDate ?? "NO DATE"}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+      <footer className="flex items-center justify-between gap-3 border-t border-accent/10 bg-surface-inset/45 px-4 py-3 sm:px-5">
+        <span className="flex items-center gap-2 font-mono text-[9px] tracking-widest text-subtle-foreground">
+          {openTasks.length === 0 ? <CheckCircle2 className="h-3 w-3 text-emerald-300" /> : <CircleDashed className="h-3 w-3 text-accent" />}
+          {completedTasks} COMPLETED
+        </span>
+        <Link href="/tasks" className="group inline-flex min-h-9 items-center gap-1.5 font-mono text-[9px] tracking-widest text-accent-strong hover:text-foreground">
+          OPEN TASK BOARD
+          <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </footer>
+    </section>
   );
 }

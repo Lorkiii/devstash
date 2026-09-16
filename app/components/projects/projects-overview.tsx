@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
@@ -12,6 +13,9 @@ import { ProjectForm } from "./project-form";
 export function ProjectsOverview() {
   const data = useUnlockedVault();
   const { createProject } = useVaultSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const createRequested = searchParams.get("create") === "1";
   const [showForm, setShowForm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -22,11 +26,18 @@ export function ProjectsOverview() {
     try {
       await createProject(input);
       setShowForm(false);
+      if (createRequested) router.replace("/projects");
     } catch {
       setActionError("The encrypted project could not be saved. No plaintext was sent.");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setActionError(null);
+    if (createRequested) router.replace("/projects");
   };
 
   const newButton = (
@@ -36,7 +47,7 @@ export function ProjectsOverview() {
         setActionError(null);
         setShowForm(true);
       }}
-      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-3 py-1.5 font-mono text-xs tracking-wider text-foreground hover:bg-accent/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW PROJECT
     </button>
@@ -51,11 +62,8 @@ export function ProjectsOverview() {
         actions={newButton}
       />
       <Modal
-        isOpen={showForm}
-        onClose={() => {
-          setShowForm(false);
-          setActionError(null);
-        }}
+        isOpen={showForm || createRequested}
+        onClose={closeForm}
         title="NEW PROJECT"
         status="ENCRYPTS IN THIS TAB"
         description="The project name and description are encrypted locally as one payload before saving."
@@ -66,10 +74,7 @@ export function ProjectsOverview() {
         <ProjectForm
           isSaving={isSaving}
           requestError={actionError}
-          onCancel={() => {
-            setShowForm(false);
-            setActionError(null);
-          }}
+          onCancel={closeForm}
           onSubmit={handleSave}
         />
       </Modal>

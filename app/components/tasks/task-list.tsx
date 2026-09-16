@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { ConsolePanel } from "@/app/components/ui/console-panel";
 import { EmptyState } from "@/app/components/ui/empty-state";
@@ -19,6 +20,9 @@ type CategoryFilter = "ALL" | "NONE" | string;
 export function TaskList() {
   const data = useUnlockedVault();
   const { createTask, deleteTask, touchRecent, updateTask } = useVaultSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const createRequested = searchParams.get("create") === "1";
   const tasks = data.tasks;
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("ALL");
@@ -56,8 +60,9 @@ export function TaskList() {
     data.projects.find((project) => project.id === projectId)?.name ?? "unassigned";
   const taskCategory = (categoryId?: string) =>
     data.taskCategories.find((category) => category.id === categoryId) ?? null;
-  const formTask = formId && formId !== "new"
-    ? tasks.find((task) => task.id === formId)
+  const activeFormId = formId ?? (createRequested ? "new" : null);
+  const formTask = activeFormId && activeFormId !== "new"
+    ? tasks.find((task) => task.id === activeFormId)
     : undefined;
 
   const openCount = tasks.filter((task) => !task.done).length;
@@ -84,19 +89,19 @@ export function TaskList() {
         setActionError(null);
         setFormId("new");
       }}
-      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-[#6ea8ff]/40 bg-[#6ea8ff]/10 px-3 py-1.5 font-mono text-xs tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/20"
+      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-3 py-1.5 font-mono text-xs tracking-wider text-foreground hover:bg-accent/20"
     >
       <Plus className="w-3.5 h-3.5" /> NEW TASK
     </button>
   );
 
   const showDoneToggle = (
-    <label className="flex items-center gap-1.5 text-[10px] tracking-widest text-[#e8eefb]/55 cursor-pointer">
+    <label className="flex items-center gap-1.5 text-[10px] tracking-widest text-muted-foreground cursor-pointer">
       <input
         type="checkbox"
         checked={showDone}
         onChange={(event) => setShowDone(event.target.checked)}
-        className="accent-[#6ea8ff]"
+        className="accent-accent"
       />
       SHOW DONE
     </label>
@@ -113,18 +118,25 @@ export function TaskList() {
   });
 
   const handleSave = async (input: TaskInput) => {
-    setBusyId(formId ?? "new");
+    setBusyId(activeFormId ?? "new");
     setActionError(null);
     try {
-      if (formId === "new") await createTask(input);
-      else if (formId) await updateTask(formId, input);
+      if (activeFormId === "new") await createTask(input);
+      else if (activeFormId) await updateTask(activeFormId, input);
       else return;
       setFormId(null);
+      if (createRequested) router.replace("/tasks");
     } catch {
       setActionError("The encrypted task could not be saved. No plaintext was sent.");
     } finally {
       setBusyId(null);
     }
+  };
+
+  const closeForm = () => {
+    setFormId(null);
+    setActionError(null);
+    if (createRequested) router.replace("/tasks");
   };
 
   const toggle = async (task: Task) => {
@@ -150,44 +162,38 @@ export function TaskList() {
       />
 
       <Modal
-        isOpen={formId !== null}
-        onClose={() => {
-          setFormId(null);
-          setActionError(null);
-        }}
-        title={formId === "new" ? "NEW TASK" : "EDIT TASK"}
+        isOpen={activeFormId !== null}
+        onClose={closeForm}
+        title={activeFormId === "new" ? "NEW TASK" : "EDIT TASK"}
         status="ENCRYPTS IN THIS TAB"
         description="The title, description, due date, and relationships are encrypted locally before saving."
-        icon={formId === "new" ? <Plus className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+        icon={activeFormId === "new" ? <Plus className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
         maxWidth="2xl"
         closeDisabled={busyId !== null}
       >
-        {formId && (
+        {activeFormId && (
           <TaskForm
-            key={formId}
+            key={activeFormId}
             task={formTask}
             projects={data.projects}
             categories={data.taskCategories}
             defaultSortOrder={defaultSortOrder}
             isSaving={busyId !== null}
             requestError={actionError}
-            onCancel={() => {
-              setFormId(null);
-              setActionError(null);
-            }}
+            onCancel={closeForm}
             onSubmit={handleSave}
           />
         )}
       </Modal>
 
-      {actionError && !formId && <p role="alert" className="text-xs text-rose-300">{actionError}</p>}
+      {actionError && !activeFormId && <p role="alert" className="text-xs text-rose-300">{actionError}</p>}
 
       <TaskCategoryManager />
 
       <ConsolePanel title="TASK LIST" status={`${openCount} OPEN`} action={showDoneToggle} bodyClassName="p-0">
-        <div className="space-y-2.5 p-3 border-b border-[#6ea8ff]/10">
+        <div className="space-y-2.5 p-3 border-b border-accent/10">
           <div role="group" aria-label="Filter tasks by project" className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[9px] tracking-widest text-[#e8eefb]/35">PROJECT</span>
+            <span className="mr-1 text-[9px] tracking-widest text-subtle-foreground">PROJECT</span>
             {filterChips.map((chip) => {
               const active = projectFilter === chip.id;
               return (
@@ -198,8 +204,8 @@ export function TaskList() {
                   onClick={() => setProjectFilter(chip.id)}
                   className={`rounded border px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
                     active
-                      ? "bg-[#6ea8ff]/15 border-[#6ea8ff]/50 text-[#e8eefb]"
-                      : "border-[#6ea8ff]/15 text-[#e8eefb]/55 hover:text-[#e8eefb] hover:border-[#6ea8ff]/40"
+                      ? "bg-accent/15 border-accent/50 text-foreground"
+                      : "border-accent/15 text-muted-foreground hover:text-foreground hover:border-accent/40"
                   }`}
                 >
                   {chip.label}
@@ -208,7 +214,7 @@ export function TaskList() {
             })}
           </div>
           <div role="group" aria-label="Filter tasks by category" className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[9px] tracking-widest text-[#e8eefb]/35">CATEGORY</span>
+            <span className="mr-1 text-[9px] tracking-widest text-subtle-foreground">CATEGORY</span>
             {categoryFilterChips.map((chip) => {
               const active = effectiveCategoryFilter === chip.id;
               return (
@@ -219,8 +225,8 @@ export function TaskList() {
                   onClick={() => setCategoryFilter(chip.id)}
                   className={`rounded border px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
                     active
-                      ? "bg-[#6ea8ff]/15 border-[#6ea8ff]/50 text-[#e8eefb]"
-                      : "border-[#6ea8ff]/15 text-[#e8eefb]/55 hover:text-[#e8eefb] hover:border-[#6ea8ff]/40"
+                      ? "bg-accent/15 border-accent/50 text-foreground"
+                      : "border-accent/15 text-muted-foreground hover:text-foreground hover:border-accent/40"
                   }`}
                 >
                   {chip.label}
@@ -235,7 +241,7 @@ export function TaskList() {
             <EmptyState message="nothing to do here." hint="Toggle SHOW DONE to see completed tasks." />
           </div>
         ) : (
-          <ul className="divide-y divide-[#6ea8ff]/10">
+          <ul className="divide-y divide-accent/10">
             {visible.map((task) => (
               <li key={task.id} className="flex flex-wrap items-start gap-x-3 gap-y-2 px-3 py-2.5">
                 <button
@@ -248,23 +254,23 @@ export function TaskList() {
                   className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors cursor-pointer ${
                     task.done
                       ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-300"
-                      : "border-[#6ea8ff]/40 hover:border-[#6ea8ff]"
+                      : "border-accent/40 hover:border-accent"
                   }`}
                 >
                   {task.done && <Check className="w-3 h-3" />}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <div className={`text-xs ${task.done ? "text-[#e8eefb]/40 line-through" : "text-[#e8eefb]"}`}>
+                  <div className={`text-xs ${task.done ? "text-subtle-foreground line-through" : "text-foreground"}`}>
                     {task.title}
                   </div>
                   {task.description && (
-                    <p className="mt-0.5 break-words text-[11px] text-[#e8eefb]/50">{task.description}</p>
+                    <p className="mt-0.5 break-words text-[11px] text-subtle-foreground">{task.description}</p>
                   )}
                   <TaskCategoryBadge category={taskCategory(task.categoryId)} className="mt-1" />
                 </div>
                 <div className="order-4 ml-7 flex w-[calc(100%_-_1.75rem)] items-center justify-between gap-2 font-mono text-[10px] sm:order-none sm:ml-0 sm:w-auto sm:shrink-0 sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
-                  <span className="text-[#e8eefb]/45 truncate max-w-32">{projectName(task.projectId)}</span>
-                  <span className={task.dueDate ? "text-[#e8eefb]/65" : "text-[#e8eefb]/30"}>
+                  <span className="text-subtle-foreground truncate max-w-32">{projectName(task.projectId)}</span>
+                  <span className={task.dueDate ? "text-muted-foreground" : "text-subtle-foreground"}>
                     {task.dueDate ?? "no date"}
                   </span>
                 </div>
@@ -278,7 +284,7 @@ export function TaskList() {
                     }}
                     disabled={busyId === task.id}
                     aria-label="Edit task"
-                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 p-1 text-[#e8eefb]/60 hover:text-[#6ea8ff] disabled:opacity-50"
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 p-1 text-muted-foreground hover:text-accent disabled:opacity-50"
                   >
                     <Pencil className="h-3 w-3" />
                   </button>
