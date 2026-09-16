@@ -40,7 +40,7 @@ export function EnvBundleForm({ projectId, bundle, isSaving, requestError, onCan
         <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">COMPLETE .ENV CONTENT</span>
         <textarea value={content} onChange={(event) => setContent(event.target.value)} rows={12} maxLength={WORKSPACE_FIELD_LIMITS.envContentCodePoints} placeholder="SYNTHETIC_KEY=FAKE_VALUE" autoComplete="off" spellCheck={false} disabled={isSaving} className={`${FIELD_CLASS} whitespace-pre`} />
       </label>
-      {(validationError || requestError) && <p role="alert" className="text-xs text-rose-300">{validationError ?? requestError}</p>}
+      {(validationError || requestError) && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{validationError ?? requestError}</p>}
       <div className="flex flex-col-reverse gap-2 border-t border-accent/15 pt-4 sm:flex-row sm:justify-end">
         <button type="button" onClick={onCancel} disabled={isSaving} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-accent/20 px-4 py-2 text-xs tracking-wider text-muted-foreground hover:bg-accent/5 hover:text-foreground disabled:opacity-50 sm:w-auto">
           <X className="h-3.5 w-3.5" /> CANCEL

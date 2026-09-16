@@ -163,7 +163,7 @@ export function ProjectEnvWorkspace({
                         active ? "bg-cyan-400/10" : "hover:bg-cyan-400/5"
                       }`}
                     >
-                      <FileCode2 className={`h-4 w-4 shrink-0 ${active ? "text-cyan-300" : "text-foreground/32"}`} aria-hidden="true" />
+                      <FileCode2 className={`h-4 w-4 shrink-0 ${active ? "text-cyan-700 dark:text-cyan-300" : "text-foreground/32"}`} aria-hidden="true" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-xs text-foreground">.env.{bundle.environment}</span>
                         <span className="mt-0.5 block text-[10px] text-subtle-foreground">updated {formatDate(bundle.updatedAt)}</span>
@@ -189,7 +189,7 @@ export function ProjectEnvWorkspace({
                 onDelete={() => void handleDelete()}
               />
             )}
-            {actionError && !formId && <p role="alert" className="px-4 pb-4 text-xs text-rose-300 sm:px-5">{actionError}</p>}
+            {actionError && !formId && <p role="alert" className="px-4 pb-4 text-xs text-rose-700 dark:text-rose-300 sm:px-5">{actionError}</p>}
           </div>
         </div>
       )}

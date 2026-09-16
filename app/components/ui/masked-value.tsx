@@ -55,9 +55,9 @@ export function MaskedValue({
           aria-label={`Copy ${label}`}
           className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded border transition-colors cursor-pointer ${
             controls.copyStatus === "copied"
-              ? "border-emerald-400/50 text-emerald-400"
+              ? "border-emerald-400/50 text-emerald-700 dark:text-emerald-400"
               : controls.copyStatus === "error"
-                ? "border-rose-400/50 text-rose-300"
+                ? "border-rose-400/50 text-rose-700 dark:text-rose-300"
               : "border-accent/20 text-muted-foreground hover:text-accent hover:border-accent/50"
           }`}
         >

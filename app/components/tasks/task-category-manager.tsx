@@ -144,7 +144,7 @@ export function TaskCategoryManager() {
                     onClick={() => void remove(category.id, category.name)}
                     disabled={busyId !== null}
                     aria-label={`Delete ${category.name} category`}
-                    className="rounded p-1 text-rose-300/60 hover:text-rose-200 disabled:opacity-50"
+                    className="rounded p-1 text-rose-700/70 hover:text-rose-800 dark:text-rose-300/60 dark:hover:text-rose-200 disabled:opacity-50"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -154,7 +154,7 @@ export function TaskCategoryManager() {
           ))}
         </ul>
         {actionError && !formId && (
-          <p role="alert" className="mt-3 text-xs text-rose-300">{actionError}</p>
+          <p role="alert" className="mt-3 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>
         )}
       </ConsolePanel>
     </div>

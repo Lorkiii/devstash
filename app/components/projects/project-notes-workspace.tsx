@@ -161,7 +161,7 @@ export function ProjectNotesWorkspace({
         <div className="grid min-w-0 lg:grid-cols-[minmax(16rem,0.78fr)_minmax(0,1.22fr)]">
           <div className={`${selected ? "hidden lg:block" : ""} min-w-0 border-accent/12 lg:border-r`}>
             <label className="flex min-h-12 items-center gap-2 border-b border-accent/10 px-4 py-2.5">
-              <Search className="h-3.5 w-3.5 shrink-0 text-amber-300/70" aria-hidden="true" />
+              <Search className="h-3.5 w-3.5 shrink-0 text-amber-700/80 dark:text-amber-300/70" aria-hidden="true" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -209,7 +209,7 @@ export function ProjectNotesWorkspace({
                 <button
                   type="button"
                   onClick={() => onSelectionChange(null)}
-                  className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-[10px] tracking-widest text-amber-300/80 hover:text-amber-200 lg:hidden"
+                  className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-[10px] tracking-widest text-amber-700 hover:text-amber-800 dark:text-amber-300/80 dark:hover:text-amber-200 lg:hidden"
                 >
                   <ArrowLeft className="h-3 w-3" /> BACK TO NOTES
                 </button>
@@ -239,7 +239,7 @@ export function ProjectNotesWorkspace({
                       onClick={() => void handleDelete()}
                       disabled={isDeleting}
                       aria-label="Delete note"
-                      className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-300/70 transition-colors hover:border-rose-400/45 hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
+                      className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -252,7 +252,7 @@ export function ProjectNotesWorkspace({
                 <p className="mt-6 text-[10px] text-foreground/32">
                   Plain-text preview. Sanitized Markdown rendering remains a separate reviewed step.
                 </p>
-                {actionError && <p role="alert" className="mt-4 text-xs text-rose-300">{actionError}</p>}
+                {actionError && <p role="alert" className="mt-4 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
               </article>
             ) : (
               <WorkspaceEmptyState message="select a note to read it." />

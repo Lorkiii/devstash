@@ -152,7 +152,7 @@ export function GenericSecretForm({
         </label>
 
         {(validationError || requestError) && (
-          <p role="alert" className="text-xs text-rose-300">
+          <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">
             {validationError ?? requestError}
           </p>
         )}

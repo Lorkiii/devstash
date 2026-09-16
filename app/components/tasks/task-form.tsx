@@ -81,7 +81,7 @@ export function TaskForm({ task, projects, fixedProject, categories, defaultSort
             <input type="number" min={0} max={WORKSPACE_FIELD_LIMITS.maximumSortOrder} value={sortOrder} onChange={(event) => setSortOrder(event.target.valueAsNumber)} required disabled={isSaving} className={FIELD_CLASS} />
           </label>
         </div>
-        {(validationError || requestError) && <p role="alert" className="text-xs text-rose-300">{validationError ?? requestError}</p>}
+        {(validationError || requestError) && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{validationError ?? requestError}</p>}
         <div className="flex flex-col-reverse gap-2 border-t border-accent/15 pt-4 sm:flex-row sm:justify-end">
           <button
             type="button"

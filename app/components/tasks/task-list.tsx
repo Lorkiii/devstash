@@ -186,7 +186,7 @@ export function TaskList() {
         )}
       </Modal>
 
-      {actionError && !activeFormId && <p role="alert" className="text-xs text-rose-300">{actionError}</p>}
+      {actionError && !activeFormId && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
 
       <TaskCategoryManager />
 
@@ -253,7 +253,7 @@ export function TaskList() {
                   disabled={busyId === task.id}
                   className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors cursor-pointer ${
                     task.done
-                      ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-300"
+                      ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-700 dark:text-emerald-300"
                       : "border-accent/40 hover:border-accent"
                   }`}
                 >
@@ -300,7 +300,7 @@ export function TaskList() {
                     }}
                     disabled={busyId === task.id}
                     aria-label="Delete task"
-                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-300/65 hover:text-rose-200 disabled:opacity-50"
+                    className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-700/75 hover:text-rose-800 dark:text-rose-300/65 dark:hover:text-rose-200 disabled:opacity-50"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>

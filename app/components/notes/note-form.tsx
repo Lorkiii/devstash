@@ -59,7 +59,7 @@ export function NoteForm({ note, projects, fixedProject, isSaving, requestError,
           <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="process, private" autoComplete="off" spellCheck={false} disabled={isSaving} className={FIELD_CLASS} />
           <span className="mt-1 block text-[10px] text-subtle-foreground">Comma-separated; up to {WORKSPACE_FIELD_LIMITS.tagCount} tags.</span>
         </label>
-        {(validationError || requestError) && <p role="alert" className="text-xs text-rose-300">{validationError ?? requestError}</p>}
+        {(validationError || requestError) && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{validationError ?? requestError}</p>}
         <div className="flex flex-col-reverse gap-2 border-t border-accent/15 pt-4 sm:flex-row sm:justify-end">
           <button
             type="button"

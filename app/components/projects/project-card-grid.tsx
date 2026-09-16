@@ -29,7 +29,7 @@ export function ProjectCardGrid({ data }: ProjectCardGridProps) {
           <Link
             key={project.id}
             href={`/projects/${project.id}`}
-            className="group rounded-lg border border-accent/25 bg-surface/85 backdrop-blur-md p-4 font-mono hover:border-accent/60 hover:shadow-[0_0_30px_rgba(110,168,255,0.12)] transition-all"
+            className="devstash-panel devstash-panel-link group rounded-2xl border p-4 font-mono"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0">

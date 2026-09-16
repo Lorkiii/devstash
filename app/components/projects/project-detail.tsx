@@ -140,7 +140,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         type="button"
         disabled={isDeleting}
         onClick={() => void handleProjectDelete()}
-        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50"
+        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 disabled:opacity-50"
       >
         <Trash2 className="h-3 w-3" /> {isDeleting ? "DELETING…" : "DELETE"}
       </button>
@@ -178,7 +178,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         />
       </Modal>
 
-      {actionError && !editingProject && <p role="alert" className="text-xs text-rose-300">{actionError}</p>}
+      {actionError && !editingProject && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
 
       {activeTab === "env" && (
         <ProjectEnvWorkspace

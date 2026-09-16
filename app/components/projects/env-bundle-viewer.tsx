@@ -72,9 +72,9 @@ export function EnvBundleViewer({
             aria-label="Copy complete environment bundle"
             className={`inline-flex min-h-10 items-center gap-1.5 rounded border px-2.5 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
               controls.copyStatus === "copied"
-                ? "border-emerald-400/50 text-emerald-400"
+                ? "border-emerald-400/50 text-emerald-700 dark:text-emerald-400"
                 : controls.copyStatus === "error"
-                  ? "border-rose-400/50 text-rose-300"
+                  ? "border-rose-400/50 text-rose-700 dark:text-rose-300"
                 : "border-accent/20 text-muted-foreground hover:text-accent hover:border-accent/50"
             }`}
           >
@@ -95,7 +95,7 @@ export function EnvBundleViewer({
             onClick={onDelete}
             disabled={isDeleting}
             aria-label="Delete environment bundle"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-300/70 hover:text-rose-200 disabled:opacity-50"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-700/75 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 disabled:opacity-50"
           >
             <Trash2 className="h-3 w-3" />
           </button>

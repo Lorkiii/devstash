@@ -26,10 +26,10 @@ const TOGGLES: { key: ToggleKey; label: string; sample: string }[] = [
 ];
 
 function strengthLabel(bits: number): { label: string; className: string } {
-  if (bits >= 100) return { label: "EXCELLENT", className: "text-emerald-300" };
+  if (bits >= 100) return { label: "EXCELLENT", className: "text-emerald-700 dark:text-emerald-300" };
   if (bits >= 75) return { label: "STRONG", className: "text-accent" };
-  if (bits >= 50) return { label: "FAIR", className: "text-amber-300" };
-  return { label: "WEAK", className: "text-rose-300" };
+  if (bits >= 50) return { label: "FAIR", className: "text-amber-700 dark:text-amber-300" };
+  return { label: "WEAK", className: "text-rose-700 dark:text-rose-300" };
 }
 
 export function PasswordGenerator() {

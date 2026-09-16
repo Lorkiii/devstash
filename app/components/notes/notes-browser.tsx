@@ -204,7 +204,7 @@ export function NotesBrowser() {
                   <button type="button" onClick={() => setFormId(selected.id)} disabled={isDeleting} className="inline-flex min-h-10 items-center gap-1 rounded border border-accent/20 px-2 py-1 text-[10px] tracking-widest text-muted-foreground hover:text-foreground disabled:opacity-50">
                     <Pencil className="h-3 w-3" /> EDIT
                   </button>
-                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:opacity-50">
+                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 disabled:opacity-50">
                     <Trash2 className="h-3 w-3" /> {isDeleting ? "DELETING…" : "DELETE"}
                   </button>
                 </div>
@@ -234,7 +234,7 @@ export function NotesBrowser() {
               <p className="mt-6 text-[10px] text-subtle-foreground font-mono">
                 Plain-text preview. Sanitized Markdown rendering is a later, reviewed step.
               </p>
-              {actionError && <p role="alert" className="mt-4 text-xs text-rose-300">{actionError}</p>}
+              {actionError && <p role="alert" className="mt-4 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
             </ConsolePanel>
           ) : (
             <ConsolePanel title="NOTE" tone="muted" className="h-full">

@@ -70,14 +70,14 @@ export function Modal({
       onClick={(event) => {
         if (event.target === event.currentTarget) requestClose();
       }}
-      className={`devstash-modal fixed inset-0 m-auto w-[calc(100%-1rem)] ${MAX_WIDTH_CLASS[maxWidth]} max-h-[calc(100dvh-1rem)] overflow-hidden rounded-xl border border-accent/35 bg-surface p-0 font-mono text-foreground shadow-[0_24px_100px_rgba(0,0,0,0.65),0_0_44px_rgba(110,168,255,0.14)] outline-none animate-fadeIn sm:w-[calc(100%-2rem)] sm:max-h-[calc(100dvh-2rem)]`}
+      className={`devstash-modal devstash-panel shadow-modal fixed inset-0 m-auto w-[calc(100%-1rem)] ${MAX_WIDTH_CLASS[maxWidth]} max-h-[calc(100dvh-1rem)] overflow-hidden rounded-2xl border p-0 font-mono text-foreground outline-none animate-fadeIn sm:w-[calc(100%-2rem)] sm:max-h-[calc(100dvh-2rem)]`}
     >
       <div className="flex max-h-[calc(100dvh-1rem)] min-h-0 flex-col sm:max-h-[calc(100dvh-2rem)]">
         <div
           aria-hidden="true"
           className="h-px shrink-0 bg-linear-to-r from-transparent via-accent/80 to-transparent"
         />
-        <header className="flex shrink-0 items-start gap-3 border-b border-accent/15 px-4 py-3.5 sm:px-6 sm:py-4">
+        <header className="devstash-panel-header flex shrink-0 items-start gap-3 border-b px-4 py-3.5 sm:px-6 sm:py-4">
           <span
             aria-hidden="true"
             className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/25 bg-accent/10 text-accent"
@@ -122,7 +122,7 @@ export function Modal({
         <div className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}>{children}</div>
 
         {footer && (
-          <footer className="flex shrink-0 flex-col items-stretch gap-3 border-t border-accent/15 bg-surface-muted/90 px-4 py-3.5 text-[10px] text-subtle-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <footer className="devstash-panel-header flex shrink-0 flex-col items-stretch gap-3 border-t px-4 py-3.5 text-[10px] text-subtle-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
             {footer}
           </footer>
         )}

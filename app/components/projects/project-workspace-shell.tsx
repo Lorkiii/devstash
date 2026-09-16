@@ -35,9 +35,9 @@ const WORKSPACE_META: Record<ProjectWorkspaceTab, WorkspaceMeta> = {
     title: "Environment workspace",
     description: "Manage complete encrypted environment files and reveal their contents only when needed.",
     icon: FileCode2,
-    activeClass: "border-cyan-400/70 bg-cyan-400/10 text-cyan-100",
-    iconClass: "border-cyan-400/30 bg-cyan-400/10 text-cyan-300",
-    countClass: "bg-cyan-400/15 text-cyan-200",
+    activeClass: "border-cyan-400/70 bg-cyan-400/10 text-cyan-800 dark:text-cyan-100",
+    iconClass: "border-cyan-400/30 bg-cyan-400/10 text-cyan-700 dark:text-cyan-300",
+    countClass: "bg-cyan-400/15 text-cyan-700 dark:text-cyan-200",
     lineClass: "via-cyan-400/80",
   },
   secrets: {
@@ -45,9 +45,9 @@ const WORKSPACE_META: Record<ProjectWorkspaceTab, WorkspaceMeta> = {
     title: "Secrets workspace",
     description: "Inspect and manage project-linked secrets while keeping sensitive values masked by default.",
     icon: KeyRound,
-    activeClass: "border-violet-400/70 bg-violet-400/10 text-violet-100",
-    iconClass: "border-violet-400/30 bg-violet-400/10 text-violet-300",
-    countClass: "bg-violet-400/15 text-violet-200",
+    activeClass: "border-violet-400/70 bg-violet-400/10 text-violet-800 dark:text-violet-100",
+    iconClass: "border-violet-400/30 bg-violet-400/10 text-violet-700 dark:text-violet-300",
+    countClass: "bg-violet-400/15 text-violet-700 dark:text-violet-200",
     lineClass: "via-violet-400/80",
   },
   notes: {
@@ -55,9 +55,9 @@ const WORKSPACE_META: Record<ProjectWorkspaceTab, WorkspaceMeta> = {
     title: "Notes workspace",
     description: "Search, read, and update the private notes that belong to this project.",
     icon: FileText,
-    activeClass: "border-amber-400/70 bg-amber-400/10 text-amber-100",
-    iconClass: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-    countClass: "bg-amber-400/15 text-amber-200",
+    activeClass: "border-amber-400/70 bg-amber-400/10 text-amber-800 dark:text-amber-100",
+    iconClass: "border-amber-400/30 bg-amber-400/10 text-amber-700 dark:text-amber-300",
+    countClass: "bg-amber-400/15 text-amber-700 dark:text-amber-200",
     lineClass: "via-amber-400/80",
   },
   tasks: {
@@ -65,9 +65,9 @@ const WORKSPACE_META: Record<ProjectWorkspaceTab, WorkspaceMeta> = {
     title: "Tasks workspace",
     description: "Plan project work, track open items, and keep completed tasks available on demand.",
     icon: CheckSquare2,
-    activeClass: "border-emerald-400/70 bg-emerald-400/10 text-emerald-100",
-    iconClass: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-    countClass: "bg-emerald-400/15 text-emerald-200",
+    activeClass: "border-emerald-400/70 bg-emerald-400/10 text-emerald-800 dark:text-emerald-100",
+    iconClass: "border-emerald-400/30 bg-emerald-400/10 text-emerald-700 dark:text-emerald-300",
+    countClass: "bg-emerald-400/15 text-emerald-700 dark:text-emerald-200",
     lineClass: "via-emerald-400/80",
   },
 };
@@ -106,11 +106,11 @@ export function ProjectWorkspaceShell({
   };
 
   return (
-    <section className="overflow-hidden rounded-xl border border-accent/25 bg-surface/82 font-mono text-foreground backdrop-blur-md">
+    <section data-panel-tone={activeTab} className="devstash-panel overflow-hidden rounded-2xl border font-mono text-foreground">
       <div
         role="tablist"
         aria-label="Project workspaces"
-        className="flex min-w-0 overflow-x-auto border-b border-accent/15 bg-surface-muted/55 px-2 pt-2 [scrollbar-width:thin] sm:px-3"
+        className="devstash-panel-header flex min-w-0 overflow-x-auto border-b px-2 pt-2 [scrollbar-width:thin] sm:px-3"
       >
         {PROJECT_WORKSPACE_TABS.map((tab, index) => {
           const meta = WORKSPACE_META[tab];

@@ -22,8 +22,8 @@ const DOT_CLASS: Record<ConsolePanelTone, string> = {
   muted: "bg-subtle-foreground",
 };
 
-// Terminal-style card used across the app shell. Same frame as the landing
-// page's access panel: dark surface, blue hairline border, mono header row.
+// Terminal-style card used across the app shell. Theme tokens keep the console
+// frame crisp in light mode without flattening the darker vault experience.
 export function ConsolePanel({
   title,
   status,
@@ -35,9 +35,10 @@ export function ConsolePanel({
 }: ConsolePanelProps) {
   return (
     <section
-      className={`shadow-panel flex min-h-0 flex-col rounded-xl border border-border/80 bg-surface/92 text-foreground backdrop-blur-md ${className}`}
+      data-panel-tone={tone}
+      className={`devstash-panel flex min-h-0 flex-col overflow-hidden rounded-2xl border text-foreground ${className}`}
     >
-      <header className="flex flex-col items-start gap-2 border-b border-border/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <header className="devstash-panel-header flex flex-col items-start gap-2 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-2 h-2 rounded-full shrink-0 ${DOT_CLASS[tone]}`} />
           <h3 className="truncate font-mono text-[11px] font-bold tracking-widest text-accent">{title}</h3>

@@ -35,7 +35,7 @@ export function VaultItemDetail({
         type="button"
         onClick={onDelete}
         disabled={isDeleting}
-        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-300/75 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Trash2 className="w-3 h-3" /> {isDeleting ? "DELETING…" : "DELETE"}
       </button>
@@ -87,7 +87,7 @@ export function VaultItemDetail({
         </div>
       )}
 
-      {actionError && <p role="alert" className="mt-4 text-xs text-rose-300">{actionError}</p>}
+      {actionError && <p role="alert" className="mt-4 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
 
       <p className="mt-4 text-[10px] text-subtle-foreground">
         Reveal auto-hides after 10s. Copy is explicit; clipboard clearing is best-effort and not guaranteed.
@@ -100,7 +100,7 @@ export function VaultItemDetail({
       <section className="min-w-0 px-4 py-4 sm:px-5">
         <header className="mb-4 flex flex-col gap-3 border-b border-accent/12 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-[10px] font-bold tracking-widest text-violet-300">{meta.label.toUpperCase()}</div>
+            <div className="text-[10px] font-bold tracking-widest text-violet-700 dark:text-violet-300">{meta.label.toUpperCase()}</div>
             <div className="mt-1 text-[10px] tracking-wider text-subtle-foreground">updated {formatDate(item.updatedAt)}</div>
           </div>
           {actions}

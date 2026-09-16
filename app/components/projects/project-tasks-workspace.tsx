@@ -189,7 +189,7 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
                 onClick={() => setCategoryFilter(filter.id)}
                 className={`min-h-9 rounded-lg border px-2.5 py-1 text-[10px] tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 ${
                   active
-                    ? "border-emerald-400/45 bg-emerald-400/10 text-emerald-100"
+                    ? "border-emerald-400/45 bg-emerald-400/10 text-emerald-800 dark:text-emerald-100"
                     : "border-accent/14 text-subtle-foreground hover:border-accent/35 hover:text-muted-foreground"
                 }`}
               >
@@ -210,7 +210,7 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
         </label>
       </div>
 
-      {actionError && !formId && <p role="alert" className="border-b border-rose-400/10 px-4 py-3 text-xs text-rose-300 sm:px-5">{actionError}</p>}
+      {actionError && !formId && <p role="alert" className="border-b border-rose-400/10 px-4 py-3 text-xs text-rose-700 dark:text-rose-300 sm:px-5">{actionError}</p>}
 
       {visible.length === 0 ? (
         <WorkspaceEmptyState
@@ -230,7 +230,7 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
                 disabled={busyId === task.id}
                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/55 ${
                   task.done
-                    ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-200"
+                    ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-700 dark:text-emerald-200"
                     : "border-accent/40 hover:border-emerald-400/70"
                 } disabled:opacity-50`}
               >
@@ -269,7 +269,7 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
                   onClick={() => void deleteSelectedTask(task)}
                   disabled={busyId === task.id}
                   aria-label={`Delete ${task.title}`}
-                  className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-300/70 transition-colors hover:border-rose-400/45 hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
+                  className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

@@ -161,7 +161,7 @@ export function ProjectSecretsWorkspace({
         <div className="grid min-w-0 lg:grid-cols-[minmax(16rem,0.82fr)_minmax(0,1.18fr)]">
           <div className={`${selected ? "hidden lg:block" : ""} min-w-0 border-accent/12 lg:border-r`}>
             <label className="flex min-h-12 items-center gap-2 border-b border-accent/10 px-4 py-2.5">
-              <Search className="h-3.5 w-3.5 shrink-0 text-violet-300/70" aria-hidden="true" />
+              <Search className="h-3.5 w-3.5 shrink-0 text-violet-700/80 dark:text-violet-300/70" aria-hidden="true" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
