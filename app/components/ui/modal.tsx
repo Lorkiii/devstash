@@ -23,6 +23,7 @@ export function Modal({
   icon,
   footer,
   maxWidth = "2xl",
+  bodyClassName = "p-4 sm:p-6",
   closeDisabled = false,
   children,
 }: ModalProps) {
@@ -69,17 +70,17 @@ export function Modal({
       onClick={(event) => {
         if (event.target === event.currentTarget) requestClose();
       }}
-      className={`devstash-modal fixed inset-0 m-auto w-[calc(100%-1rem)] ${MAX_WIDTH_CLASS[maxWidth]} max-h-[calc(100dvh-1rem)] overflow-hidden rounded-xl border border-[#6ea8ff]/35 bg-[#0a1220] p-0 font-mono text-[#e8eefb] shadow-[0_24px_100px_rgba(0,0,0,0.65),0_0_44px_rgba(110,168,255,0.14)] outline-none animate-fadeIn sm:w-[calc(100%-2rem)] sm:max-h-[calc(100dvh-2rem)]`}
+      className={`devstash-modal fixed inset-0 m-auto w-[calc(100%-1rem)] ${MAX_WIDTH_CLASS[maxWidth]} max-h-[calc(100dvh-1rem)] overflow-hidden rounded-xl border border-accent/35 bg-surface p-0 font-mono text-foreground shadow-[0_24px_100px_rgba(0,0,0,0.65),0_0_44px_rgba(110,168,255,0.14)] outline-none animate-fadeIn sm:w-[calc(100%-2rem)] sm:max-h-[calc(100dvh-2rem)]`}
     >
       <div className="flex max-h-[calc(100dvh-1rem)] min-h-0 flex-col sm:max-h-[calc(100dvh-2rem)]">
         <div
           aria-hidden="true"
-          className="h-px shrink-0 bg-linear-to-r from-transparent via-[#6ea8ff]/80 to-transparent"
+          className="h-px shrink-0 bg-linear-to-r from-transparent via-accent/80 to-transparent"
         />
-        <header className="flex shrink-0 items-start gap-3 border-b border-[#6ea8ff]/15 px-4 py-3.5 sm:px-6 sm:py-4">
+        <header className="flex shrink-0 items-start gap-3 border-b border-accent/15 px-4 py-3.5 sm:px-6 sm:py-4">
           <span
             aria-hidden="true"
-            className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[#6ea8ff]/25 bg-[#6ea8ff]/10 text-[#6ea8ff]"
+            className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/25 bg-accent/10 text-accent"
           >
             {icon ?? <ShieldLockIcon className="h-4.5 w-4.5" />}
           </span>
@@ -87,12 +88,12 @@ export function Modal({
             <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
               <h2
                 id={titleId}
-                className="break-words text-sm font-bold tracking-[0.12em] text-[#e8eefb] sm:text-base"
+                className="break-words text-sm font-bold tracking-[0.12em] text-foreground sm:text-base"
               >
                 {title}
               </h2>
               {status && (
-                <span className="rounded border border-[#6ea8ff]/20 bg-[#05070d]/70 px-2 py-0.5 text-[9px] tracking-[0.16em] text-[#6ea8ff]/80">
+                <span className="rounded border border-accent/20 bg-background/70 px-2 py-0.5 text-[9px] tracking-[0.16em] text-accent">
                   {status}
                 </span>
               )}
@@ -100,7 +101,7 @@ export function Modal({
             {description && (
               <p
                 id={descriptionId}
-                className="mt-1.5 max-w-prose font-sans text-xs leading-relaxed text-[#e8eefb]/55"
+                className="mt-1.5 max-w-prose font-sans text-xs leading-relaxed text-muted-foreground"
               >
                 {description}
               </p>
@@ -111,17 +112,17 @@ export function Modal({
             onClick={requestClose}
             disabled={closeDisabled}
             aria-label={`Close ${title}`}
-            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#6ea8ff]/20 bg-[#05070d]/45 px-2.5 text-[#e8eefb]/55 transition-colors hover:border-[#6ea8ff]/40 hover:bg-[#6ea8ff]/10 hover:text-[#6ea8ff] disabled:cursor-not-allowed disabled:opacity-35"
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/20 bg-background/45 px-2.5 text-muted-foreground transition-colors hover:border-accent/40 hover:bg-accent/10 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
           >
             <X className="h-4 w-4" />
             <span className="hidden text-[9px] tracking-widest sm:inline">ESC</span>
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
+        <div className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}>{children}</div>
 
         {footer && (
-          <footer className="flex shrink-0 flex-col items-stretch gap-3 border-t border-[#6ea8ff]/15 bg-[#070d18]/90 px-4 py-3.5 text-[10px] text-[#e8eefb]/50 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <footer className="flex shrink-0 flex-col items-stretch gap-3 border-t border-accent/15 bg-surface-muted/90 px-4 py-3.5 text-[10px] text-subtle-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
             {footer}
           </footer>
         )}

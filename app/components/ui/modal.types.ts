@@ -11,6 +11,7 @@ export interface ModalProps {
   icon?: ReactNode;
   footer?: ReactNode;
   maxWidth?: ModalMaxWidth;
+  bodyClassName?: string;
   closeDisabled?: boolean;
   children: ReactNode;
 }
