@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "./components/theme/theme-provider";
+import { parseThemePreference, THEME_COOKIE_NAME } from "./lib/theme";
 import type { RootLayoutProps } from "./layout.types";
 import "./globals.css";
 
@@ -25,14 +28,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const theme = parseThemePreference((await cookies()).get(THEME_COOKIE_NAME)?.value);
+
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      data-theme={theme}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased ${theme === "dark" ? "dark" : ""}`}
     >
-      <body className="min-h-full flex flex-col bg-[#05070d] text-[#e8eefb] selection:bg-[#6ea8ff]/30 selection:text-white">
-        {children}
+      <body className="flex min-h-full flex-col bg-background text-foreground selection:bg-accent/30 selection:text-foreground">
+        <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
       </body>
     </html>
   );

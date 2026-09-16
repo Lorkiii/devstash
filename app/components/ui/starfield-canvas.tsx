@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { useTheme } from "@/app/components/theme/theme-provider";
+import { THEME_STARFIELD_COLORS } from "@/app/lib/theme";
 import type {
   OrbitLayer,
   Star,
@@ -58,6 +60,7 @@ export function StarfieldCanvas({
   motion = "drift",
 }: StarfieldCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,6 +68,7 @@ export function StarfieldCanvas({
 
     const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
+    const colors = THEME_STARFIELD_COLORS[theme];
 
     let animationFrameId: number | null = null;
     let width = (canvas.width = window.innerWidth);
@@ -203,14 +207,15 @@ export function StarfieldCanvas({
               (s.depth === "far" ? 0.82 + pulse * 0.18 : 0.62 + pulse * 0.38)
             : 0.22 + 0.72 * pulse;
 
-        ctx.globalAlpha = Math.min(1, Math.max(0.1, twinkle));
+        const themeOpacity = theme === "light" ? 0.46 : 1;
+        ctx.globalAlpha = Math.min(1, Math.max(0.08, twinkle * themeOpacity));
 
         if (s.hue === "cyan") {
-          ctx.fillStyle = "#6ea8ff";
+          ctx.fillStyle = colors.cyan;
         } else if (s.hue === "white") {
-          ctx.fillStyle = "#ffffff";
+          ctx.fillStyle = colors.white;
         } else {
-          ctx.fillStyle = "#dbe7ff";
+          ctx.fillStyle = colors.cool;
         }
 
         ctx.beginPath();
@@ -295,7 +300,7 @@ export function StarfieldCanvas({
         handleMotionPreferenceChange
       );
     };
-  }, [starCount, motion]);
+  }, [starCount, motion, theme]);
 
   return (
     <canvas

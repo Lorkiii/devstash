@@ -90,7 +90,7 @@ function ShellFrame({ children }: ShellFrameProps) {
   }, [isUnlocked]);
 
   return (
-    <div className="relative h-dvh flex flex-col bg-[#05070d] text-[#e8eefb] overflow-hidden">
+    <div className="relative h-dvh flex flex-col bg-background text-foreground overflow-hidden">
       <div className="absolute inset-0 opacity-50 pointer-events-none">
         <StarfieldCanvas starCount={90} />
       </div>

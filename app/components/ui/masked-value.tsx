@@ -26,8 +26,8 @@ export function MaskedValue({
   return (
     <div className="flex items-start gap-2 min-w-0">
       <div
-        className={`flex-1 min-w-0 rounded border border-[#6ea8ff]/15 bg-[#070d18]/90 px-2.5 py-1.5 font-mono ${textSize} ${
-          showValue ? "text-[#e8eefb]" : "text-[#e8eefb]/40 tracking-[0.15em]"
+        className={`flex-1 min-w-0 rounded border border-accent/15 bg-surface-muted/90 px-2.5 py-1.5 font-mono ${textSize} ${
+          showValue ? "text-foreground" : "text-subtle-foreground tracking-[0.15em]"
         } ${(isMultiline || wrap) && showValue ? "whitespace-pre-wrap break-all" : "truncate"}`}
       >
         {showValue ? value : MASK}
@@ -39,11 +39,11 @@ export function MaskedValue({
             onClick={controls.toggleReveal}
             aria-label={controls.revealed ? `Hide ${label}` : `Reveal ${label}`}
             aria-pressed={controls.revealed}
-            className="relative inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 text-[#e8eefb]/70 hover:text-[#6ea8ff] hover:border-[#6ea8ff]/50 transition-colors cursor-pointer"
+            className="relative inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors cursor-pointer"
           >
             {controls.revealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             {controls.revealed && (
-              <span aria-hidden="true" className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-[#6ea8ff] text-[#05070d] text-[9px] font-bold leading-4 text-center">
+              <span aria-hidden="true" className="absolute -top-1.5 -right-1.5 min-w-4 h-4 px-0.5 rounded-full bg-accent text-accent-foreground text-[9px] font-bold leading-4 text-center">
                 {controls.remainingSeconds}
               </span>
             )}
@@ -58,7 +58,7 @@ export function MaskedValue({
               ? "border-emerald-400/50 text-emerald-400"
               : controls.copyStatus === "error"
                 ? "border-rose-400/50 text-rose-300"
-              : "border-[#6ea8ff]/20 text-[#e8eefb]/70 hover:text-[#6ea8ff] hover:border-[#6ea8ff]/50"
+              : "border-accent/20 text-muted-foreground hover:text-accent hover:border-accent/50"
           }`}
         >
           {controls.copyStatus === "copied" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}

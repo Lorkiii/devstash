@@ -21,23 +21,23 @@ export function AppHeader({
   onSignOut,
 }: AppHeaderProps) {
   return (
-    <header className="relative z-20 h-14 shrink-0 border-b border-[#6ea8ff]/15 bg-[#05070d]/70 backdrop-blur-md">
+    <header className="relative z-20 h-14 shrink-0 border-b border-accent/15 bg-background/70 backdrop-blur-md">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:gap-3 sm:px-5 lg:px-6">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onOpenMobileNav}
             aria-label="Open navigation"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded text-[#e8eefb]/70 hover:text-[#e8eefb] cursor-pointer md:hidden"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer md:hidden"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link href="/dashboard" className="flex items-center gap-1.5 font-bold tracking-[0.08em] text-lg text-[#e8eefb]">
+          <Link href="/dashboard" className="flex items-center gap-1.5 font-bold tracking-[0.08em] text-lg text-foreground">
             <span>DEVSTASH</span>
-            <span className="text-[#6ea8ff] font-extrabold">↑</span>
+            <span className="text-accent font-extrabold">↑</span>
           </Link>
-          <span className="hidden sm:inline-block text-[10px] font-mono tracking-widest text-[#6ea8ff] px-2 py-0.5 rounded bg-[#6ea8ff]/10 border border-[#6ea8ff]/25">
-            VAULT · V1
+          <span className="hidden sm:inline-block text-[10px] font-mono tracking-widest text-accent px-2 py-0.5 rounded bg-accent/10 border border-accent/25">
+            PRIVATE VAULT
           </span>
         </div>
 
@@ -45,11 +45,11 @@ export function AppHeader({
           type="button"
           onClick={onOpenPalette}
           disabled={!isUnlocked}
-          className="hidden sm:flex items-center gap-3 w-full max-w-sm rounded border border-[#6ea8ff]/20 bg-[#0a1220]/70 px-3 py-1.5 font-mono text-xs text-[#e8eefb]/50 hover:border-[#6ea8ff]/50 hover:text-[#e8eefb]/80 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="hidden sm:flex items-center gap-3 w-full max-w-sm rounded border border-accent/20 bg-surface/70 px-3 py-1.5 font-mono text-xs text-subtle-foreground hover:border-accent/50 hover:text-muted-foreground transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Search className="w-3.5 h-3.5" />
           <span className="flex-1 text-left">Search vault, run a command…</span>
-          <kbd className="rounded border border-[#6ea8ff]/25 px-1.5 py-0.5 text-[10px] text-[#6ea8ff]">
+          <kbd className="rounded border border-accent/25 px-1.5 py-0.5 text-[10px] text-accent">
             Ctrl K
           </kbd>
         </button>
@@ -77,7 +77,7 @@ export function AppHeader({
             onClick={onSignOut}
             aria-label="Sign out"
             title="Sign out"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-[#6ea8ff]/20 text-[#e8eefb]/60 transition-colors hover:border-[#6ea8ff]/50 hover:text-[#e8eefb] cursor-pointer"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 text-muted-foreground transition-colors hover:border-accent/50 hover:text-foreground cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>

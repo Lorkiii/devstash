@@ -2,7 +2,7 @@ import type { TaskCategoryColorToken } from "@/app/lib/vault-data.types";
 import type { TaskCategoryBadgeProps } from "./task-category-badge.types";
 
 const COLOR_CLASSES: Record<TaskCategoryColorToken, string> = {
-  blue: "border-[#6ea8ff]/45 bg-[#6ea8ff]/12 text-[#b8d2ff]",
+  blue: "border-accent/45 bg-accent/12 text-accent-strong",
   cyan: "border-cyan-400/45 bg-cyan-400/10 text-cyan-200",
   violet: "border-violet-400/45 bg-violet-400/10 text-violet-200",
   emerald: "border-emerald-400/45 bg-emerald-400/10 text-emerald-200",

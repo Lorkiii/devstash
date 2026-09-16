@@ -28,8 +28,8 @@ type LockPanelMode = "unlock" | "recover" | "restore";
 const GENERIC_UNLOCK_ERROR = "Unable to unlock the vault. Check your passphrase and try again.";
 const GENERIC_RECOVERY_ERROR = "Unable to recover the vault with that Recovery Phrase.";
 const GENERIC_RESTORE_ERROR = "Unable to restore that encrypted backup with the provided passphrase.";
-const FIELD_CLASS = "w-full rounded border border-[#6ea8ff]/25 bg-[#05070d]/80 px-3 py-2.5 font-mono text-sm text-[#e8eefb] outline-none placeholder:text-[#e8eefb]/25 focus:border-[#6ea8ff]/70";
-const PRIMARY_BUTTON_CLASS = "inline-flex min-h-10 items-center justify-center gap-2 rounded border border-[#6ea8ff]/50 bg-[#6ea8ff]/15 px-4 py-2 font-mono text-xs font-semibold tracking-wider text-[#e8eefb] hover:bg-[#6ea8ff]/25 disabled:cursor-not-allowed disabled:opacity-50";
+const FIELD_CLASS = "w-full rounded border border-accent/25 bg-background/80 px-3 py-2.5 font-mono text-sm text-foreground outline-none placeholder:text-subtle-foreground focus:border-accent/70";
+const PRIMARY_BUTTON_CLASS = "inline-flex min-h-10 items-center justify-center gap-2 rounded border border-accent/50 bg-accent/15 px-4 py-2 font-mono text-xs font-semibold tracking-wider text-foreground hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-50";
 
 function operationError(error: unknown, fallback: string): string {
   if (error instanceof DOMException && error.name === "AbortError") return "Operation cancelled.";
@@ -240,7 +240,7 @@ export function VaultLockPanel() {
     return (
       <PanelFrame status="CHECKING PROFILE">
         <h2 id="vault-lock-title" className="sr-only">Checking vault status</h2>
-        <div className="flex items-center gap-3 text-sm text-[#e8eefb]/70" role="status">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground" role="status">
           <LoaderCircle className="h-4 w-4 animate-spin" /> Loading vault status…
         </div>
       </PanelFrame>
@@ -251,7 +251,7 @@ export function VaultLockPanel() {
     return (
       <PanelFrame status="PROFILE UNAVAILABLE">
         <h2 id="vault-lock-title" className="mb-2 text-lg font-semibold">Vault status could not be loaded</h2>
-        <p className="mb-4 text-sm leading-relaxed text-[#e8eefb]/65">
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
           No key or private data was loaded. Check the connection and try again.
         </p>
         <button type="button" onClick={() => void session.reloadProfile()} className={PRIMARY_BUTTON_CLASS}>
@@ -306,7 +306,7 @@ export function VaultLockPanel() {
         <form onSubmit={handleCreateDraft} className="space-y-4">
           <div>
             <h2 id="vault-lock-title" className="text-lg font-semibold">Create your encrypted vault</h2>
-            <p className="mt-2 text-sm leading-relaxed text-[#e8eefb]/65">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Choose a passphrase of 15–128 characters. It stays in this browser and only wraps your vault key.
             </p>
           </div>
@@ -330,7 +330,7 @@ export function VaultLockPanel() {
               setError(null);
               setMode("restore");
             }}
-            className="ml-2 min-h-10 rounded border border-[#6ea8ff]/25 px-4 py-2 font-mono text-xs text-[#e8eefb]/65 hover:border-[#6ea8ff]/60 hover:text-[#e8eefb] disabled:opacity-50"
+            className="ml-2 min-h-10 rounded border border-accent/25 px-4 py-2 font-mono text-xs text-muted-foreground hover:border-accent/60 hover:text-foreground disabled:opacity-50"
           >
             RESTORE ENCRYPTED BACKUP
           </button>
@@ -341,7 +341,7 @@ export function VaultLockPanel() {
 
   return (
     <PanelFrame status={mode === "unlock" ? "SIGNED IN · LOCKED" : mode === "recover" ? "LOCAL RECOVERY" : "ENCRYPTED RESTORE"}>
-      <div className="mb-4 flex rounded border border-[#6ea8ff]/15 bg-[#05070d]/50 p-1" role="tablist" aria-label="Vault access method">
+      <div className="mb-4 flex rounded border border-accent/15 bg-background/50 p-1" role="tablist" aria-label="Vault access method">
         {(["unlock", "recover", "restore"] as const).map((candidate) => (
           <button
             key={candidate}
@@ -355,7 +355,7 @@ export function VaultLockPanel() {
               setError(null);
               setMode(candidate);
             }}
-            className={`flex-1 rounded px-3 py-2 font-mono text-[10px] tracking-widest ${mode === candidate ? "bg-[#6ea8ff]/15 text-[#e8eefb]" : "text-[#e8eefb]/45"}`}
+            className={`flex-1 rounded px-3 py-2 font-mono text-[10px] tracking-widest ${mode === candidate ? "bg-accent/15 text-foreground" : "text-subtle-foreground"}`}
           >
             {candidate === "unlock" ? "PASSPHRASE" : candidate === "recover" ? "RECOVERY PHRASE" : "RESTORE BACKUP"}
           </button>
@@ -395,7 +395,7 @@ export function VaultLockPanel() {
           onSubmit={handleRestore}
         />
       )}
-      <p className="mt-4 border-t border-[#6ea8ff]/15 pt-3 text-[10px] leading-relaxed text-[#e8eefb]/40">
+      <p className="mt-4 border-t border-accent/15 pt-3 text-[10px] leading-relaxed text-subtle-foreground">
         No passphrase or Recovery Phrase is sent to DevStash. Capability failure keeps the vault locked; there is no weaker fallback.
       </p>
     </PanelFrame>
@@ -406,9 +406,9 @@ function PanelFrame({ children, status }: { children: React.ReactNode; status: s
   return (
     <section
       aria-labelledby="vault-lock-title"
-      className="w-full max-w-xl rounded-lg border border-[#6ea8ff]/30 bg-[#0a1220]/90 p-5 font-mono text-[#e8eefb] shadow-xl sm:p-6"
+      className="w-full max-w-xl rounded-lg border border-accent/30 bg-surface/90 p-5 font-mono text-foreground shadow-xl sm:p-6"
     >
-      <div className="mb-4 flex items-center gap-2 border-b border-[#6ea8ff]/20 pb-3 text-xs tracking-widest text-amber-300">
+      <div className="mb-4 flex items-center gap-2 border-b border-accent/20 pb-3 text-xs tracking-widest text-amber-300">
         <ShieldLockIcon className="h-4 w-4" /> {status}
       </div>
       {children}
@@ -436,7 +436,7 @@ function PassphraseFields({
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="block">
-        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">
+        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground">
           {label.toUpperCase()}
         </span>
         <input
@@ -451,7 +451,7 @@ function PassphraseFields({
         />
       </label>
       <label className="block">
-        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">
+        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground">
           {confirmationLabel.toUpperCase()}
         </span>
         <input
@@ -505,7 +505,7 @@ function RecoveryPhraseConfirmation({
           {draft.recoveryPhrase}
         </div>
         <label className="block">
-          <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">
+          <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground">
             RE-ENTER THE COMPLETE SAVED PHRASE
           </span>
           <textarea
@@ -519,7 +519,7 @@ function RecoveryPhraseConfirmation({
             className={FIELD_CLASS}
           />
         </label>
-        <label className="flex items-start gap-2 text-xs leading-relaxed text-[#e8eefb]/65">
+        <label className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
           <input
             type="checkbox"
             checked={acknowledged}
@@ -540,7 +540,7 @@ function RecoveryPhraseConfirmation({
             type="button"
             disabled={isWorking}
             onClick={onCancel}
-            className="min-h-10 rounded border border-[#6ea8ff]/20 px-4 py-2 font-mono text-xs text-[#e8eefb]/60 disabled:opacity-50"
+            className="min-h-10 rounded border border-accent/20 px-4 py-2 font-mono text-xs text-muted-foreground disabled:opacity-50"
           >
             CANCEL
           </button>
@@ -575,12 +575,12 @@ function UnlockForm({
     >
       <div>
         <h2 id="vault-lock-title" className="text-lg font-semibold">Unlock your vault</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#e8eefb]/65">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Google verified your identity. Your passphrase separately unwraps the vault key in this browser.
         </p>
       </div>
       <label className="block">
-        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">VAULT PASSPHRASE</span>
+        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground">VAULT PASSPHRASE</span>
         <input
           type="password"
           value={passphrase}
@@ -622,12 +622,12 @@ function RecoveryForm(props: RecoveryFormProps) {
     >
       <div>
         <h2 id="vault-lock-title" className="text-lg font-semibold">Recover a lost passphrase</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#e8eefb]/65">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Recovery unwraps the same vault key locally, then replaces the passphrase wrapper before private screens open.
         </p>
       </div>
       <label className="block">
-        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">24-WORD RECOVERY PHRASE</span>
+        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground">24-WORD RECOVERY PHRASE</span>
         <textarea
           value={props.recoveryPhrase}
           onChange={(event) => props.onRecoveryPhraseChange(event.target.value)}
@@ -681,7 +681,7 @@ function RestoreForm(props: RestoreFormProps) {
     >
       <div>
         <h2 id="vault-lock-title" className="text-lg font-semibold">Restore an encrypted backup</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#e8eefb]/65">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           The backup profile is unlocked and every record is authenticated locally before the server atomically replaces ciphertext.
         </p>
       </div>
@@ -697,14 +697,14 @@ function RestoreForm(props: RestoreFormProps) {
         />
         <label
           htmlFor="encrypted-backup-file"
-          className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded border border-[#6ea8ff]/35 px-4 py-2 font-mono text-xs tracking-wider text-[#e8eefb]/80 hover:border-[#6ea8ff]"
+          className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded border border-accent/35 px-4 py-2 font-mono text-xs tracking-wider text-muted-foreground hover:border-accent"
         >
           <Upload className="h-3.5 w-3.5" />
           {props.backupSelected ? "ENCRYPTED BACKUP SELECTED" : "SELECT ENCRYPTED BACKUP"}
         </label>
       </div>
       <label className="block">
-        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">
+        <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground">
           BACKUP VAULT PASSPHRASE
         </span>
         <input
@@ -741,13 +741,13 @@ function RestoreForm(props: RestoreFormProps) {
             type="button"
             disabled={props.isWorking}
             onClick={props.onCancel}
-            className="min-h-10 rounded border border-[#6ea8ff]/20 px-4 py-2 font-mono text-xs text-[#e8eefb]/60 disabled:opacity-50"
+            className="min-h-10 rounded border border-accent/20 px-4 py-2 font-mono text-xs text-muted-foreground disabled:opacity-50"
           >
             CANCEL
           </button>
         )}
       </div>
-      <p className="text-[10px] leading-relaxed text-[#e8eefb]/40">
+      <p className="text-[10px] leading-relaxed text-subtle-foreground">
         The backup is not a recovery bypass. A matching passphrase is required, and no plaintext file is ever created.
       </p>
     </form>

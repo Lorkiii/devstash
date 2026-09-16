@@ -27,7 +27,7 @@ const TOGGLES: { key: ToggleKey; label: string; sample: string }[] = [
 
 function strengthLabel(bits: number): { label: string; className: string } {
   if (bits >= 100) return { label: "EXCELLENT", className: "text-emerald-300" };
-  if (bits >= 75) return { label: "STRONG", className: "text-[#6ea8ff]" };
+  if (bits >= 75) return { label: "STRONG", className: "text-accent" };
   if (bits >= 50) return { label: "FAIR", className: "text-amber-300" };
   return { label: "WEAK", className: "text-rose-300" };
 }
@@ -79,7 +79,7 @@ export function PasswordGenerator() {
                 wrap
               />
             ) : (
-              <div className="rounded border border-[#6ea8ff]/20 bg-[#070d18] px-4 py-4 font-mono text-sm text-[#e8eefb]/30 min-h-16">
+              <div className="rounded border border-accent/20 bg-surface-muted px-4 py-4 font-mono text-sm text-subtle-foreground min-h-16">
                 select at least one character set
               </div>
             )}
@@ -89,7 +89,7 @@ export function PasswordGenerator() {
                 type="button"
                 onClick={regenerate}
                 disabled={alphabetSize === 0}
-                className="inline-flex items-center gap-2 rounded bg-[#e8eefb] px-4 py-2 font-mono text-xs font-bold tracking-wider text-[#05070d] hover:bg-[#6ea8ff] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 rounded bg-foreground px-4 py-2 font-mono text-xs font-bold tracking-wider text-accent-foreground hover:bg-accent transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> REGENERATE
               </button>
@@ -101,7 +101,7 @@ export function PasswordGenerator() {
               <Stat label="entropy" value={`${bits} bits`} valueClass={strength.className} />
             </dl>
 
-            <p className="mt-3 text-[10px] text-[#e8eefb]/35 font-mono">
+            <p className="mt-3 text-[10px] text-subtle-foreground font-mono">
               Output is masked by default. Reveal and copy are explicit; clipboard clearing after 30 seconds is best-effort, not guaranteed.
             </p>
           </ConsolePanel>
@@ -112,10 +112,10 @@ export function PasswordGenerator() {
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="pw-length" className="text-[10px] tracking-widest text-[#e8eefb]/55">
+                  <label htmlFor="pw-length" className="text-[10px] tracking-widest text-muted-foreground">
                     LENGTH
                   </label>
-                  <span className="font-mono text-xs text-[#6ea8ff]">{options.length}</span>
+                  <span className="font-mono text-xs text-accent">{options.length}</span>
                 </div>
                 <input
                   id="pw-length"
@@ -124,9 +124,9 @@ export function PasswordGenerator() {
                   max={PASSWORD_LENGTH_MAX}
                   value={options.length}
                   onChange={(event) => updateOptions({ ...options, length: Number(event.target.value) })}
-                  className="w-full accent-[#6ea8ff]"
+                  className="w-full accent-accent"
                 />
-                <div className="flex justify-between text-[10px] text-[#e8eefb]/35 font-mono">
+                <div className="flex justify-between text-[10px] text-subtle-foreground font-mono">
                   <span>{PASSWORD_LENGTH_MIN}</span>
                   <span>{PASSWORD_LENGTH_MAX}</span>
                 </div>
@@ -135,17 +135,17 @@ export function PasswordGenerator() {
               <ul className="space-y-1.5">
                 {TOGGLES.map((toggle) => (
                   <li key={toggle.key}>
-                    <label className="flex items-center justify-between gap-3 rounded border border-[#6ea8ff]/15 bg-[#070d18]/60 px-3 py-2 cursor-pointer hover:border-[#6ea8ff]/40 transition-colors">
+                    <label className="flex items-center justify-between gap-3 rounded border border-accent/15 bg-surface-muted/60 px-3 py-2 cursor-pointer hover:border-accent/40 transition-colors">
                       <span className="flex items-center gap-3">
                         <input
                           type="checkbox"
                           checked={options[toggle.key]}
                           onChange={(event) => updateOptions({ ...options, [toggle.key]: event.target.checked })}
-                          className="accent-[#6ea8ff]"
+                          className="accent-accent"
                         />
-                        <span className="text-xs text-[#e8eefb]/85">{toggle.label}</span>
+                        <span className="text-xs text-foreground/85">{toggle.label}</span>
                       </span>
-                      <span className="font-mono text-[10px] text-[#e8eefb]/40">{toggle.sample}</span>
+                      <span className="font-mono text-[10px] text-subtle-foreground">{toggle.sample}</span>
                     </label>
                   </li>
                 ))}
@@ -158,10 +158,10 @@ export function PasswordGenerator() {
   );
 }
 
-function Stat({ label, value, valueClass = "text-[#e8eefb]/85" }: { label: string; value: string; valueClass?: string }) {
+function Stat({ label, value, valueClass = "text-foreground/85" }: { label: string; value: string; valueClass?: string }) {
   return (
-    <div className="rounded border border-[#6ea8ff]/15 bg-[#070d18]/60 px-2.5 py-2">
-      <dt className="tracking-widest text-[#e8eefb]/40 uppercase">{label}</dt>
+    <div className="rounded border border-accent/15 bg-surface-muted/60 px-2.5 py-2">
+      <dt className="tracking-widest text-subtle-foreground uppercase">{label}</dt>
       <dd className={`mt-0.5 text-xs ${valueClass}`}>{value}</dd>
     </div>
   );

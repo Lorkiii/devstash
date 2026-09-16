@@ -15,11 +15,11 @@ interface ConsolePanelProps {
 }
 
 const DOT_CLASS: Record<ConsolePanelTone, string> = {
-  blue: "bg-[#6ea8ff]",
+  blue: "bg-accent",
   amber: "bg-amber-400",
   green: "bg-emerald-400",
   red: "bg-rose-400",
-  muted: "bg-[#e8eefb]/30",
+  muted: "bg-subtle-foreground",
 };
 
 // Terminal-style card used across the app shell. Same frame as the landing
@@ -35,21 +35,23 @@ export function ConsolePanel({
 }: ConsolePanelProps) {
   return (
     <section
-      className={`rounded-lg border border-[#6ea8ff]/25 bg-[#0a1220]/85 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.45)] font-mono text-[#e8eefb] flex flex-col min-h-0 ${className}`}
+      className={`shadow-panel flex min-h-0 flex-col rounded-xl border border-border/80 bg-surface/92 text-foreground backdrop-blur-md ${className}`}
     >
-      <header className="flex flex-col items-start gap-2 border-b border-[#6ea8ff]/15 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+      <header className="flex flex-col items-start gap-2 border-b border-border/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-2 h-2 rounded-full shrink-0 ${DOT_CLASS[tone]}`} />
-          <h2 className="text-[11px] font-bold tracking-widest text-[#6ea8ff] truncate">{title}</h2>
+          <h3 className="truncate font-mono text-[11px] font-bold tracking-widest text-accent">{title}</h3>
         </div>
-        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:shrink-0 sm:justify-end">
-          {action}
-          {status && (
-            <span className="text-[10px] tracking-wider text-[#e8eefb]/55 whitespace-nowrap">{status}</span>
-          )}
-        </div>
+        {(action || status) && (
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:shrink-0 sm:justify-end">
+            {action}
+            {status && (
+              <span className="whitespace-nowrap font-mono text-[10px] tracking-wider text-subtle-foreground">{status}</span>
+            )}
+          </div>
+        )}
       </header>
-      <div className={`p-4 min-h-0 flex-1 ${bodyClassName}`}>{children}</div>
+      <div className={`min-h-0 flex-1 p-4 sm:p-5 ${bodyClassName}`}>{children}</div>
     </section>
   );
 }

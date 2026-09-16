@@ -112,13 +112,13 @@ export function TaskCategoryManager() {
               setFormId("new");
             }}
             disabled={busyId !== null}
-            className="inline-flex items-center gap-1 rounded border border-[#6ea8ff]/25 px-2 py-1 text-[10px] tracking-widest text-[#e8eefb]/70 hover:text-[#6ea8ff] disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded border border-accent/25 px-2 py-1 text-[10px] tracking-widest text-muted-foreground hover:text-accent disabled:opacity-50"
           >
             <Plus className="h-3 w-3" /> CUSTOM
           </button>
         )}
       >
-        <p className="mb-3 text-xs leading-relaxed text-[#e8eefb]/50">
+        <p className="mb-3 text-xs leading-relaxed text-subtle-foreground">
           Built-ins remain available. Custom names and palette choices are encrypted in this tab.
         </p>
         <ul className="flex flex-wrap gap-2">
@@ -135,7 +135,7 @@ export function TaskCategoryManager() {
                     }}
                     disabled={busyId !== null}
                     aria-label={`Edit ${category.name} category`}
-                    className="rounded p-1 text-[#e8eefb]/50 hover:text-[#6ea8ff] disabled:opacity-50"
+                    className="rounded p-1 text-subtle-foreground hover:text-accent disabled:opacity-50"
                   >
                     <Pencil className="h-3 w-3" />
                   </button>

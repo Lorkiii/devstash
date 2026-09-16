@@ -12,7 +12,7 @@ export function LoginPageContent({ error, isConfigured }: LoginPageContentProps)
       : "Google sign-in could not be completed. Please try again.";
   }
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-[#05070d] px-4 py-8 text-[#e8eefb] sm:px-5 lg:px-6">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-background px-4 py-8 text-foreground sm:px-5 lg:px-6">
       <h1 className="font-mono text-xl font-bold tracking-widest">Sign in to DevStash</h1>
       <div className="w-full max-w-md">
         <AuthTerminalPanel
@@ -22,7 +22,7 @@ export function LoginPageContent({ error, isConfigured }: LoginPageContentProps)
       </div>
       <Link
         href={AUTH_ROUTES.publicHome}
-        className="font-mono text-sm text-[#6ea8ff] hover:underline"
+        className="font-mono text-sm text-accent hover:underline"
       >
         Back to DevStash
       </Link>

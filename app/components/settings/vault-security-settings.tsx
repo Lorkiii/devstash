@@ -15,8 +15,8 @@ import {
 import { normalizeRecoveryPhrase } from "@/app/lib/vault-crypto/recovery-phrase";
 import type { VaultRecoveryRotationDraft } from "@/app/lib/vault-profile.types";
 
-const FIELD_CLASS = "w-full rounded border border-[#6ea8ff]/25 bg-[#05070d]/80 px-3 py-2 font-mono text-xs text-[#e8eefb] outline-none placeholder:text-[#e8eefb]/25 focus:border-[#6ea8ff]/70";
-const ACTION_CLASS = "inline-flex min-h-10 items-center justify-center gap-2 rounded border border-amber-400/40 bg-amber-400/10 px-3 py-2 font-mono text-xs tracking-wider text-amber-200 hover:bg-amber-400/20 disabled:cursor-not-allowed disabled:opacity-50";
+const FIELD_CLASS = "min-h-11 w-full rounded-lg border border-border bg-background/80 px-3 py-2.5 font-mono text-sm text-foreground outline-none placeholder:text-subtle-foreground focus:border-accent focus:ring-2 focus:ring-accent/15";
+const ACTION_CLASS = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-amber-500/45 bg-amber-500/10 px-4 py-2 font-mono text-xs font-semibold tracking-wider text-amber-700 transition-colors hover:bg-amber-500/18 disabled:cursor-not-allowed disabled:opacity-50 dark:text-amber-200";
 
 export function VaultSecuritySettings() {
   const session = useVaultSession();
@@ -145,7 +145,7 @@ export function VaultSecuritySettings() {
   return (
     <>
       <ConsolePanel title="VAULT PASSPHRASE" status="LOCAL KEY WRAP" tone="amber">
-        <p className="mb-3 text-xs leading-relaxed text-[#e8eefb]/65">
+        <p className="mb-4 text-sm leading-6 text-muted-foreground">
           Re-verify the current passphrase, derive a new key, and rewrap the same vault key. Records are not re-encrypted.
         </p>
         {changeOpen ? (
@@ -158,7 +158,7 @@ export function VaultSecuritySettings() {
                 {isWorking ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
                 SAVE NEW PASSPHRASE
               </button>
-              <button type="button" disabled={isWorking} onClick={() => { clearPassphrases(); setChangeOpen(false); }} className="px-3 py-2 font-mono text-xs text-[#e8eefb]/55">CANCEL</button>
+              <button type="button" disabled={isWorking} onClick={() => { clearPassphrases(); setChangeOpen(false); }} className="min-h-11 px-3 py-2 font-mono text-xs text-muted-foreground hover:text-foreground">CANCEL</button>
             </div>
           </form>
         ) : (
@@ -178,11 +178,11 @@ export function VaultSecuritySettings() {
             <KeyRound className="h-3.5 w-3.5" /> CHANGE PASSPHRASE
           </button>
         )}
-        {changeFeedback && <p role="status" className="mt-3 text-xs leading-relaxed text-[#e8eefb]/65">{changeFeedback}</p>}
+        {changeFeedback && <p role="status" className="mt-3 text-sm leading-6 text-muted-foreground">{changeFeedback}</p>}
       </ConsolePanel>
 
       <ConsolePanel title="RECOVERY PHRASE" status="SHOW ONCE" tone="amber">
-        <p className="mb-3 text-xs leading-relaxed text-[#e8eefb]/65">
+        <p className="mb-4 text-sm leading-6 text-muted-foreground">
           Rotation replaces only the current recovery wrapper. An older backup can still match its older phrase.
         </p>
         {!rotateOpen ? (
@@ -207,20 +207,20 @@ export function VaultSecuritySettings() {
                 {isWorking ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
                 GENERATE NEW PHRASE
               </button>
-              <button type="button" disabled={isWorking} onClick={() => { clearPassphrases(); setRotateOpen(false); }} className="px-3 py-2 font-mono text-xs text-[#e8eefb]/55">CANCEL</button>
+              <button type="button" disabled={isWorking} onClick={() => { clearPassphrases(); setRotateOpen(false); }} className="min-h-11 px-3 py-2 font-mono text-xs text-muted-foreground hover:text-foreground">CANCEL</button>
             </div>
           </form>
         ) : (
           <form onSubmit={handlePersistRotation} className="space-y-3">
-            <p className="select-text rounded border border-amber-400/35 bg-amber-400/5 p-3 font-mono text-xs leading-6 text-amber-100">
+            <p className="select-text rounded-lg border border-amber-500/35 bg-amber-500/8 p-3 font-mono text-xs leading-6 text-amber-800 dark:text-amber-100">
               {rotationDraft.recoveryPhrase}
             </p>
             <label className="block">
-              <span className="mb-1 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">RE-ENTER THE COMPLETE SAVED PHRASE</span>
+              <span className="mb-1 block font-mono text-[10px] tracking-widest text-muted-foreground">RE-ENTER THE COMPLETE SAVED PHRASE</span>
               <textarea value={phraseConfirmation} onChange={(event) => setPhraseConfirmation(event.target.value)} rows={4} autoComplete="off" autoCapitalize="none" spellCheck={false} required className={FIELD_CLASS} />
             </label>
-            <label className="flex items-start gap-2 text-xs leading-relaxed text-[#e8eefb]/65">
-              <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} className="mt-0.5" />
+            <label className="flex items-start gap-2 text-sm leading-6 text-muted-foreground">
+              <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} className="mt-1 accent-accent" />
               <span>I saved the new phrase and understand the old phrase may still unlock an older backup.</span>
             </label>
             <button type="submit" disabled={isWorking} className={ACTION_CLASS}>
@@ -229,7 +229,7 @@ export function VaultSecuritySettings() {
             </button>
           </form>
         )}
-        {rotationFeedback && <p role="status" className="mt-3 text-xs leading-relaxed text-[#e8eefb]/65">{rotationFeedback}</p>}
+        {rotationFeedback && <p role="status" className="mt-3 text-sm leading-6 text-muted-foreground">{rotationFeedback}</p>}
       </ConsolePanel>
     </>
   );
@@ -248,7 +248,7 @@ function SecretField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block font-mono text-[10px] tracking-widest text-[#e8eefb]/55">{label.toUpperCase()}</span>
+      <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-subtle-foreground">{label.toUpperCase()}</span>
       <input
         type="password"
         value={value}
