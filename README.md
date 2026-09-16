@@ -1,175 +1,324 @@
-DevStash is an individual developer workspace with Gmail sign-in and a separately
-locked, private vault for each user. Authentication and the local Phase 9 vault
-lifecycle are implemented, including setup, unlock, lock, recovery, passphrase
-change, Recovery Phrase rotation, Generic Secret CRUD, and encrypted Projects,
-`.env` bundles, Notes, Tasks, custom task categories, local decrypted search,
-secure password generation, timed reveal/copy safeguards, and encrypted backup
-restore. The vault-profile, vault-item, and workspace
-migrations have not been applied, browser runtime QA remains pending, and this
-project is not approved for real credentials. Use synthetic data only.
+# DevStash
 
-## Google sign-in setup
+DevStash is a personal, client-encrypted workspace for developer secrets,
+environment files, private notes, projects, and tasks. Google sign-in establishes
+the user identity, while a separate Vault Passphrase unlocks encrypted data only
+inside the browser.
 
-1. Use Node.js 24 LTS and run `npm ci`, then `npm run db:generate`.
-2. Use `.env.example` as the variable reference and fill the values privately.
-   This workspace may already keep Neon URLs in `.env`; add the auth values to
-   that file, or move every value to `.env.local`. Do not leave blank duplicates
-   in `.env.local`, because it takes precedence over `.env`. Never commit either
-   private environment file or paste its values into chat.
-3. In [Google Auth Platform](https://console.cloud.google.com/auth/overview),
-   configure an **External** OAuth consent screen and a **Web application** OAuth
-   client. While the app is in Testing, add each developer/test account under
-   Audience > Test users. Publish the OAuth app before expecting unlisted Gmail
-   users to sign in. Request only the `openid`, `email`, and `profile` scopes.
-4. For local development, register `http://localhost:3000` as an authorized
-   JavaScript origin and register the exact redirect URI
-   `http://localhost:3000/api/auth/callback/google`. Use
-   `AUTH_URL=http://localhost:3000`. A different port or hostname requires
-   matching entries. Production requires the deployed HTTPS origin and its exact
-   `/api/auth/callback/google` redirect URI.
-5. Fill `AUTH_GOOGLE_CLIENT_ID` and `AUTH_GOOGLE_CLIENT_SECRET` from that OAuth client. Any
-   verified `@gmail.com` identity may create its own account. Each account is
-   bound to Google's stable subject, and an existing email cannot be linked to a
-   different Google identity.
-6. Generate `AUTH_SECRET` locally without printing it. Auth.js can create it in
-   the local environment file with:
+> [!WARNING]
+> DevStash is a security-learning project and has not received an independent
+> security audit. Use synthetic data until the intended deployment, database,
+> browser, and security reviews have been completed. Do not store important real
+> credentials yet.
 
-   ```powershell
-   npx auth secret
-   ```
+## Features
 
-   Run it once and keep the generated value private. Changing it later
-   invalidates existing Auth.js sessions.
+- Google-only sign-in for verified Gmail identities.
+- A separately locked vault with setup, unlock, explicit lock, inactivity lock,
+  lost-passphrase recovery, passphrase changes, and Recovery Phrase rotation.
+- Encrypted Generic Secrets, Projects, complete `.env` bundles, Notes, Tasks,
+  and custom task categories.
+- Project relationships for secrets, environment bundles, notes, and tasks.
+- Browser-local decrypted search through the command palette.
+- Secure password generation using browser cryptographic randomness.
+- Masked values, timed reveal, explicit copy, and best-effort clipboard clearing.
+- Versioned encrypted backup export and all-or-nothing restore validation.
+- Owner-scoped, ciphertext-only Route Handlers with strict validation, private
+  cache controls, security headers, and abuse throttling.
 
-7. Configure `DATABASE_URL` with the **pooled** Neon URL and `DIRECT_URL` with the
-   separate **direct** URL. Neither may use a `NEXT_PUBLIC_` prefix. The runtime
-   uses only the pooled connection; Prisma CLI reads only the direct connection.
-8. Review `prisma/migrations/20260909000000_google_auth/migration.sql`. It creates
-   authentication tables only. It was validated on an isolated Neon branch and
-   applied to the configured production branch on 2026-09-09. For another
-   environment, approve its target and apply it with `npx prisma migrate deploy`.
-9. Run `npm run dev`, visit `/login`, and choose a verified Gmail account.
-   Successful sign-in opens `/dashboard` locked. The header's sign-out control
-   clears local vault state and deletes the database session before navigation.
+## Security model
 
-Missing configuration disables sign-in and protected routes redirect to `/login`.
-Sign-in never accepts a vault passphrase or unlocks data. The earlier simulated
-unlock has been replaced by the browser-only lifecycle. Vault setup and item
-persistence cannot run until the pending vault-profile, vault-item, and workspace
-migrations are reviewed and explicitly approved for the intended database.
+DevStash deliberately separates authentication from decryption:
 
-### Where the authentication tables are defined
+```text
+Google sign-in -> authenticated session -> locked vault
+Vault Passphrase or Recovery Phrase -> local key derivation -> unlocked vault
+```
 
-- `prisma/schema.prisma` describes the Prisma models.
-- `prisma/migrations/20260909000000_google_auth/migration.sql` contains the SQL
-  for `User`, `Account`, `Session`, and `AuthRateLimit`.
-- `app/generated/prisma/` contains generated client code, not database tables.
+Google authentication never unlocks the vault. Refreshing the page can preserve
+the Auth.js session, but it discards the in-memory vault key and returns the user
+to the locked state.
 
-`npm run db:generate` and `npm run build` do not apply migrations. Prisma records
-applied migrations in the database's `_prisma_migrations` table.
+### Encryption boundary
 
-`prisma.config.ts` loads the local environment and targets `DIRECT_URL`; the
-application uses `DATABASE_URL`. Check the intended Neon project, branch,
-database, and schema before approving any migration. To check status without
-changing the database, run `npx --no-install prisma migrate status`.
+- Vault plaintext, the Vault Passphrase, the Recovery Phrase, and plaintext key
+  material are handled in the browser only.
+- The Vault Passphrase derives a key-encryption key with Argon2id.
+- A browser-generated 24-word English BIP-39 Recovery Phrase represents 256 bits
+  of random entropy; HKDF-SHA-256 derives a separate recovery wrapping key.
+- The passphrase key and recovery key independently wrap the same random 256-bit
+  data-encryption key.
+- Vault records use AES-256-GCM with a fresh 96-bit nonce and authenticated,
+  versioned context for every encryption operation.
+- The server and Neon store authentication data, approved relationship metadata,
+  encryption settings, wrapped keys, nonces, and ciphertext—not vault plaintext.
+- All private operations derive ownership from the authenticated server session;
+  browser-supplied owner identifiers are not trusted.
+
+The normal data path is:
+
+```text
+Write: plaintext -> browser encryption -> ciphertext API -> Neon
+Read:  Neon -> ciphertext API -> browser decryption -> in-memory UI
+```
+
+Search also stays local: authorized ciphertext is fetched and decrypted in the
+unlocked browser session, then indexed only in memory.
+
+### Recovery and threat limits
+
+DevStash has no server-side passphrase reset, escrow key, or decryption bypass.
+The Recovery Phrase can recover the vault only after Google authentication and
+must immediately be used to create a new passphrase wrapper. If both the Vault
+Passphrase and Recovery Phrase are lost, the encrypted content is unrecoverable
+through DevStash.
+
+Client-side encryption reduces exposure from database snapshots, accidental
+server plaintext handling, cross-user access, network observation under HTTPS,
+and ciphertext tampering. It does not protect an unlocked vault from a
+compromised device, malicious browser extension, keylogger, screen or clipboard
+monitoring, XSS, compromised dependencies, or a malicious application build.
+DevStash should not be described as zero-knowledge, audited, unbreakable, or
+cryptographically erased.
+
+## Technology stack
+
+| Area | Technology |
+| --- | --- |
+| Application | Next.js 16 App Router, React 19, TypeScript |
+| Styling | Tailwind CSS 4 and local reusable UI components |
+| Authentication | Auth.js 5 with Google OAuth and database sessions |
+| Database | Neon Postgres |
+| ORM and validation | Prisma 7 and Zod 4 |
+| Browser cryptography | Web Crypto, `libsodium-wrappers-sumo`, and `@scure/bip39` |
+| Tests | Node.js test runner with TypeScript through `tsx` |
+
+Security-sensitive packages are pinned in `package.json` and
+`package-lock.json`. Use npm so the committed lockfile remains authoritative.
+
+## Prerequisites
+
+- Node.js 24 LTS and npm.
+- A Neon Postgres project with separate pooled and direct connection strings.
+- A Google Cloud OAuth web client configured for the environment where DevStash
+  will run.
+
+## Local setup
+
+### 1. Install dependencies
+
+```powershell
+npm ci
+npm run db:generate
+```
+
+### 2. Create the private environment file
+
+Use `.env.example` as the variable reference:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Fill `.env.local` privately. Never commit it or paste its values into issues,
+logs, screenshots, or chat.
+
+| Variable | Purpose |
+| --- | --- |
+| `AUTH_URL` | Exact application origin, such as `http://localhost:3000` locally |
+| `AUTH_SECRET` | Auth.js signing secret with at least 32 characters |
+| `AUTH_GOOGLE_CLIENT_ID` | Google OAuth web client ID |
+| `AUTH_GOOGLE_CLIENT_SECRET` | Google OAuth web client secret |
+| `DATABASE_URL` | Pooled Neon URL used by application traffic |
+| `DIRECT_URL` | Direct Neon URL used by Prisma CLI and administrative work |
+| `DEVSTASH_CSP_MODE` | CSP mode; keep `report-only` until deployment review approves enforcement |
+
+Generate the Auth.js secret directly into the local environment without
+printing it:
+
+```powershell
+npx auth secret
+```
+
+Changing `AUTH_SECRET` later invalidates existing sessions. None of the private
+variables may use a `NEXT_PUBLIC_` prefix.
+
+### 3. Configure Google OAuth
+
+Create an External OAuth consent screen and a Web application client in Google
+Auth Platform. Request only the `openid`, `email`, and `profile` identity scopes.
+While the app remains in Testing, add every developer or tester under the OAuth
+test audience.
+
+For the default local origin, register:
+
+```text
+Authorized JavaScript origin: http://localhost:3000
+Authorized redirect URI:      http://localhost:3000/api/auth/callback/google
+```
+
+`AUTH_URL`, the browser origin, and the Google OAuth configuration must match
+exactly. Production requires the deployed HTTPS origin and its corresponding
+`/api/auth/callback/google` redirect URI.
+
+DevStash accepts verified `@gmail.com` identities only. Each account is bound to
+Google's stable provider subject, and an existing email cannot be silently
+linked to a different Google identity.
+
+### 4. Prepare the database
+
+The repository contains migrations for authentication, the vault encryption
+profile, vault items, and encrypted workspace modules. First inspect the target
+and migration status without modifying the database:
+
+```powershell
+npx --no-install prisma migrate status
+```
+
+Before applying anything, confirm the intended Neon project, branch, database,
+and schema, then review the SQL under `prisma/migrations/`. Test migrations on an
+isolated Neon branch. Only an authorized operator should apply them to the
+confirmed target:
+
+```powershell
+npx prisma migrate deploy
+```
+
+`npm run db:generate`, `npm run db:validate`, and `npm run build` do not apply
+migrations. Prisma records applied migrations in the database's
+`_prisma_migrations` table.
+
+### 5. Start DevStash
+
+```powershell
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Successful Google sign-in
+opens the authenticated dashboard in the locked state. A first-time user creates
+the Vault Passphrase and receives the browser-generated Recovery Phrase during
+local vault setup.
+
+If authentication variables are missing or invalid, Google sign-in is disabled
+and protected routes redirect to `/login`.
+
+## Available commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local Next.js development server |
+| `npm run build` | Generate the Prisma client and create a production build |
+| `npm run start` | Run the previously built production server |
+| `npm test` | Run the synthetic unit and security regression suite |
+| `npm run lint` | Run ESLint |
+| `npm run db:generate` | Generate the Prisma client without changing the database |
+| `npm run db:validate` | Validate the Prisma schema without applying migrations |
+| `npm run check:deployment` | Run offline repository and environment-contract checks |
+| `npm run test:crypto:browser:build` | Build the standalone browser crypto proof |
+| `npm run test:crypto:browser:serve` | Serve the built browser crypto proof locally |
+
+The deployment checker does not load `.env`, contact Neon or Google, apply
+migrations, or prove that a deployment works.
+
+## Project structure
+
+```text
+app/
+  (app)/                 authenticated pages mounted only after vault unlock
+  api/                   authenticated, ciphertext-only Route Handlers
+  components/
+    <feature>/           page-specific UI grouped by feature
+    ui/                  reusable, page-agnostic primitives
+  lib/
+    auth/                Google identity, session, and authorization boundary
+    security/            CSP and shared security headers
+    vault-crypto/        browser-only encoding, KDF, wrapping, and encryption
+    vault-profile/       ciphertext profile validation and persistence
+    vault-items/         owner-scoped encrypted item persistence
+    workspace/           owner-scoped project, env, note, and task persistence
+    vault-backup/        ciphertext snapshot and atomic restore persistence
+prisma/
+  migrations/            reviewed SQL migrations
+  schema.prisma          application data model
+scripts/                 offline repository and release checks
+tests/                   synthetic unit, boundary, and negative-security tests
+```
+
+Keep route files focused on composition or HTTP handling. Feature components may
+depend on shared UI and library modules; shared UI must not import page features,
+and library code must not import components. Promote a component into
+`app/components/ui/` only after it is genuinely shared.
+
+Browser cryptography and plaintext types must not be imported into Server
+Components or Route Handlers. Server-side persistence modules remain
+ciphertext-only and enforce ownership close to the data layer. Component props
+and supporting types live in adjacent `*.types.ts` files when needed.
+
+Before changing Next.js behavior, read the installed version's relevant guide
+under `node_modules/next/dist/docs/`; this repository may differ from older
+Next.js conventions.
 
 ## Verification
+
+Run the relevant checks before review:
 
 ```powershell
 npm test
 npm run lint
 npm run db:validate
+npm run check:deployment
 npm run build
 git diff --check
 ```
 
-Tests use synthetic identities and an in-memory Auth.js adapter fixture. They
-cover Gmail-only verified claims, stable subject binding, token-free
-account persistence, session ownership, safe redirects, request origin checks,
-minimal session responses, cookie flags, expiration, revocation, and CSRF logout.
-They also cover vault setup, wrong credentials, passphrase rewrapping, recovery,
-Recovery Phrase rotation, Generic Secret and workspace encryption/decryption,
-relationship and metadata tamper failure, curated category colors, local search,
-password constraints, encrypted backup integrity/full local restoration, and
-strict ciphertext validation. They do not
-connect to Neon, perform a live Google OAuth exchange, or constitute a security audit.
+The automated suite uses synthetic identities and data. It covers authentication
+policy, ownership and request boundaries, vault cryptographic primitives and
+lifecycle, ciphertext validation, workspace encryption, local search, password
+generation, backup integrity, CSP, caching, and source-boundary regressions.
 
-Before enabling real use, verify first/returning Gmail login, denied non-Gmail identities,
-session deletion and revocation against the isolated database, concurrency and
-reset of the database rate limiter, cancellation/error UX, refresh, inactivity,
-and lock/sign-out across tabs. The polling interval is 60 seconds with focus
-revalidation; it is not instant cross-device revocation of already-rendered UI.
-Each server route revalidates authorization.
+Passing these checks does not prove a live Google OAuth exchange, Neon
+connectivity, applied migration state, production headers, real-browser vault
+behavior, Safari compatibility, rate limits across deployed instances, backup
+recovery against production data, or an independent security audit.
 
-Read [the authentication architecture review](docs/AUTHENTICATION_ARCHITECTURE.md)
-for the identity and session boundaries, and the
-[vault encryption architecture](docs/VAULT_ENCRYPTION_ARCHITECTURE.md) for the
-Phase 1 threat model, metadata classification, cryptographic formats, CSP, and
-supported-browser decisions. The
-[Phase 4 cryptographic proof](docs/VAULT_CRYPTOGRAPHIC_PROOF.md) records the
-implemented primitives, dependency review, vectors, local browser evidence, and
-remaining release gates. The
-[Phase 5 lifecycle record](docs/VAULT_LIFECYCLE_IMPLEMENTATION.md) records the
-setup, unlock, recovery, profile API, locking, and persistence boundary. The
-[Phase 6 vault-item record](docs/VAULT_ITEM_IMPLEMENTATION.md) defines the first
-Generic Secret payload, ciphertext API, ownership boundary, and pending database
-activation work. The
-[Phase 7 workspace record](docs/WORKSPACE_MODULES_IMPLEMENTATION.md) defines
-encrypted Projects, complete `.env` bundles, Notes, Tasks, same-owner
-relationships, and their pending database activation work.
-The
-[Phase 8 safety/productivity record](docs/SAFETY_PRODUCTIVITY_IMPLEMENTATION.md)
-defines local search, generator and sensitive-value safeguards, and the
-versioned encrypted backup/atomic restore boundary.
-The
-[Phase 9 security-hardening record](docs/SECURITY_HARDENING_IMPLEMENTATION.md)
-defines the nonce CSP, security headers, backup throttles, dependency/XSS/cache/
-log review, expanded negative tests, and remaining production gates.
-The
-[Phase 10 deployment-readiness record](docs/DEPLOYMENT_READINESS.md) defines
-the offline release gate, pooled/direct connection separation, isolated
-migration review, HTTPS/HSTS, OAuth, log, rate-limit, browser, and CSP rollout
-sequence. `npm run check:deployment` performs only local repository checks.
-Hosting access logs must redact OAuth callback query strings. Next.js incoming
-request logging excludes all `/api` paths and Auth.js diagnostic payloads are suppressed.
+## Deployment checklist
 
-The nonce policy stays report-only unless the server-only setting
-`DEVSTASH_CSP_MODE=enforce` is explicitly configured. Keep the first production
-deployment report-only, review real browser violations without recording private
-inputs, and enable enforcement only after the Phase 10 supported-browser and
-authenticated-vault checks pass.
+Deployment and production database changes require explicit operator approval.
+For a candidate release:
 
-## Getting Started
+1. Confirm the exact hosting origin and configure all server-only variables in
+   the host's encrypted secret store.
+2. Register the matching HTTPS origin and Google callback URI.
+3. Test every pending migration on an isolated Neon branch before applying it to
+   the intended target.
+4. Run the complete verification suite against the exact release revision.
+5. Deploy with `DEVSTASH_CSP_MODE=report-only` and verify HTTPS, HSTS, security
+   headers, redacted logs, safe errors, and trusted-source rate limits.
+6. Exercise authentication, vault lifecycle, encrypted CRUD, local search,
+   backup export, deletion, and restore in supported browsers, including Safari
+   on real Apple hardware.
+7. Enable CSP enforcement only after reviewing the collected evidence and
+   confirming a rollback path.
 
-First, run the development server:
+Never store infrastructure credentials inside DevStash itself, expose database
+URLs to browser code, or use a pooled connection for migrations and other
+administrative work.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Development guardrails
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Read [`AGENTS.md`](AGENTS.md) before changing the repository. It contains the
+authoritative security invariants, scope boundaries, and verification rules.
+In particular:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Keep Google authentication and vault unlocking separate.
+- Never send or persist vault plaintext, passphrases, Recovery Phrases, or
+  plaintext keys outside ephemeral browser memory.
+- Authenticate, authorize, validate, and enforce ownership for every protected
+  server operation.
+- Keep search local and user-authored private content encrypted by default.
+- Do not add third-party scripts, cryptography, authentication providers, or
+  plaintext metadata without explicit architecture review.
+- Do not deploy, change production configuration, or apply database migrations
+  without explicit authorization.
+- Report only checks that were actually run; static checks are not browser or
+  production verification.
