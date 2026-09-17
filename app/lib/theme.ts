@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./validation/zod";
 
 export const THEME_COOKIE_NAME = "devstash-theme";
 export const THEME_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;

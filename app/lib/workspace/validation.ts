@@ -1,6 +1,6 @@
 import "server-only";
 
-import { z } from "zod";
+import { z } from "../validation/zod";
 import {
   WORKSPACE_CIPHERTEXT_LIMITS,
   WORKSPACE_FIELD_LIMITS,

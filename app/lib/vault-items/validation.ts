@@ -1,6 +1,6 @@
 import "server-only";
 
-import { z } from "zod";
+import { z } from "../validation/zod";
 import {
   GENERIC_SECRET_ITEM_TYPE,
   MAXIMUM_VAULT_ITEM_CIPHERTEXT_BYTES,

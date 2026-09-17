@@ -1,6 +1,6 @@
 import "server-only";
 
-import { z } from "zod";
+import { z } from "../validation/zod";
 import {
   VAULT_BACKUP_FORMAT,
   VAULT_BACKUP_FORMAT_VERSION,

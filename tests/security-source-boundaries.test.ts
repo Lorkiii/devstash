@@ -51,3 +51,14 @@ test("application code does not log private runtime values or use persistent bro
     }
   }
 });
+
+test("application imports Zod through its CSP setup module", async () => {
+  const setupPath = join(applicationRoot, "lib", "validation", "zod.ts");
+  const directZodImport = /\b(?:from\s*|import\s*(?:\(\s*)?|require\s*\(\s*)["']zod(?:\/[^"']*)?["']/u;
+
+  for (const path of await applicationSources()) {
+    if (path === setupPath) continue;
+    const source = await readFile(path, "utf8");
+    assert.doesNotMatch(source, directZodImport, `${relative(process.cwd(), path)} bypasses Zod CSP setup`);
+  }
+});

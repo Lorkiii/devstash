@@ -1,6 +1,6 @@
 import "client-only";
 
-import { z } from "zod";
+import { z } from "../validation/zod";
 import {
   AES_GCM_KEY_BYTES,
   AES_GCM_NONCE_BYTES,

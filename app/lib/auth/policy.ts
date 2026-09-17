@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "../validation/zod";
 import { AUTH_PROVIDER_ID, AUTH_ROUTES } from "./config";
 
 // Google supplies additional OIDC claims; project-owned request contracts remain strict.

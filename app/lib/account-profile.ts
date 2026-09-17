@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./validation/zod";
 
 const MAX_DISPLAY_NAME_CHARACTERS = 40;
 const DISPLAY_NAME_CHARACTERS = /^[\p{L}\p{M}\p{N}\p{P}\p{S} ]*$/u;

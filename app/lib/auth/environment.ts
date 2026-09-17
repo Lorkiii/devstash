@@ -1,5 +1,5 @@
 import "server-only";
-import { z } from "zod";
+import { z } from "../validation/zod";
 
 const environmentSchema = z.strictObject({
   secret: z.string().min(32),
