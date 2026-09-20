@@ -12,8 +12,6 @@ export function proxy(request: NextRequest) {
   const mode = contentSecurityPolicyMode(process.env.DEVSTASH_CSP_MODE);
   const requestHeaders = new Headers(request.headers);
 
-  // Next.js reads the enforcing request header to nonce its framework output.
-  // The browser-facing header remains report-only until Phase 10 explicitly enables enforcement.
   requestHeaders.set("Content-Security-Policy", policy);
   requestHeaders.set("x-nonce", nonce);
 

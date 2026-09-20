@@ -84,6 +84,17 @@ body {
   font-family: var(--font-sans);
 }
 
+.devstash-app-shell {
+  background: var(--background);
+}
+
+[data-theme="light"] .devstash-app-shell {
+  background:
+    radial-gradient(ellipse 55% 48% at 84% 8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 78%),
+    radial-gradient(ellipse 50% 55% at 8% 95%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 80%),
+    var(--background);
+}
+
 ::selection {
   background: color-mix(in srgb, var(--accent) 35%, transparent);
   color: var(--foreground);
@@ -201,6 +212,44 @@ body {
 
 [data-theme="light"] .orbital-top-vignette {
   background: linear-gradient(to bottom, rgba(244, 247, 251, 0.88) 0%, transparent 100%);
+}
+
+.landing-preview {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--panel-border));
+  background:
+    radial-gradient(circle at 88% 2%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 35%),
+    linear-gradient(145deg, color-mix(in srgb, var(--accent) 6%, var(--surface)), var(--surface) 45%);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.36), 0 0 48px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.landing-preview::before {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 12%;
+  left: 12%;
+  height: 1px;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--accent), transparent);
+}
+
+.landing-preview-grid {
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.landing-preview-document {
+  background: linear-gradient(110deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 68%);
+}
+
+[data-theme="light"] .landing-preview {
+  box-shadow: 0 26px 65px rgba(45, 68, 108, 0.15), 0 0 42px rgba(37, 99, 235, 0.07);
 }
 
 .shadow-panel {

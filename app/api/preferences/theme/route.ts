@@ -5,7 +5,6 @@ import {
   readBoundedJson,
 } from "@/app/lib/api/request";
 import { getAuthEnvironment } from "@/app/lib/auth/environment";
-import { getSession } from "@/app/lib/auth/session";
 import {
   THEME_COOKIE_NAME,
   themePreferenceCookieOptions,
@@ -18,8 +17,7 @@ export const runtime = "nodejs";
 const MAXIMUM_BODY_BYTES = 64;
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session) return errorResponse("Authentication required.", 401);
+  // Theme is a device preference, not account or vault data; visitors can set it before sign-in.
   if (!hasTrustedMutationOrigin(request)) {
     return errorResponse("Request origin is not allowed.", 403);
   }
