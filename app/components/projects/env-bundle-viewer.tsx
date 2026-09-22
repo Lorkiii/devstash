@@ -48,20 +48,20 @@ export function EnvBundleViewer({
 
   return (
     <div className={embedded ? "min-w-0 overflow-hidden" : "overflow-hidden rounded border border-accent/20 bg-surface-muted/90"}>
-      <div className="flex flex-col items-stretch gap-3 border-b border-accent/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-mono text-xs text-foreground truncate">.env.{bundle.environment}</span>
-          <span className="font-mono text-[10px] text-subtle-foreground">
+      <div className="flex flex-col items-stretch gap-2 border-b border-accent/10 px-2.5 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-3">
+        <div className="flex items-center gap-1.5 min-w-0 sm:gap-2">
+          <span className="truncate font-mono text-[11px] text-foreground sm:text-xs">.env.{bundle.environment}</span>
+          <span className="font-mono text-[9px] text-subtle-foreground sm:text-[10px]">
             {lines.filter((line) => line.raw === null).length} vars · {formatDate(bundle.updatedAt)}
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-1 sm:shrink-0 sm:justify-end sm:gap-1.5">
           <button
             type="button"
             onClick={controls.toggleReveal}
             aria-label={controls.revealed ? "Hide environment bundle" : "Reveal environment bundle"}
             aria-pressed={controls.revealed}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded border border-accent/20 px-2.5 py-1 font-mono text-[10px] tracking-widest text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors cursor-pointer"
+            className="inline-flex min-h-9 items-center gap-1.5 rounded border border-accent/20 px-2 py-1 font-mono text-[9px] tracking-widest text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors cursor-pointer sm:min-h-10 sm:px-2.5 sm:text-[10px]"
           >
             {controls.revealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
             {controls.revealed ? `HIDE · ${controls.remainingSeconds}s` : "REVEAL ALL"}
@@ -70,7 +70,7 @@ export function EnvBundleViewer({
             type="button"
             onClick={() => void controls.copy()}
             aria-label="Copy complete environment bundle"
-            className={`inline-flex min-h-10 items-center gap-1.5 rounded border px-2.5 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
+            className={`inline-flex min-h-9 items-center gap-1.5 rounded border px-2 py-1 font-mono text-[9px] tracking-widest transition-colors cursor-pointer sm:min-h-10 sm:px-2.5 sm:text-[10px] ${
               controls.copyStatus === "copied"
                 ? "border-emerald-400/50 text-emerald-700 dark:text-emerald-400"
                 : controls.copyStatus === "error"
@@ -86,7 +86,7 @@ export function EnvBundleViewer({
             onClick={onEdit}
             disabled={isDeleting}
             aria-label="Edit environment bundle"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 p-1 text-muted-foreground hover:text-accent disabled:opacity-50"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded border border-accent/20 p-1 text-muted-foreground hover:text-accent disabled:opacity-50 sm:min-h-10 sm:min-w-10"
           >
             <Pencil className="h-3 w-3" />
           </button>
@@ -95,17 +95,17 @@ export function EnvBundleViewer({
             onClick={onDelete}
             disabled={isDeleting}
             aria-label="Delete environment bundle"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-700/75 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 disabled:opacity-50"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded border border-rose-400/20 p-1 text-rose-700/75 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 disabled:opacity-50 sm:min-h-10 sm:min-w-10"
           >
             <Trash2 className="h-3 w-3" />
           </button>
         </div>
       </div>
 
-      <ol className="font-mono text-xs leading-6 py-2 overflow-x-auto">
+      <ol className="overflow-x-auto py-1.5 font-mono text-[10px] leading-[1.125rem] sm:py-2 sm:text-xs sm:leading-6">
         {lines.map((line) => (
-          <li key={line.number} className="grid grid-cols-[40px_1fr] hover:bg-accent/5">
-            <span className="text-right pr-3 text-subtle-foreground select-none">{line.number}</span>
+          <li key={line.number} className="grid grid-cols-[32px_1fr] hover:bg-accent/5 sm:grid-cols-[40px_1fr]">
+            <span className="select-none pr-2 text-right text-subtle-foreground sm:pr-3">{line.number}</span>
             {!controls.revealed ? (
               <span aria-label="Environment line masked" className="text-subtle-foreground tracking-widest">
                 {line.raw === "" ? " " : MASK}

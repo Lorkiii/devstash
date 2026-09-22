@@ -6,7 +6,7 @@ import { prepareTaskInput } from "@/app/lib/vault-crypto/task";
 import { WORKSPACE_FIELD_LIMITS } from "@/app/lib/workspace.types";
 import type { TaskFormProps } from "./task-form.types";
 
-const FIELD_CLASS = "min-h-11 w-full rounded-lg border border-accent/25 bg-background/80 px-3 py-2 font-mono text-sm text-foreground outline-none placeholder:text-subtle-foreground focus:border-accent/70 focus:ring-2 focus:ring-accent/10 disabled:opacity-60";
+const FIELD_CLASS = "min-h-10 w-full rounded-lg border border-accent/25 bg-background/80 px-2.5 py-1.5 font-mono text-[13px] text-foreground outline-none sm:min-h-11 sm:px-3 sm:py-2 sm:text-sm placeholder:text-subtle-foreground focus:border-accent/70 focus:ring-2 focus:ring-accent/10 disabled:opacity-60";
 
 export function TaskForm({ task, projects, fixedProject, categories, defaultSortOrder, isSaving, requestError, onCancel, onSubmit }: TaskFormProps) {
   const [projectId, setProjectId] = useState(fixedProject?.id ?? task?.projectId ?? "");
@@ -40,16 +40,16 @@ export function TaskForm({ task, projects, fixedProject, categories, defaultSort
   };
 
   return (
-    <form onSubmit={handleSubmit} aria-busy={isSaving} className="space-y-4">
+    <form onSubmit={handleSubmit} aria-busy={isSaving} className="space-y-3 sm:space-y-4">
         {fixedProject ? (
           <div>
-            <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">PROJECT</span>
-            <div className="min-h-11 rounded-lg border border-accent/18 bg-background/45 px-3 py-2 text-sm text-foreground/72">{fixedProject.name}</div>
-            <span className="mt-1 block text-[10px] text-subtle-foreground">Fixed while managing this project workspace.</span>
+            <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">PROJECT</span>
+            <div className="min-h-10 rounded-lg border border-accent/18 bg-background/45 px-2.5 py-1.5 text-[13px] text-foreground/72 sm:min-h-11 sm:px-3 sm:py-2 sm:text-sm">{fixedProject.name}</div>
+            <span className="mt-1 block text-[9px] text-subtle-foreground sm:text-[10px]">Fixed while managing this project workspace.</span>
           </div>
         ) : (
           <label className="block">
-            <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">PROJECT · OPTIONAL</span>
+            <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">PROJECT · OPTIONAL</span>
             <select value={projectId} onChange={(event) => setProjectId(event.target.value)} disabled={isSaving} className={FIELD_CLASS}>
               <option value="">Unassigned</option>
               {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
@@ -57,44 +57,44 @@ export function TaskForm({ task, projects, fixedProject, categories, defaultSort
           </label>
         )}
         <label className="block">
-          <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">CATEGORY · OPTIONAL</span>
+          <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">CATEGORY · OPTIONAL</span>
           <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)} disabled={isSaving} className={FIELD_CLASS}>
             <option value="">Uncategorized</option>
             {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
           </select>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">TITLE</span>
+          <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">TITLE</span>
           <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={WORKSPACE_FIELD_LIMITS.titleCodePoints} autoComplete="off" autoFocus required disabled={isSaving} className={FIELD_CLASS} />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">DESCRIPTION · OPTIONAL</span>
+          <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">DESCRIPTION · OPTIONAL</span>
           <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} maxLength={WORKSPACE_FIELD_LIMITS.descriptionCodePoints} autoComplete="off" disabled={isSaving} className={FIELD_CLASS} />
         </label>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">DUE DATE · ENCRYPTED</span>
+            <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">DUE DATE · ENCRYPTED</span>
             <input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} disabled={isSaving} className={FIELD_CLASS} />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[10px] tracking-widest text-muted-foreground">SORT ORDER</span>
+            <span className="mb-1 block text-[9px] tracking-widest text-muted-foreground sm:mb-1.5 sm:text-[10px]">SORT ORDER</span>
             <input type="number" min={0} max={WORKSPACE_FIELD_LIMITS.maximumSortOrder} value={sortOrder} onChange={(event) => setSortOrder(event.target.valueAsNumber)} required disabled={isSaving} className={FIELD_CLASS} />
           </label>
         </div>
-        {(validationError || requestError) && <p role="alert" className="text-xs text-rose-700 dark:text-rose-300">{validationError ?? requestError}</p>}
-        <div className="flex flex-col-reverse gap-2 border-t border-accent/15 pt-4 sm:flex-row sm:justify-end">
+        {(validationError || requestError) && <p role="alert" className="text-[11px] text-rose-700 dark:text-rose-300 sm:text-xs">{validationError ?? requestError}</p>}
+        <div className="flex flex-col-reverse gap-2 border-t border-accent/15 pt-3 sm:flex-row sm:justify-end sm:pt-4">
           <button
             type="button"
             onClick={onCancel}
             disabled={isSaving}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-accent/20 px-4 py-2 text-xs tracking-wider text-muted-foreground hover:bg-accent/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-accent/20 px-3 py-2 text-[11px] tracking-wider sm:min-h-11 sm:px-4 sm:text-xs text-muted-foreground hover:bg-accent/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             <X className="h-3.5 w-3.5" /> CANCEL
           </button>
           <button
             type="submit"
             disabled={isSaving}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-accent/50 bg-accent/15 px-4 py-2 text-xs font-semibold tracking-wider text-foreground hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-accent/50 bg-accent/15 px-3 py-2 text-[11px] font-semibold tracking-wider sm:min-h-11 sm:px-4 sm:text-xs text-foreground hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isSaving ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             {task ? "SAVE ENCRYPTED UPDATE" : "CREATE ENCRYPTED TASK"}

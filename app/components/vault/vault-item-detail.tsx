@@ -27,7 +27,7 @@ export function VaultItemDetail({
         type="button"
         onClick={onEdit}
         disabled={isDeleting}
-        className="inline-flex min-h-10 items-center gap-1 rounded border border-accent/20 px-2 py-1 text-[10px] tracking-widest text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-8 items-center gap-1 rounded border border-accent/20 px-1.5 py-1 text-[9px] tracking-widest text-muted-foreground hover:text-foreground sm:min-h-10 sm:px-2 sm:text-[10px] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Pencil className="w-3 h-3" /> EDIT
       </button>
@@ -35,7 +35,7 @@ export function VaultItemDetail({
         type="button"
         onClick={onDelete}
         disabled={isDeleting}
-        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex min-h-8 items-center gap-1 rounded border border-rose-400/20 px-1.5 py-1 text-[9px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 sm:min-h-10 sm:px-2 sm:text-[10px] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Trash2 className="w-3 h-3" /> {isDeleting ? "DELETING…" : "DELETE"}
       </button>
@@ -47,18 +47,18 @@ export function VaultItemDetail({
       <button
         type="button"
         onClick={onBack}
-        className="lg:hidden mb-3 inline-flex items-center gap-1.5 text-[10px] tracking-widest text-accent hover:text-accent cursor-pointer"
+        className="lg:hidden mb-2.5 inline-flex items-center gap-1.5 text-[9px] tracking-widest text-accent hover:text-accent cursor-pointer sm:mb-3 sm:text-[10px]"
       >
         <ArrowLeft className="w-3 h-3" /> BACK TO LIST
       </button>
 
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-3 sm:mb-4">
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-foreground truncate">{item.title}</h3>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-subtle-foreground">
+          <h3 className="text-[13px] font-bold text-foreground truncate sm:text-base">{item.title}</h3>
+          <div className="mt-1 flex flex-wrap items-center gap-1 text-[9px] text-subtle-foreground sm:gap-1.5 sm:text-[10px]">
             <TypeBadge type={item.type} />
             {projectName && (
-              <span className="px-1.5 py-0.5 rounded border border-foreground/15 tracking-widest">{projectName}</span>
+              <span className="rounded border border-foreground/15 px-1 py-0.5 tracking-widest sm:px-1.5">{projectName}</span>
             )}
             {item.tags.map((tag) => (
               <span key={tag} className="text-subtle-foreground">
@@ -69,10 +69,10 @@ export function VaultItemDetail({
         </div>
       </div>
 
-      <dl className="space-y-3">
+      <dl className="space-y-2.5 sm:space-y-3">
         {item.fields.map((field) => (
           <div key={field.key}>
-            <dt className="mb-1 text-[10px] tracking-widest text-subtle-foreground uppercase">{field.label}</dt>
+            <dt className="mb-1 text-[9px] uppercase tracking-widest text-subtle-foreground sm:text-[10px]">{field.label}</dt>
             <dd>
               <MaskedValue value={field.value} label={field.label} secret={field.secret} />
             </dd>
@@ -81,15 +81,15 @@ export function VaultItemDetail({
       </dl>
 
       {item.notes && (
-        <div className="mt-4 pt-3 border-t border-accent/10">
-          <div className="mb-1 text-[10px] tracking-widest text-subtle-foreground">NOTES</div>
-          <p className="text-xs text-muted-foreground whitespace-pre-wrap">{item.notes}</p>
+        <div className="mt-3 border-t border-accent/10 pt-2.5 sm:mt-4 sm:pt-3">
+          <div className="mb-1 text-[9px] tracking-widest text-subtle-foreground sm:text-[10px]">NOTES</div>
+          <p className="whitespace-pre-wrap text-[11px] text-muted-foreground sm:text-xs">{item.notes}</p>
         </div>
       )}
 
-      {actionError && <p role="alert" className="mt-4 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
+      {actionError && <p role="alert" className="mt-3 text-[11px] text-rose-700 dark:text-rose-300 sm:mt-4 sm:text-xs">{actionError}</p>}
 
-      <p className="mt-4 text-[10px] text-subtle-foreground">
+      <p className="mt-3 text-[9px] text-subtle-foreground sm:mt-4 sm:text-[10px]">
         Reveal auto-hides after 10s. Copy is explicit; clipboard clearing is best-effort and not guaranteed.
       </p>
     </>
@@ -97,11 +97,11 @@ export function VaultItemDetail({
 
   if (embedded) {
     return (
-      <section className="min-w-0 px-4 py-4 sm:px-5">
-        <header className="mb-4 flex flex-col gap-3 border-b border-accent/12 pb-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="min-w-0 px-3 py-3 sm:px-5 sm:py-4">
+        <header className="mb-3 flex flex-col gap-2.5 border-b border-accent/12 pb-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:pb-4">
           <div>
-            <div className="text-[10px] font-bold tracking-widest text-violet-700 dark:text-violet-300">{meta.label.toUpperCase()}</div>
-            <div className="mt-1 text-[10px] tracking-wider text-subtle-foreground">updated {formatDate(item.updatedAt)}</div>
+            <div className="text-[9px] font-bold tracking-widest text-violet-700 dark:text-violet-300 sm:text-[10px]">{meta.label.toUpperCase()}</div>
+            <div className="mt-0.5 text-[9px] tracking-wider text-subtle-foreground sm:mt-1 sm:text-[10px]">updated {formatDate(item.updatedAt)}</div>
           </div>
           {actions}
         </header>

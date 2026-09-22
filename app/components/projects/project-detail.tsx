@@ -84,7 +84,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
   if (!project) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <BackLink />
         <ConsolePanel title="PROJECT" tone="muted">
           <EmptyState message="no project with that id in memory." hint="It may have been deleted, or the link is stale." />
@@ -132,7 +132,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
           setEditingProject(true);
         }}
         disabled={isDeleting}
-        className="inline-flex min-h-10 items-center gap-1 rounded border border-accent/20 px-2 py-1 text-[10px] tracking-widest text-muted-foreground hover:text-foreground disabled:opacity-50"
+        className="inline-flex min-h-8 items-center gap-1 rounded border border-accent/20 px-1.5 py-1 text-[9px] tracking-widest text-muted-foreground hover:text-foreground sm:min-h-10 sm:px-2 sm:text-[10px] disabled:opacity-50"
       >
         <Pencil className="h-3 w-3" /> EDIT
       </button>
@@ -140,7 +140,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         type="button"
         disabled={isDeleting}
         onClick={() => void handleProjectDelete()}
-        className="inline-flex min-h-10 items-center gap-1 rounded border border-rose-400/20 px-2 py-1 text-[10px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 disabled:opacity-50"
+        className="inline-flex min-h-8 items-center gap-1 rounded border border-rose-400/20 px-1.5 py-1 text-[9px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 sm:min-h-10 sm:px-2 sm:text-[10px] disabled:opacity-50"
       >
         <Trash2 className="h-3 w-3" /> {isDeleting ? "DELETING…" : "DELETE"}
       </button>
@@ -148,7 +148,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <BackLink />
       <PageHeading eyebrow="PROJECT" title={project.name} description={project.description} actions={projectActions} />
 
@@ -222,7 +222,7 @@ function BackLink() {
   return (
     <Link
       href="/projects"
-      className="inline-flex min-h-10 items-center gap-1.5 font-mono text-[10px] tracking-widest text-accent hover:text-accent"
+      className="inline-flex min-h-8 items-center gap-1.5 font-mono text-[9px] tracking-widest text-accent hover:text-accent sm:min-h-10 sm:text-[10px]"
     >
       <ArrowLeft className="h-3 w-3" /> ALL PROJECTS
     </Link>

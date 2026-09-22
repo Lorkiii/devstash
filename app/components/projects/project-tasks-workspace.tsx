@@ -1,11 +1,16 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Check, CheckSquare2, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, CheckSquare2, Pencil, Plus, Trash2 } from "lucide-react";
+import { TaskCheckButton } from "@/app/components/tasks/task-check-button";
 import { TaskForm } from "@/app/components/tasks/task-form";
 import { Modal } from "@/app/components/ui/modal";
-import { TaskCategoryBadge } from "@/app/components/ui/task-category-badge";
-import type { Project, Task } from "@/app/lib/vault-data.types";
+import {
+  TASK_CATEGORY_COLOR_CLASSES,
+  TaskCategoryBadge,
+} from "@/app/components/ui/task-category-badge";
+import { localIsoDate } from "@/app/components/tasks/task-due";
+import type { Project, Task, TaskCategory } from "@/app/lib/vault-data.types";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import type { TaskInput } from "@/app/lib/workspace.types";
 import {
@@ -17,6 +22,27 @@ import {
 } from "./project-workspace-shell";
 
 type CategoryFilter = "ALL" | "NONE" | string;
+
+function dueMeta(dueDate?: string) {
+  if (!dueDate) return null;
+  const today = localIsoDate();
+  if (dueDate < today) {
+    return { label: `Overdue ${dueDate}`, className: "text-rose-700 dark:text-rose-300" };
+  }
+  if (dueDate === today) {
+    return { label: "Due today", className: "text-amber-800 dark:text-amber-200" };
+  }
+  return { label: `Due ${dueDate}`, className: "text-muted-foreground" };
+}
+
+function categoryChipClass(active: boolean, chipId: CategoryFilter, category?: TaskCategory | null) {
+  if (!active) {
+    return "border-accent/14 text-subtle-foreground hover:border-accent/35 hover:text-muted-foreground";
+  }
+  if (chipId === "ALL") return "border-emerald-400/50 bg-emerald-400/12 text-emerald-800 dark:text-emerald-100";
+  if (!category) return TASK_CATEGORY_COLOR_CLASSES.slate;
+  return TASK_CATEGORY_COLOR_CLASSES[category.colorToken];
+}
 
 interface ProjectTasksWorkspaceProps {
   project: Project;
@@ -65,10 +91,10 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
     : undefined;
   const taskCategory = (categoryId?: string) =>
     data.taskCategories.find((category) => category.id === categoryId) ?? null;
-  const categoryFilters: { id: CategoryFilter; label: string }[] = [
+  const categoryFilters: { id: CategoryFilter; label: string; category?: TaskCategory | null }[] = [
     { id: "ALL", label: "ALL" },
-    ...data.taskCategories.map((category) => ({ id: category.id, label: category.name })),
-    { id: "NONE", label: "UNCATEGORIZED" },
+    ...data.taskCategories.map((category) => ({ id: category.id, label: category.name, category })),
+    { id: "NONE", label: "UNCATEGORIZED", category: null },
   ];
 
   const inputForTask = (task: Task, done = task.done): TaskInput => ({
@@ -176,9 +202,9 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
         )}
       </Modal>
 
-      <div className="flex flex-col gap-3 border-b border-accent/10 px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-        <div role="group" aria-label="Filter project tasks by category" className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <span className="mr-1 text-[9px] tracking-widest text-subtle-foreground">CATEGORY</span>
+      <div className="flex flex-col gap-2.5 border-b border-emerald-400/10 bg-emerald-400/[0.02] px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div role="group" aria-label="Filter project tasks by category" className="flex min-w-0 flex-wrap items-center gap-1 sm:gap-1.5">
+          <span className="mr-1 text-[8px] tracking-widest text-subtle-foreground sm:text-[9px]">CATEGORY</span>
           {categoryFilters.map((filter) => {
             const active = effectiveCategoryFilter === filter.id;
             return (
@@ -187,11 +213,7 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
                 type="button"
                 aria-pressed={active}
                 onClick={() => setCategoryFilter(filter.id)}
-                className={`min-h-9 rounded-lg border px-2.5 py-1 text-[10px] tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 ${
-                  active
-                    ? "border-emerald-400/45 bg-emerald-400/10 text-emerald-800 dark:text-emerald-100"
-                    : "border-accent/14 text-subtle-foreground hover:border-accent/35 hover:text-muted-foreground"
-                }`}
+                className={`min-h-7 rounded-full border px-2 py-0.5 text-[9px] tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 sm:min-h-9 sm:px-2.5 sm:py-1 sm:text-[10px] ${categoryChipClass(active, filter.id, filter.category)}`}
               >
                 {filter.label}
               </button>
@@ -199,18 +221,18 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
           })}
         </div>
 
-        <label className="flex min-h-10 shrink-0 cursor-pointer items-center gap-2 text-[10px] tracking-widest text-muted-foreground">
+        <label className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 text-[9px] tracking-widest text-muted-foreground sm:min-h-10 sm:gap-2 sm:text-[10px]">
           <input
             type="checkbox"
             checked={showDone}
             onChange={(event) => setShowDone(event.target.checked)}
-            className="h-4 w-4 accent-emerald-400"
+            className="h-3.5 w-3.5 accent-emerald-400 sm:h-4 sm:w-4"
           />
           SHOW COMPLETED
         </label>
       </div>
 
-      {actionError && !formId && <p role="alert" className="border-b border-rose-400/10 px-4 py-3 text-xs text-rose-700 dark:text-rose-300 sm:px-5">{actionError}</p>}
+      {actionError && !formId && <p role="alert" className="border-b border-rose-400/10 px-3 py-2.5 text-xs text-rose-700 dark:text-rose-300 sm:px-5 sm:py-3">{actionError}</p>}
 
       {visible.length === 0 ? (
         <WorkspaceEmptyState
@@ -218,64 +240,63 @@ export function ProjectTasksWorkspace({ project, counts, onTabChange }: ProjectT
           hint={tasks.length === 0 ? "Create a task to start planning this project." : "Show completed tasks or choose another category."}
         />
       ) : (
-        <ul className="divide-y divide-accent/10">
-          {visible.map((task) => (
-            <li key={task.id} className="flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3 sm:px-5">
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={task.done}
-                aria-label={task.done ? `Mark ${task.title} as not done` : `Mark ${task.title} as done`}
-                onClick={() => void toggleTask(task)}
-                disabled={busyId === task.id}
-                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/55 ${
-                  task.done
-                    ? "border-emerald-400/70 bg-emerald-400/25 text-emerald-700 dark:text-emerald-200"
-                    : "border-accent/40 hover:border-emerald-400/70"
-                } disabled:opacity-50`}
-              >
-                {task.done && <Check className="h-3.5 w-3.5" />}
-              </button>
-
-              <div className="min-w-0 flex-1">
-                <div className={`break-words text-xs ${task.done ? "text-subtle-foreground line-through" : "text-foreground"}`}>
-                  {task.title}
-                </div>
-                {task.description && <p className="mt-1 break-words font-sans text-xs leading-relaxed text-subtle-foreground">{task.description}</p>}
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <TaskCategoryBadge category={taskCategory(task.categoryId)} />
-                  <span className={`text-[10px] ${task.dueDate ? "text-muted-foreground" : "text-foreground/28"}`}>
-                    {task.dueDate ?? "no due date"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="ml-8 flex shrink-0 items-center gap-1 sm:ml-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActionError(null);
-                    setFormId(task.id);
-                    touchRecent("task", task.id);
-                  }}
+        <ul className="divide-y divide-emerald-400/10">
+          {visible.map((task) => {
+            const category = taskCategory(task.categoryId);
+            const due = dueMeta(task.dueDate);
+            return (
+              <li key={task.id} className="flex flex-wrap items-start gap-x-3 gap-y-2 px-3 py-2.5 sm:px-5 sm:py-3.5">
+                <TaskCheckButton
+                  done={task.done}
                   disabled={busyId === task.id}
-                  aria-label={`Edit ${task.title}`}
-                  className={PROJECT_WORKSPACE_ICON_ACTION}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void deleteSelectedTask(task)}
-                  disabled={busyId === task.id}
-                  aria-label={`Delete ${task.title}`}
-                  className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </li>
-          ))}
+                  label={task.done ? "Mark as not done" : "Mark as done"}
+                  onToggle={() => void toggleTask(task)}
+                />
+
+                <div className="min-w-0 flex-1">
+                  <div className={`break-words text-[12px] font-semibold sm:text-[13px] ${task.done ? "text-subtle-foreground line-through" : "text-foreground"}`}>
+                    {task.title}
+                  </div>
+                  {task.description && <p className="mt-0.5 line-clamp-2 break-words font-sans text-[11px] leading-4 text-subtle-foreground sm:mt-1 sm:text-xs sm:leading-relaxed">{task.description}</p>}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:mt-2 sm:gap-2">
+                    <TaskCategoryBadge category={category} />
+                    {due ? (
+                      <span className={`inline-flex items-center gap-1 font-mono text-[9px] sm:text-[10px] ${due.className}`}>
+                        <CalendarDays className="h-3 w-3" aria-hidden="true" /> {due.label}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] text-foreground/28 sm:text-[10px]">no due date</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="ml-8 flex shrink-0 items-center gap-1 sm:ml-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionError(null);
+                      setFormId(task.id);
+                      touchRecent("task", task.id);
+                    }}
+                    disabled={busyId === task.id}
+                    aria-label="Edit task"
+                    className={PROJECT_WORKSPACE_ICON_ACTION}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void deleteSelectedTask(task)}
+                    disabled={busyId === task.id}
+                    aria-label="Delete task"
+                    className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50 sm:min-h-10 sm:min-w-10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </ProjectWorkspaceShell>

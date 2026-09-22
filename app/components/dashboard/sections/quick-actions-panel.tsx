@@ -54,7 +54,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 export function QuickActionsPanel() {
   return (
     <section aria-labelledby="capture-dock-title" className="overflow-hidden rounded-xl border border-accent/20 bg-surface/85 font-mono shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
-      <header className="flex flex-col gap-2 border-b border-accent/15 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <header className="flex flex-col gap-1.5 border-b border-accent/15 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:px-5 sm:py-3">
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(110,168,255,0.9)]" />
           <h2 id="capture-dock-title" className="text-[10px] font-bold tracking-[0.2em] text-accent-strong">CAPTURE DOCK</h2>
@@ -62,7 +62,7 @@ export function QuickActionsPanel() {
         <p className="text-[9px] tracking-[0.16em] text-subtle-foreground">PLAINTEXT STAYS IN THIS TAB</p>
       </header>
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4">
         {QUICK_ACTIONS.map((action, index) => {
           const Icon = action.icon;
           const actionNumber = String(index + 1).padStart(2, "0");
@@ -70,19 +70,19 @@ export function QuickActionsPanel() {
             <Link
               key={action.id}
               href={action.href}
-              className="group relative min-h-32 border-b border-accent/10 p-4 transition-colors hover:bg-accent/[0.06] sm:border-r xl:border-b-0 last:border-b-0 sm:[&:nth-child(2)]:border-r-0 xl:[&:nth-child(2)]:border-r xl:last:border-r-0"
+              className="group relative min-h-24 border-b border-r border-accent/10 p-3 transition-colors hover:bg-accent/[0.06] [&:nth-child(even)]:border-r-0 [&:nth-child(n+3)]:border-b-0 sm:min-h-32 sm:p-4 xl:border-b-0 xl:[&:nth-child(even)]:border-r xl:last:border-r-0"
             >
-              <div className="flex items-start justify-between gap-4">
-                <span className={`inline-flex h-9 w-9 items-center justify-center rounded border ${action.accentClass}`}>
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
+                <span className={`inline-flex h-8 w-8 items-center justify-center rounded border sm:h-9 sm:w-9 ${action.accentClass}`}>
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="text-[9px] tracking-[0.2em] text-subtle-foreground">{actionNumber}</span>
               </div>
-              <div className="mt-5 pr-5">
-                <h3 className="text-xs font-bold tracking-wider text-foreground">{action.label.toUpperCase()}</h3>
-                <p className="mt-1.5 font-sans text-[11px] leading-4 text-subtle-foreground">{action.hint}</p>
+              <div className="mt-3 pr-4 sm:mt-5 sm:pr-5">
+                <h3 className="text-[11px] font-bold tracking-wider text-foreground sm:text-xs">{action.label.toUpperCase()}</h3>
+                <p className="mt-1 font-sans text-[10px] leading-[0.875rem] text-subtle-foreground sm:mt-1.5 sm:text-[11px] sm:leading-4">{action.hint}</p>
               </div>
-              <ArrowUpRight className="absolute bottom-4 right-4 h-3.5 w-3.5 text-accent transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-strong" />
+              <ArrowUpRight className="absolute bottom-3 right-3 h-3.5 w-3.5 text-accent transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-accent-strong sm:bottom-4 sm:right-4" />
             </Link>
           );
         })}

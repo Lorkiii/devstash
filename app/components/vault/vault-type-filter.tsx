@@ -21,7 +21,7 @@ export function VaultTypeFilter({ selected, counts, onChange }: VaultTypeFilterP
         type="button"
         onClick={() => onChange(value)}
         aria-pressed={active}
-        className={`inline-flex items-center gap-1.5 rounded border px-2 py-1 font-mono text-[10px] tracking-widest transition-colors cursor-pointer ${
+        className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] tracking-widest transition-colors cursor-pointer sm:gap-1.5 sm:px-2 sm:py-1 sm:text-[10px] ${
           active ? activeClass : "border-accent/15 text-muted-foreground hover:text-foreground hover:border-accent/40"
         }`}
       >
@@ -32,7 +32,7 @@ export function VaultTypeFilter({ selected, counts, onChange }: VaultTypeFilterP
   };
 
   return (
-    <div role="group" aria-label="Filter by type" className="flex flex-wrap gap-1.5">
+    <div role="group" aria-label="Filter by type" className="flex flex-wrap gap-1 sm:gap-1.5">
       {chip("ALL", "ALL", total, "bg-accent/15 border-accent/50 text-foreground")}
       {VAULT_TYPE_ORDER.map((type) =>
         chip(VAULT_TYPE_META[type].short, type, counts[type], VAULT_TYPE_META[type].chipClass)

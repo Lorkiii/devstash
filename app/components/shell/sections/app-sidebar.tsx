@@ -3,7 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Lock, X } from "lucide-react";
+import { Lock, Moon, Sun, X } from "lucide-react";
+import { useTheme } from "@/app/components/theme/theme-provider";
 import { NAV_ITEMS, isNavItemActive } from "../nav-items";
 
 interface AppSidebarProps {
@@ -16,6 +17,9 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isUnlocked, onLock, isMobileOpen, onCloseMobile }: AppSidebarProps) {
   const pathname = usePathname();
+  // Theme is a device preference, not vault data, so the toggle stays usable while locked.
+  const { theme, setTheme, isSaving: isThemeSaving, error: themeError } = useTheme();
+  const isDark = theme === "dark";
   const workspaceItems = NAV_ITEMS.filter((item) => item.group === "workspace");
   const toolItems = NAV_ITEMS.filter((item) => item.group === "tools");
 
@@ -49,7 +53,7 @@ export function AppSidebar({ isUnlocked, onLock, isMobileOpen, onCloseMobile }: 
 
   const content = (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between px-3 h-14 border-b border-accent/15 md:hidden">
+      <div className="flex items-center justify-between px-3 h-12 border-b border-accent/15 md:hidden sm:h-14">
         <span className="font-mono text-[10px] tracking-widest text-accent">NAVIGATION</span>
         <button
           type="button"
@@ -67,7 +71,24 @@ export function AppSidebar({ isUnlocked, onLock, isMobileOpen, onCloseMobile }: 
         <ul className="space-y-0.5">{toolItems.map(renderItem)}</ul>
       </nav>
 
-      <div className="p-2 border-t border-accent/15">
+      <div className="space-y-1.5 p-2 border-t border-accent/15">
+        <button
+          type="button"
+          onClick={() => void setTheme(isDark ? "light" : "dark")}
+          disabled={isThemeSaving}
+          aria-pressed={isDark}
+          aria-label="Dark theme"
+          title={`Switch to ${isDark ? "light" : "dark"} theme`}
+          className="w-full flex items-center justify-center gap-2 rounded border border-accent/25 bg-surface/60 px-3 py-2 font-mono text-xs tracking-wider text-muted-foreground hover:border-accent/50 hover:text-foreground transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
+        >
+          {isDark ? <Moon className="w-3.5 h-3.5 text-accent-strong" aria-hidden="true" /> : <Sun className="w-3.5 h-3.5 text-accent-strong" aria-hidden="true" />}
+          <span className="lg:inline md:hidden">{isDark ? "DARK" : "LIGHT"}</span>
+        </button>
+        {themeError && (
+          <p role="alert" className="px-1 font-mono text-[10px] leading-4 text-rose-600 dark:text-rose-200 md:hidden lg:block">
+            {themeError}
+          </p>
+        )}
         <button
           type="button"
           onClick={onLock}

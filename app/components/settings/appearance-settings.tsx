@@ -36,7 +36,7 @@ export function AppearanceSettings() {
             return (
               <label
                 key={option.value}
-                className={`inline-flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 font-mono text-xs font-semibold transition-colors focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-surface motion-reduce:transition-none sm:min-w-28 ${
+                className={`inline-flex min-h-9 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2.5 font-mono text-[11px] font-semibold transition-colors sm:gap-2 sm:text-xs focus-within:ring-2 focus-within:ring-accent focus-within:ring-offset-2 focus-within:ring-offset-surface motion-reduce:transition-none sm:min-h-11 sm:min-w-28 sm:px-4 ${
                   selected
                     ? "border-accent/60 bg-accent/15 text-accent-strong shadow-sm"
                     : "border-transparent text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -57,7 +57,7 @@ export function AppearanceSettings() {
           })}
         </div>
       </fieldset>
-      {error && <p role="alert" className="mt-3 text-sm text-rose-600 dark:text-rose-200">{error}</p>}
+      {error && <p role="alert" className="mt-2.5 text-[13px] text-rose-600 dark:text-rose-200 sm:mt-3 sm:text-sm">{error}</p>}
     </ConsolePanel>
   );
 }

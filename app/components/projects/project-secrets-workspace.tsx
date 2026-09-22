@@ -160,7 +160,7 @@ export function ProjectSecretsWorkspace({
       ) : (
         <div className="grid min-w-0 lg:grid-cols-[minmax(16rem,0.82fr)_minmax(0,1.18fr)]">
           <div className={`${selected ? "hidden lg:block" : ""} min-w-0 border-accent/12 lg:border-r`}>
-            <label className="flex min-h-12 items-center gap-2 border-b border-accent/10 px-4 py-2.5">
+            <label className="flex min-h-10 items-center gap-2 border-b border-accent/10 px-2.5 py-1.5 sm:min-h-12 sm:px-4 sm:py-2.5">
               <Search className="h-3.5 w-3.5 shrink-0 text-violet-700/80 dark:text-violet-300/70" aria-hidden="true" />
               <input
                 value={query}
@@ -169,9 +169,9 @@ export function ProjectSecretsWorkspace({
                 aria-label="Filter project secrets"
                 autoComplete="off"
                 spellCheck={false}
-                className="min-w-0 flex-1 bg-transparent text-xs text-foreground placeholder:text-subtle-foreground focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent text-[11px] text-foreground placeholder:text-subtle-foreground focus:outline-none sm:text-xs"
               />
-              <span className="text-[9px] tracking-wider text-foreground/32">{visible.length} SHOWN</span>
+              <span className="text-[8px] tracking-wider text-foreground/32 sm:text-[9px]">{visible.length} SHOWN</span>
             </label>
 
             {visible.length === 0 ? (
@@ -186,14 +186,14 @@ export function ProjectSecretsWorkspace({
                         type="button"
                         onClick={() => onSelectionChange(item.id)}
                         aria-current={active ? "true" : undefined}
-                        className={`flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400/50 ${
+                        className={`flex min-h-12 w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400/50 sm:min-h-16 sm:gap-3 sm:px-4 sm:py-2.5 ${
                           active ? "bg-violet-400/10" : "hover:bg-violet-400/5"
                         }`}
                       >
-                        <TypeBadge type={item.type} className="w-[68px] shrink-0 justify-center" />
+                        <TypeBadge type={item.type} className="w-[54px] shrink-0 justify-center sm:w-[68px]" />
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-xs text-foreground">{item.title}</span>
-                          <span className="mt-0.5 block truncate text-[10px] text-subtle-foreground">
+                          <span className="block truncate text-[11px] text-foreground sm:text-xs">{item.title}</span>
+                          <span className="mt-0.5 block truncate text-[9px] text-subtle-foreground sm:text-[10px]">
                             {item.tags.length > 0 ? item.tags.map((tag) => `#${tag}`).join(" ") : `updated ${formatDate(item.updatedAt)}`}
                           </span>
                         </span>

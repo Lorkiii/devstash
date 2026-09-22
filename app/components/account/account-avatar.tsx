@@ -17,9 +17,9 @@ export function AccountAvatar({ displayName, size = "small" }: {
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border border-accent/45 bg-accent/15 font-mono font-bold tracking-wide text-accent-strong ${size === "large" ? "size-14 text-lg" : "size-9 text-xs"}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border border-accent/45 bg-accent/15 font-mono font-bold tracking-wide text-accent-strong ${size === "large" ? "size-11 text-base sm:size-14 sm:text-lg" : "size-8 text-[11px] sm:size-9 sm:text-xs"}`}
     >
-      {initials ?? <UserRound className={size === "large" ? "size-6" : "size-4"} />}
+      {initials ?? <UserRound className={size === "large" ? "size-5 sm:size-6" : "size-4"} />}
     </span>
   );
 }
