@@ -21,12 +21,12 @@ export function MaskedValue({
 
   const isMultiline = value.includes("\n");
   const showValue = !secret || controls.revealed;
-  const textSize = compact ? "text-[11px]" : "text-xs";
+  const textSize = compact ? "text-[10px] sm:text-[11px]" : "text-[11px] sm:text-xs";
 
   return (
     <div className="flex items-start gap-2 min-w-0">
       <div
-        className={`flex-1 min-w-0 rounded border border-accent/15 bg-surface-muted/90 px-2.5 py-1.5 font-mono ${textSize} ${
+        className={`flex-1 min-w-0 rounded border border-accent/15 bg-surface-muted/90 px-2 py-1 font-mono sm:px-2.5 sm:py-1.5 ${textSize} ${
           showValue ? "text-foreground" : "text-subtle-foreground tracking-[0.15em]"
         } ${(isMultiline || wrap) && showValue ? "whitespace-pre-wrap break-all" : "truncate"}`}
       >
@@ -39,7 +39,7 @@ export function MaskedValue({
             onClick={controls.toggleReveal}
             aria-label={controls.revealed ? `Hide ${label}` : `Reveal ${label}`}
             aria-pressed={controls.revealed}
-            className="relative inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors cursor-pointer"
+            className="relative inline-flex min-h-9 min-w-9 items-center justify-center rounded border border-accent/20 text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors cursor-pointer sm:min-h-10 sm:min-w-10"
           >
             {controls.revealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             {controls.revealed && (
@@ -53,7 +53,7 @@ export function MaskedValue({
           type="button"
           onClick={() => void controls.copy()}
           aria-label={`Copy ${label}`}
-          className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded border transition-colors cursor-pointer ${
+          className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded border transition-colors cursor-pointer sm:min-h-10 sm:min-w-10 ${
             controls.copyStatus === "copied"
               ? "border-emerald-400/50 text-emerald-700 dark:text-emerald-400"
               : controls.copyStatus === "error"

@@ -47,14 +47,14 @@ export function ProjectsOverview() {
         setActionError(null);
         setShowForm(true);
       }}
-      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-3 py-1.5 font-mono text-xs tracking-wider text-foreground hover:bg-accent/20"
+      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-foreground hover:bg-accent/20 sm:min-h-10 sm:px-3 sm:text-xs"
     >
       <Plus className="w-3.5 h-3.5" /> NEW PROJECT
     </button>
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <PageHeading
         eyebrow="PROJECTS"
         title="Projects & .env"

@@ -10,6 +10,7 @@ interface AppStatusBarProps {
 }
 
 // tmux/VS Code style status line. Only non-sensitive metadata appears here.
+// Hidden on phones: the header already carries the lock state and countdown.
 export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: AppStatusBarProps) {
   const segments: string[] = [
     "argon2id",
@@ -21,7 +22,7 @@ export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: 
   }
 
   return (
-    <footer className="relative z-20 h-7 shrink-0 border-t border-accent/15 bg-background/85 backdrop-blur-md">
+    <footer className="relative z-20 hidden h-7 shrink-0 border-t border-accent/15 bg-background/85 backdrop-blur-md md:block">
       <div className="flex h-full items-center px-4 font-mono text-[10px] tracking-wider text-subtle-foreground sm:px-5 lg:px-6">
         <div className="flex items-center gap-2 min-w-0 truncate">
           <span className="text-accent">◇</span>

@@ -121,14 +121,14 @@ export function VaultBrowser() {
         setActionError(null);
         setFormItemId("new");
       }}
-      className="inline-flex min-h-10 items-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-3 py-1.5 font-mono text-xs tracking-wider text-foreground hover:bg-accent/20"
+      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-foreground hover:bg-accent/20 sm:min-h-10 sm:px-3 sm:text-xs"
     >
       <Plus className="w-3.5 h-3.5" /> NEW GENERIC SECRET
     </button>
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <PageHeading
         eyebrow="VAULT"
         title="Secrets & credentials"
@@ -189,8 +189,8 @@ export function VaultBrowser() {
       </Modal>
 
       <ConsolePanel title="RECORDS" status={`${visible.length} SHOWN`} bodyClassName="p-0">
-        <div className="grid gap-2.5 border-b border-accent/10 p-3 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)] lg:items-start">
-          <label className="flex min-h-10 items-center gap-2 rounded border border-accent/20 bg-surface-muted/80 px-2.5 py-1.5 focus-within:border-accent/45 focus-within:ring-2 focus-within:ring-accent/10">
+        <div className="grid gap-2 border-b border-accent/10 p-2.5 sm:gap-2.5 sm:p-3 lg:grid-cols-[minmax(16rem,0.8fr)_minmax(0,1.2fr)] lg:items-start">
+          <label className="flex min-h-9 items-center gap-2 rounded border border-accent/20 bg-surface-muted/80 px-2.5 py-1.5 focus-within:border-accent/45 focus-within:ring-2 focus-within:ring-accent/10 sm:min-h-10">
             <Search className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden="true" />
             <input
               value={query}
@@ -199,14 +199,14 @@ export function VaultBrowser() {
               aria-label="Filter records"
               autoComplete="off"
               spellCheck={false}
-              className="min-w-0 flex-1 bg-transparent text-xs text-foreground placeholder:text-subtle-foreground focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent text-[11px] text-foreground placeholder:text-subtle-foreground focus:outline-none sm:text-xs"
             />
           </label>
           <VaultTypeFilter selected={typeFilter} counts={counts} onChange={setTypeFilter} />
         </div>
 
         {visible.length === 0 ? (
-          <div className="p-3">
+          <div className="p-2.5 sm:p-3">
             <EmptyState
               message={data.secrets.length === 0 ? "no encrypted secrets yet." : "no records match."}
               hint={data.secrets.length === 0 ? "Create a generic secret to begin." : "Clear the filter or search a different tag."}
@@ -223,14 +223,14 @@ export function VaultBrowser() {
                     onClick={() => select(item.id)}
                     aria-current={active ? "true" : undefined}
                     aria-haspopup="dialog"
-                    className={`group grid min-h-16 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/55 sm:px-4 ${
+                    className={`group grid min-h-14 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 px-2.5 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/55 sm:min-h-16 sm:gap-3 sm:px-4 sm:py-3 ${
                       active ? "bg-accent/10" : "hover:bg-accent/5"
                     }`}
                   >
-                    <TypeBadge type={item.type} className="w-[68px] shrink-0 justify-center" />
+                    <TypeBadge type={item.type} className="w-[54px] shrink-0 justify-center sm:w-[68px]" />
                     <span className="min-w-0">
-                      <span className="block truncate text-xs font-medium text-foreground">{item.title}</span>
-                      <span className="mt-0.5 block truncate text-[10px] text-subtle-foreground">
+                      <span className="block truncate text-[11px] font-medium text-foreground sm:text-xs">{item.title}</span>
+                      <span className="mt-0.5 block truncate text-[9px] text-subtle-foreground sm:text-[10px]">
                         {projectName(item.projectId) ?? "no project"}
                         {item.tags.length > 0 && ` · ${item.tags.map((tag) => `#${tag}`).join(" ")}`}
                       </span>
@@ -240,7 +240,7 @@ export function VaultBrowser() {
                         <span className="block text-[8px] tracking-[0.16em]">UPDATED</span>
                         <span className="mt-0.5 block text-[10px] text-subtle-foreground">{formatDate(item.updatedAt)}</span>
                       </span>
-                      <span className="grid h-8 w-8 place-items-center rounded border border-accent/15 bg-background/40 transition-colors group-hover:border-accent/35 group-hover:bg-accent/10">
+                      <span className="grid h-7 w-7 place-items-center rounded border border-accent/15 bg-background/40 transition-colors group-hover:border-accent/35 group-hover:bg-accent/10 sm:h-8 sm:w-8">
                         <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                       </span>
                     </span>

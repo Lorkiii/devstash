@@ -26,18 +26,18 @@ export function AppHeader({
   const countdown = secondsUntilAutoLock === null ? null : formatCountdown(secondsUntilAutoLock);
 
   return (
-    <header className="relative z-20 h-14 shrink-0 border-b border-accent/15 bg-background/70 backdrop-blur-md">
-      <div className="flex h-full items-center justify-between gap-2 px-3 sm:gap-3 sm:px-5 lg:px-6">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+    <header className="relative z-20 h-12 shrink-0 border-b border-accent/15 bg-background/70 backdrop-blur-md sm:h-14">
+      <div className="flex h-full items-center justify-between gap-2 px-2.5 sm:gap-3 sm:px-5 lg:px-6">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
           <button
             type="button"
             onClick={onOpenMobileNav}
             aria-label="Open navigation"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer md:hidden"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer md:hidden sm:min-h-10 sm:min-w-10"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <Link href="/dashboard" className="flex items-center gap-1.5 font-bold tracking-[0.08em] text-base text-foreground sm:text-lg">
+          <Link href="/dashboard" className="flex items-center gap-1.5 font-bold tracking-[0.08em] text-[15px] text-foreground sm:text-lg">
             <span className="min-[400px]:hidden">DS</span>
             <span className="hidden min-[400px]:inline">DEVSTASH</span>
             <span className="text-accent font-extrabold">↑</span>
@@ -60,16 +60,16 @@ export function AppHeader({
           </kbd>
         </button>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           <div
-            className={`flex min-h-10 items-center justify-center gap-1.5 rounded border px-2 py-1 font-mono text-[11px] tracking-wider sm:min-h-0 sm:justify-start sm:px-2.5 ${
+            className={`flex min-h-8 items-center justify-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[10px] tracking-wider sm:min-h-0 sm:justify-start sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[11px] ${
               isUnlocked
                 ? "border-emerald-600/45 bg-emerald-50 text-emerald-800 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-200"
                 : "border-amber-600/45 bg-amber-50 text-amber-800 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-200"
             }`}
           >
             <span role="status" aria-live="polite" className="inline-flex items-center gap-1.5">
-              {isUnlocked ? <LockOpen aria-hidden="true" className="h-3.5 w-3.5" /> : <Lock aria-hidden="true" className="h-3.5 w-3.5" />}
+              {isUnlocked ? <LockOpen aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <Lock aria-hidden="true" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               <span className="sr-only">{isUnlocked ? "Vault unlocked" : "Vault locked"}</span>
               <span aria-hidden="true" className="hidden sm:inline">{isUnlocked ? "UNLOCKED" : "LOCKED"}</span>
             </span>
@@ -78,7 +78,7 @@ export function AppHeader({
                 role="timer"
                 aria-live="off"
                 aria-label={`Auto-lock in ${countdown} after inactivity`}
-                className="border-l border-current/30 pl-1.5 text-xs font-bold tracking-normal text-foreground tabular-nums sm:pl-2 sm:text-[13px]"
+                className="border-l border-current/30 pl-1 text-[11px] font-bold tracking-normal text-foreground tabular-nums sm:pl-2 sm:text-[13px]"
               >
                 <span aria-hidden="true" className="hidden lg:inline">LOCK IN </span>
                 <span aria-hidden="true">{countdown}</span>
@@ -89,7 +89,7 @@ export function AppHeader({
             href="/settings#profile-settings"
             aria-label={isUnlocked ? "Open profile settings" : "Unlock vault to open profile settings"}
             title={isUnlocked ? "Profile settings" : "Unlock vault to edit profile"}
-            className="inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-full border border-transparent text-foreground transition-colors hover:border-accent/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent xl:px-1.5"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center gap-2 rounded-full border border-transparent text-foreground transition-colors hover:border-accent/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-h-10 sm:min-w-10 xl:px-1.5"
           >
             <AccountAvatar displayName={profile?.displayName ?? null} />
             <span className="hidden max-w-28 truncate text-sm font-semibold xl:inline">
@@ -101,7 +101,7 @@ export function AppHeader({
             onClick={onSignOut}
             aria-label="Sign out"
             title="Sign out"
-            className="inline-flex min-h-10 min-w-10 items-center justify-center rounded border border-accent/20 text-muted-foreground transition-colors hover:border-accent/50 hover:text-foreground cursor-pointer"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded border border-accent/20 text-muted-foreground transition-colors hover:border-accent/50 hover:text-foreground cursor-pointer sm:min-h-10 sm:min-w-10"
           >
             <LogOut className="w-3.5 h-3.5" />
           </button>

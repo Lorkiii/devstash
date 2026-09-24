@@ -23,7 +23,7 @@ export function Modal({
   icon,
   footer,
   maxWidth = "2xl",
-  bodyClassName = "p-4 sm:p-6",
+  bodyClassName = "p-2.5 sm:p-6",
   closeDisabled = false,
   children,
 }: ModalProps) {
@@ -77,23 +77,23 @@ export function Modal({
           aria-hidden="true"
           className="h-px shrink-0 bg-linear-to-r from-transparent via-accent/80 to-transparent"
         />
-        <header className="devstash-panel-header flex shrink-0 items-start gap-3 border-b px-4 py-3.5 sm:px-6 sm:py-4">
+        <header className="devstash-panel-header flex shrink-0 items-start gap-2 border-b px-2.5 py-2.5 sm:gap-3 sm:px-6 sm:py-4">
           <span
             aria-hidden="true"
-            className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-accent/25 bg-accent/10 text-accent"
+            className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-accent/25 bg-accent/10 text-accent sm:h-9 sm:w-9"
           >
             {icon ?? <ShieldLockIcon className="h-4.5 w-4.5" />}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
+            <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2.5">
               <h2
                 id={titleId}
-                className="break-words text-sm font-bold tracking-[0.12em] text-foreground sm:text-base"
+                className="break-words text-[13px] font-bold tracking-[0.12em] text-foreground sm:text-base"
               >
                 {title}
               </h2>
               {status && (
-                <span className="rounded border border-accent/20 bg-background/70 px-2 py-0.5 text-[9px] tracking-[0.16em] text-accent">
+                <span className="rounded border border-accent/20 bg-background/70 px-1.5 py-0.5 text-[8px] tracking-[0.16em] text-accent sm:px-2 sm:text-[9px]">
                   {status}
                 </span>
               )}
@@ -101,7 +101,7 @@ export function Modal({
             {description && (
               <p
                 id={descriptionId}
-                className="mt-1.5 max-w-prose font-sans text-xs leading-relaxed text-muted-foreground"
+                className="mt-1 max-w-prose font-sans text-[11px] leading-4 text-muted-foreground sm:mt-1.5 sm:text-xs sm:leading-relaxed"
               >
                 {description}
               </p>
@@ -112,7 +112,7 @@ export function Modal({
             onClick={requestClose}
             disabled={closeDisabled}
             aria-label={`Close ${title}`}
-            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/20 bg-background/45 px-2.5 text-muted-foreground transition-colors hover:border-accent/40 hover:bg-accent/10 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+            className="inline-flex min-h-10 min-w-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-accent/20 bg-background/45 px-2 text-muted-foreground transition-colors hover:border-accent/40 hover:bg-accent/10 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35 sm:min-h-11 sm:min-w-11 sm:px-2.5"
           >
             <X className="h-4 w-4" />
             <span className="hidden text-[9px] tracking-widest sm:inline">ESC</span>
@@ -122,7 +122,7 @@ export function Modal({
         <div className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}>{children}</div>
 
         {footer && (
-          <footer className="devstash-panel-header flex shrink-0 flex-col items-stretch gap-3 border-t px-4 py-3.5 text-[10px] text-subtle-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <footer className="devstash-panel-header flex shrink-0 flex-col items-stretch gap-2.5 border-t px-3 py-3 text-[10px] text-subtle-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-3.5">
             {footer}
           </footer>
         )}

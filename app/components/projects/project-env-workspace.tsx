@@ -147,7 +147,7 @@ export function ProjectEnvWorkspace({
       ) : (
         <div className="grid min-w-0 lg:grid-cols-[15rem_minmax(0,1fr)]">
           <aside className="border-b border-accent/12 lg:border-r lg:border-b-0" aria-label="Environment bundles">
-            <div className="border-b border-accent/10 px-4 py-2 text-[9px] tracking-widest text-subtle-foreground">
+            <div className="border-b border-accent/10 px-2.5 py-1.5 text-[8px] tracking-widest text-subtle-foreground sm:px-4 sm:py-2 sm:text-[9px]">
               ENVIRONMENT FILES
             </div>
             <ul className="divide-y divide-accent/10">
@@ -159,14 +159,14 @@ export function ProjectEnvWorkspace({
                       type="button"
                       onClick={() => onSelectionChange(bundle.id)}
                       aria-current={active ? "true" : undefined}
-                      className={`flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-400/50 ${
+                      className={`flex min-h-11 w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cyan-400/50 sm:min-h-14 sm:gap-3 sm:px-4 sm:py-2.5 ${
                         active ? "bg-cyan-400/10" : "hover:bg-cyan-400/5"
                       }`}
                     >
-                      <FileCode2 className={`h-4 w-4 shrink-0 ${active ? "text-cyan-700 dark:text-cyan-300" : "text-foreground/32"}`} aria-hidden="true" />
+                      <FileCode2 className={`h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${active ? "text-cyan-700 dark:text-cyan-300" : "text-foreground/32"}`} aria-hidden="true" />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs text-foreground">.env.{bundle.environment}</span>
-                        <span className="mt-0.5 block text-[10px] text-subtle-foreground">updated {formatDate(bundle.updatedAt)}</span>
+                        <span className="block truncate text-[11px] text-foreground sm:text-xs">.env.{bundle.environment}</span>
+                        <span className="mt-0.5 block text-[9px] text-subtle-foreground sm:text-[10px]">updated {formatDate(bundle.updatedAt)}</span>
                       </span>
                     </button>
                   </li>
@@ -189,7 +189,7 @@ export function ProjectEnvWorkspace({
                 onDelete={() => void handleDelete()}
               />
             )}
-            {actionError && !formId && <p role="alert" className="px-4 pb-4 text-xs text-rose-700 dark:text-rose-300 sm:px-5">{actionError}</p>}
+            {actionError && !formId && <p role="alert" className="px-3 pb-3 text-xs text-rose-700 dark:text-rose-300 sm:px-5 sm:pb-4">{actionError}</p>}
           </div>
         </div>
       )}

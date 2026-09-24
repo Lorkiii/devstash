@@ -99,39 +99,39 @@ export function RecentPanel({ data, recents }: RecentPanelProps) {
 
   return (
     <section aria-labelledby="session-trail-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_10px_32px_rgba(0,0,0,0.14)]">
-      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-accent/15 px-4 py-4 sm:px-5">
+      <header className="flex flex-wrap items-end justify-between gap-2 border-b border-accent/15 px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
         <div>
           <p className="font-mono text-[9px] tracking-[0.2em] text-accent">EPHEMERAL NAVIGATION LOG</p>
-          <h2 id="session-trail-title" className="mt-1 text-lg font-bold tracking-tight text-foreground">Session trail</h2>
+          <h2 id="session-trail-title" className="mt-0.5 text-base font-bold tracking-tight text-foreground sm:mt-1 sm:text-lg">Session trail</h2>
         </div>
-        <span className="rounded-full border border-foreground/10 bg-surface-inset/60 px-2.5 py-1 font-mono text-[9px] tracking-widest text-subtle-foreground">
+        <span className="rounded-full border border-foreground/10 bg-surface-inset/60 px-2 py-0.5 font-mono text-[9px] tracking-widest text-subtle-foreground sm:px-2.5 sm:py-1">
           CLEARS ON LOCK
         </span>
       </header>
 
-      <div className="p-4 sm:p-5">
+      <div className="p-3 sm:p-5">
         {resolved.length === 0 ? (
           <EmptyState
             message="Your session trail is quiet."
             hint="Open a record, project, note, or task and it will appear here until the vault locks."
-            className="flex min-h-40 flex-col justify-center"
+            className="flex min-h-32 flex-col justify-center sm:min-h-40"
           />
         ) : (
-          <ol className="relative space-y-1 before:absolute before:bottom-6 before:left-[18px] before:top-6 before:w-px before:bg-gradient-to-b before:from-accent/35 before:via-accent/15 before:to-transparent">
+          <ol className="relative space-y-1 before:absolute before:bottom-6 before:left-[16px] before:top-6 before:w-px before:bg-gradient-to-b before:from-accent/35 before:via-accent/15 before:to-transparent sm:before:left-[18px]">
             {resolved.map((entry, index) => {
               const Icon = entry.icon;
               return (
                 <li key={entry.key} className="relative">
                   <Link
                     href={entry.href}
-                    className="group grid min-h-16 grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-1 py-2.5 transition-colors hover:bg-accent/[0.06] sm:px-2"
+                    className="group grid min-h-14 grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg px-1 py-2 transition-colors hover:bg-accent/[0.06] sm:min-h-16 sm:grid-cols-[36px_minmax(0,1fr)_auto] sm:gap-3 sm:px-2 sm:py-2.5"
                   >
-                    <span className={`relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border ${entry.iconClass}`}>
+                    <span className={`relative z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border sm:h-9 sm:w-9 ${entry.iconClass}`}>
                       <Icon className="h-4 w-4" />
                     </span>
                     <span className="min-w-0">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-muted-foreground transition-colors group-hover:text-foreground">{entry.title}</span>
+                        <span className="truncate text-[13px] font-semibold text-muted-foreground transition-colors group-hover:text-foreground sm:text-sm">{entry.title}</span>
                         {entry.badge}
                       </span>
                       <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-widest text-subtle-foreground">

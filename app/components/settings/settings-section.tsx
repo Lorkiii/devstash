@@ -17,16 +17,16 @@ export function SettingsSection({
   children,
 }: SettingsSectionProps) {
   return (
-    <section aria-labelledby={id} className="space-y-3">
-      <header className="flex items-start gap-3">
-        <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent/10 text-accent">
+    <section aria-labelledby={id} className="space-y-2.5 sm:space-y-3">
+      <header className="flex items-start gap-2.5 sm:gap-3">
+        <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent/20 bg-accent/10 text-accent sm:h-9 sm:w-9">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <h2 id={id} className="text-base font-bold tracking-tight text-foreground sm:text-lg">
+          <h2 id={id} className="text-[15px] font-bold tracking-tight text-foreground sm:text-lg">
             {title}
           </h2>
-          <p className="mt-0.5 max-w-3xl text-sm leading-6 text-muted-foreground">
+          <p className="mt-0.5 max-w-3xl text-xs leading-[1.125rem] text-muted-foreground sm:text-sm sm:leading-6">
             {description}
           </p>
         </div>

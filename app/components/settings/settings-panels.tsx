@@ -10,7 +10,7 @@ import { VaultSecuritySettings } from "./vault-security-settings";
 
 export function SettingsPanels() {
   return (
-    <div className="space-y-8 pb-4">
+    <div className="space-y-4 pb-3 sm:space-y-8 sm:pb-4">
       <PageHeading
         eyebrow="SETTINGS"
         title="Settings"
@@ -50,7 +50,7 @@ export function SettingsPanels() {
         description="Change the local unlock credential or rotate the separate offline recovery path."
         icon={ShieldCheck}
       >
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
           <VaultSecuritySettings />
         </div>
       </SettingsSection>

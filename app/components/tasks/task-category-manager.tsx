@@ -104,8 +104,9 @@ export function TaskCategoryManager() {
         )}
       </Modal>
       <ConsolePanel
-        title="TASK CATEGORIES"
-        status={`${customCategories.length} CUSTOM`}
+        title="ALL CATEGORIES"
+        status={`${customCategories.length} CUSTOM · ${data.taskCategories.length} TOTAL`}
+        tone="tasks"
         surface="flat"
         action={(
           <button
@@ -115,58 +116,71 @@ export function TaskCategoryManager() {
               setFormId("new");
             }}
             disabled={busyId !== null}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-accent/30 px-3 font-mono text-[10px] tracking-wider text-accent-strong hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-emerald-400/30 px-2.5 font-mono text-[9px] tracking-wider text-emerald-800 hover:bg-emerald-400/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 dark:text-emerald-200 sm:min-h-10 sm:px-3 sm:text-[10px]"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden="true" /> NEW CATEGORY
           </button>
         )}
       >
-        <p className="mb-3 text-xs leading-relaxed text-muted-foreground">
-          See open tasks by category. Custom names and colors are encrypted locally.
+        <p className="mb-3 text-[11px] leading-4 text-muted-foreground sm:mb-4 sm:text-xs sm:leading-relaxed">
+          Built-in and custom labels for the task board. Custom names and colors are encrypted locally.
         </p>
-        <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {data.taskCategories.map((category) => (
-            <li key={category.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-panel-border bg-surface-muted p-2">
-              <TaskCategoryBadge category={category} className="min-w-0" />
-              <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
-                {openTasks.filter((task) => task.categoryId === category.id).length} open
-              </span>
-              {!category.builtIn && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActionError(null);
-                      setFormId(category.id);
-                    }}
-                    disabled={busyId !== null}
-                    aria-label="Edit category"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-accent/20 text-muted-foreground hover:border-accent/45 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
-                  >
-                    <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void remove(category.id, category.name)}
-                    disabled={busyId !== null}
-                    aria-label="Delete category"
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-rose-400/20 text-rose-700 hover:border-rose-400/45 hover:text-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 disabled:opacity-50 dark:text-rose-300 dark:hover:text-rose-200"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  </button>
-                </>
-              )}
-            </li>
-          ))}
-          <li className="flex min-w-0 items-center gap-2 rounded-lg border border-panel-border bg-surface-muted p-2">
-            <TaskCategoryBadge category={null} className="min-w-0" />
-            <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
-              {uncategorizedOpenCount} open
-            </span>
+        <ul className="grid gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-3">
+          {data.taskCategories.map((category) => {
+            const openCount = openTasks.filter((task) => task.categoryId === category.id).length;
+            return (
+              <li
+                key={category.id}
+                className="overflow-hidden rounded-xl border border-panel-border bg-surface-muted/80 p-3 sm:p-3.5"
+              >
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <TaskCategoryBadge category={category} className="min-w-0" />
+                    <p className="mt-2 font-mono text-[10px] tracking-wider text-muted-foreground">
+                      <span className="text-base font-bold text-foreground">{openCount}</span> open
+                      {category.builtIn ? " · built-in" : " · custom"}
+                    </p>
+                  </div>
+                  {!category.builtIn && (
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActionError(null);
+                          setFormId(category.id);
+                        }}
+                        disabled={busyId !== null}
+                        aria-label="Edit category"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-accent/20 text-muted-foreground hover:border-accent/45 hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 sm:h-9 sm:w-9"
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void remove(category.id, category.name)}
+                        disabled={busyId !== null}
+                        aria-label="Delete category"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-rose-400/20 text-rose-700 hover:border-rose-400/45 hover:text-rose-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 disabled:opacity-50 dark:text-rose-300 dark:hover:text-rose-200 sm:h-9 sm:w-9"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+          <li className="overflow-hidden rounded-xl border border-dashed border-panel-border bg-transparent p-3 sm:p-3.5">
+            <div>
+              <TaskCategoryBadge category={null} className="min-w-0" />
+              <p className="mt-2 font-mono text-[10px] tracking-wider text-muted-foreground">
+                <span className="text-base font-bold text-foreground">{uncategorizedOpenCount}</span> open · unassigned
+              </p>
+            </div>
           </li>
         </ul>
         {actionError && !formId && (
-          <p role="alert" className="mt-3 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>
+          <p role="alert" className="mt-2.5 text-[11px] text-rose-700 dark:text-rose-300 sm:mt-3 sm:text-xs">{actionError}</p>
         )}
       </ConsolePanel>
     </div>

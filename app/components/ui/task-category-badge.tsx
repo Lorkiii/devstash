@@ -1,7 +1,7 @@
 import type { TaskCategoryColorToken } from "@/app/lib/vault-data.types";
 import type { TaskCategoryBadgeProps } from "./task-category-badge.types";
 
-const COLOR_CLASSES: Record<TaskCategoryColorToken, string> = {
+export const TASK_CATEGORY_COLOR_CLASSES: Record<TaskCategoryColorToken, string> = {
   blue: "border-accent/45 bg-accent/12 text-accent-strong",
   cyan: "border-cyan-400/45 bg-cyan-400/10 text-cyan-700 dark:text-cyan-200",
   violet: "border-violet-400/45 bg-violet-400/10 text-violet-700 dark:text-violet-200",
@@ -12,10 +12,10 @@ const COLOR_CLASSES: Record<TaskCategoryColorToken, string> = {
 };
 
 export function TaskCategoryBadge({ category, className = "" }: TaskCategoryBadgeProps) {
-  const colorClass = category ? COLOR_CLASSES[category.colorToken] : COLOR_CLASSES.slate;
+  const colorClass = category ? TASK_CATEGORY_COLOR_CLASSES[category.colorToken] : TASK_CATEGORY_COLOR_CLASSES.slate;
   return (
     <span
-      className={`inline-flex max-w-full items-center rounded border px-1.5 py-0.5 font-mono text-[10px] tracking-wider ${colorClass} ${className}`}
+      className={`inline-flex max-w-full items-center rounded border px-1 py-0.5 font-mono text-[9px] tracking-wider sm:px-1.5 sm:text-[10px] ${colorClass} ${className}`}
     >
       <span className="truncate">{category?.name ?? "Uncategorized"}</span>
     </span>

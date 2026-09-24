@@ -110,7 +110,7 @@ export function ProjectWorkspaceShell({
       <div
         role="tablist"
         aria-label="Project workspaces"
-        className="devstash-panel-header flex min-w-0 overflow-x-auto border-b px-2 pt-2 [scrollbar-width:thin] sm:px-3"
+        className="devstash-panel-header flex min-w-0 overflow-x-auto border-b px-1.5 pt-1.5 [scrollbar-width:thin] sm:px-3 sm:pt-2"
       >
         {PROJECT_WORKSPACE_TABS.map((tab, index) => {
           const meta = WORKSPACE_META[tab];
@@ -133,15 +133,15 @@ export function ProjectWorkspaceShell({
                   moveTabFocus(index, event.key);
                 }
               }}
-              className={`mr-1 inline-flex min-h-11 shrink-0 items-center gap-2 rounded-t-lg border border-b-0 px-3 py-2 text-[10px] font-semibold tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 ${
+              className={`mr-1 inline-flex min-h-9 shrink-0 items-center gap-1 rounded-t-lg border border-b-0 px-2 py-1.5 text-[9px] font-semibold tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:min-h-11 sm:gap-2 sm:px-3 sm:py-2 sm:text-[10px] ${
                 active
                   ? meta.activeClass
                   : "border-transparent text-subtle-foreground hover:border-accent/15 hover:bg-accent/5 hover:text-muted-foreground"
               }`}
             >
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
               <span>{meta.label}</span>
-              <span className={`rounded px-1.5 py-0.5 text-[9px] ${active ? meta.countClass : "bg-foreground/5 text-subtle-foreground"}`}>
+              <span className={`rounded px-1 py-0.5 text-[8px] sm:px-1.5 sm:text-[9px] ${active ? meta.countClass : "bg-foreground/5 text-subtle-foreground"}`}>
                 {counts[tab]}
               </span>
             </button>
@@ -157,17 +157,17 @@ export function ProjectWorkspaceShell({
         className="min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50"
       >
         <div className={`h-px bg-linear-to-r from-transparent ${activeMeta.lineClass} to-transparent`} aria-hidden="true" />
-        <header className="flex flex-col gap-4 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-start gap-3">
-            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg border ${activeMeta.iconClass}`} aria-hidden="true">
-              <ActiveIcon className="h-4.5 w-4.5" />
+        <header className="flex flex-col gap-2.5 px-2.5 py-2.5 sm:gap-4 sm:px-5 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-start gap-2 sm:gap-3">
+            <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg border sm:h-10 sm:w-10 ${activeMeta.iconClass}`} aria-hidden="true">
+              <ActiveIcon className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
             </span>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h2 className="text-sm font-bold tracking-wider text-foreground sm:text-base">{activeMeta.title}</h2>
-                <span className="text-[9px] tracking-widest text-subtle-foreground">{status}</span>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 sm:gap-x-3 sm:gap-y-1">
+                <h2 className="text-xs font-bold tracking-wider text-foreground sm:text-base">{activeMeta.title}</h2>
+                <span className="text-[8px] tracking-widest text-subtle-foreground sm:text-[9px]">{status}</span>
               </div>
-              <p className="mt-1 max-w-2xl font-sans text-xs leading-relaxed text-subtle-foreground">
+              <p className="mt-0.5 max-w-2xl font-sans text-[11px] leading-4 text-subtle-foreground sm:mt-1 sm:text-xs sm:leading-relaxed">
                 {activeMeta.description}
               </p>
             </div>
@@ -191,18 +191,18 @@ interface WorkspaceEmptyStateProps {
 
 export function WorkspaceEmptyState({ message, hint, className = "" }: WorkspaceEmptyStateProps) {
   return (
-    <div className={`px-5 py-12 text-center font-mono ${className}`}>
-      <p className="text-xs text-muted-foreground">
+    <div className={`px-3 py-6 text-center font-mono sm:px-5 sm:py-12 ${className}`}>
+      <p className="text-[11px] text-muted-foreground sm:text-xs">
         <span className="mr-2 text-accent" aria-hidden="true">&gt;</span>
         {message}
       </p>
-      {hint && <p className="mx-auto mt-2 max-w-md font-sans text-xs leading-relaxed text-subtle-foreground">{hint}</p>}
+      {hint && <p className="mx-auto mt-1.5 max-w-md font-sans text-[11px] leading-4 text-subtle-foreground sm:mt-2 sm:text-xs sm:leading-relaxed">{hint}</p>}
     </div>
   );
 }
 
 export const PROJECT_WORKSPACE_PRIMARY_ACTION =
-  "inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold tracking-wider text-foreground transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:w-auto";
+  "inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] font-semibold tracking-wider text-foreground transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:min-h-11 sm:w-auto sm:py-2 sm:text-xs";
 
 export const PROJECT_WORKSPACE_ICON_ACTION =
-  "inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-accent/20 p-1 text-muted-foreground transition-colors hover:border-accent/45 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-accent/20 p-1 text-muted-foreground transition-colors hover:border-accent/45 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10 sm:min-w-10";

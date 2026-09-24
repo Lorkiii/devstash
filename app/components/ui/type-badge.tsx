@@ -11,7 +11,7 @@ export function TypeBadge({ type, className = "" }: TypeBadgeProps) {
   const meta = VAULT_TYPE_META[type];
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded border font-mono text-[10px] tracking-widest ${meta.chipClass} ${className}`}
+      className={`inline-flex items-center rounded border px-1 py-0.5 font-mono text-[9px] tracking-widest sm:px-1.5 sm:text-[10px] ${meta.chipClass} ${className}`}
     >
       {meta.short}
     </span>

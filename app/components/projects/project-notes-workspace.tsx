@@ -16,6 +16,12 @@ import {
   type ProjectWorkspaceTab,
 } from "./project-workspace-shell";
 
+function noteExcerpt(body: string) {
+  const compact = body.trim().replace(/\s+/g, " ");
+  if (!compact) return "Empty note.";
+  return compact.length > 110 ? `${compact.slice(0, 110)}…` : compact;
+}
+
 interface ProjectNotesWorkspaceProps {
   project: Project;
   counts: Record<ProjectWorkspaceTab, number>;
@@ -159,8 +165,8 @@ export function ProjectNotesWorkspace({
         />
       ) : (
         <div className="grid min-w-0 lg:grid-cols-[minmax(16rem,0.78fr)_minmax(0,1.22fr)]">
-          <div className={`${selected ? "hidden lg:block" : ""} min-w-0 border-accent/12 lg:border-r`}>
-            <label className="flex min-h-12 items-center gap-2 border-b border-accent/10 px-4 py-2.5">
+          <div className={`${selected ? "hidden lg:block" : ""} min-w-0 border-amber-400/15 lg:border-r`}>
+            <label className="flex min-h-10 items-center gap-2 border-b border-amber-400/10 bg-amber-400/[0.02] px-2.5 py-1.5 sm:min-h-12 sm:px-4 sm:py-2.5">
               <Search className="h-3.5 w-3.5 shrink-0 text-amber-700/80 dark:text-amber-300/70" aria-hidden="true" />
               <input
                 value={query}
@@ -169,15 +175,15 @@ export function ProjectNotesWorkspace({
                 aria-label="Search project notes"
                 autoComplete="off"
                 spellCheck={false}
-                className="min-w-0 flex-1 bg-transparent text-xs text-foreground placeholder:text-subtle-foreground focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent text-[11px] text-foreground placeholder:text-subtle-foreground focus:outline-none sm:text-xs"
               />
-              <span className="text-[9px] tracking-wider text-foreground/32">{visible.length} SHOWN</span>
+              <span className="text-[8px] tracking-wider text-foreground/32 sm:text-[9px]">{visible.length} SHOWN</span>
             </label>
 
             {visible.length === 0 ? (
               <WorkspaceEmptyState message="no notes match this search." className="py-9" />
             ) : (
-              <ul className="divide-y divide-accent/10">
+              <ul className="divide-y divide-amber-400/12">
                 {visible.map((note) => {
                   const active = note.id === selectedNoteId;
                   return (
@@ -186,14 +192,19 @@ export function ProjectNotesWorkspace({
                         type="button"
                         onClick={() => onSelectionChange(note.id)}
                         aria-current={active ? "true" : undefined}
-                        className={`min-h-16 w-full px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400/50 ${
-                          active ? "bg-amber-400/10" : "hover:bg-amber-400/5"
+                        className={`min-h-16 w-full px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400/50 sm:px-4 sm:py-3 ${
+                          active ? "bg-amber-400/[0.06]" : "hover:bg-amber-400/[0.04]"
                         }`}
                       >
-                        <span className="block truncate text-xs text-foreground">{note.title}</span>
-                        <span className="mt-1 block truncate text-[10px] text-subtle-foreground">
-                          {formatDate(note.updatedAt)}
-                          {note.tags.length > 0 && ` · ${note.tags.map((tag) => `#${tag}`).join(" ")}`}
+                        <span className="block truncate text-[12px] font-semibold text-foreground sm:text-[13px]">{note.title}</span>
+                        <span className="mt-1 line-clamp-2 font-sans text-[11px] leading-4 text-muted-foreground">{noteExcerpt(note.body)}</span>
+                        <span className="mt-1.5 flex flex-wrap items-center gap-1 text-[9px] text-subtle-foreground sm:gap-1.5">
+                          <span className="font-mono tracking-wider">{formatDate(note.updatedAt)}</span>
+                          {note.tags.map((tag) => (
+                            <span key={tag} className="rounded-full border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 font-mono tracking-wider text-amber-800 dark:text-amber-200">
+                              #{tag}
+                            </span>
+                          ))}
                         </span>
                       </button>
                     </li>
@@ -205,20 +216,24 @@ export function ProjectNotesWorkspace({
 
           <div className={`${selected ? "" : "hidden lg:block"} min-w-0`}>
             {selected ? (
-              <article className="min-w-0 px-4 py-4 sm:px-5">
+              <article className="min-w-0 px-2.5 py-2.5 sm:px-5 sm:py-4">
                 <button
                   type="button"
                   onClick={() => onSelectionChange(null)}
-                  className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-[10px] tracking-widest text-amber-700 hover:text-amber-800 dark:text-amber-300/80 dark:hover:text-amber-200 lg:hidden"
+                  className="mb-2.5 inline-flex min-h-9 items-center gap-1.5 text-[9px] tracking-widest text-amber-700 hover:text-amber-800 dark:text-amber-300/80 dark:hover:text-amber-200 sm:mb-4 sm:min-h-10 sm:text-[10px] lg:hidden"
                 >
                   <ArrowLeft className="h-3 w-3" /> BACK TO NOTES
                 </button>
-                <header className="flex flex-col gap-3 border-b border-accent/12 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <header className="flex flex-col gap-2 border-b border-amber-400/15 pb-2.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:pb-4">
                   <div className="min-w-0">
-                    <h3 className="break-words text-base font-bold text-foreground">{selected.title}</h3>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] text-foreground/42">
-                      <span>updated {formatDate(selected.updatedAt)}</span>
-                      {selected.tags.map((tag) => <span key={tag}>#{tag}</span>)}
+                    <h3 className="break-words text-[15px] font-bold tracking-tight text-foreground sm:text-xl">{selected.title}</h3>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[9px] text-foreground/42 sm:mt-2 sm:gap-2 sm:text-[10px]">
+                      <span className="font-mono tracking-wider">updated {formatDate(selected.updatedAt)}</span>
+                      {selected.tags.map((tag) => (
+                        <span key={tag} className="rounded-full border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 font-mono tracking-wider text-amber-800 dark:text-amber-200">
+                          #{tag}
+                        </span>
+                      ))}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
@@ -239,20 +254,22 @@ export function ProjectNotesWorkspace({
                       onClick={() => void handleDelete()}
                       disabled={isDeleting}
                       aria-label="Delete note"
-                      className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
+                      className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50 sm:min-h-10 sm:min-w-10"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </header>
 
-                <div className="mt-5 whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-foreground/82">
-                  {selected.body || <span className="text-subtle-foreground">This note has no body.</span>}
+                <div className="mt-3 rounded-xl border border-amber-400/10 bg-amber-400/[0.02] px-3 py-3 sm:mt-5 sm:px-5 sm:py-5">
+                  <div className="whitespace-pre-wrap break-words font-sans text-[13px] leading-6 text-foreground/90 sm:text-[15px] sm:leading-7">
+                    {selected.body || <span className="text-subtle-foreground">This note has no body.</span>}
+                  </div>
                 </div>
-                <p className="mt-6 text-[10px] text-foreground/32">
+                <p className="mt-4 text-[9px] text-foreground/32 sm:mt-6 sm:text-[10px]">
                   Plain-text preview. Sanitized Markdown rendering remains a separate reviewed step.
                 </p>
-                {actionError && <p role="alert" className="mt-4 text-xs text-rose-700 dark:text-rose-300">{actionError}</p>}
+                {actionError && <p role="alert" className="mt-3 text-[11px] text-rose-700 dark:text-rose-300 sm:mt-4 sm:text-xs">{actionError}</p>}
               </article>
             ) : (
               <WorkspaceEmptyState message="select a note to read it." />
