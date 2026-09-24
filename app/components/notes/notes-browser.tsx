@@ -8,6 +8,7 @@ import { EmptyState } from "@/app/components/ui/empty-state";
 import { Modal } from "@/app/components/ui/modal";
 import { PageHeading } from "@/app/components/ui/page-heading";
 import { ProjectBadge } from "@/app/components/ui/project-badge";
+import { RecordInspector } from "@/app/components/ui/record-inspector";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import { formatDate } from "@/app/lib/format";
 import type { NoteInput } from "@/app/lib/workspace.types";
@@ -77,10 +78,12 @@ export function NotesBrowser() {
     if (selected) touchRecent("note", selected.id);
   }, [selected, touchRecent]);
 
-  const select = (id: string | null) => {
+  const select = (id: string | null, replace = false) => {
     setFormId(null);
     setActionError(null);
-    router.replace(id ? `/notes?note=${id}` : "/notes");
+    const href = id ? `/notes?note=${id}` : "/notes";
+    if (replace) router.replace(href, { scroll: false });
+    else router.push(href, { scroll: false });
   };
 
   const handleSave = async (input: NoteInput) => {
@@ -93,7 +96,7 @@ export function NotesBrowser() {
           ? await updateNote(activeFormId, input)
           : null;
       if (!saved) return;
-      select(saved.id);
+      select(saved.id, true);
     } catch {
       setActionError("The encrypted note could not be saved. No plaintext was sent.");
     } finally {
@@ -113,7 +116,7 @@ export function NotesBrowser() {
     setActionError(null);
     try {
       await deleteNote(selected.id);
-      select(null);
+      select(null, true);
     } catch {
       setActionError("The encrypted note could not be deleted.");
     } finally {
@@ -129,7 +132,7 @@ export function NotesBrowser() {
         setActionError(null);
         setFormId("new");
       }}
-      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-foreground hover:bg-accent/20 sm:min-h-10 sm:px-3 sm:text-xs"
+      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-accent/40 bg-accent/10 px-2.5 py-1.5 font-mono text-[11px] tracking-wider text-foreground hover:bg-accent/20 sm:px-3 sm:text-xs"
     >
       <Plus className="w-3.5 h-3.5" /> NEW NOTE
     </button>
@@ -167,11 +170,14 @@ export function NotesBrowser() {
         )}
       </Modal>
 
-      <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-12">
-        <div className={`lg:col-span-4 ${selected ? "hidden lg:block" : ""}`}>
+      <RecordInspector
+        selected={selected !== null}
+        listLabel="Private notes"
+        detailLabel="Note details"
+        list={(
           <ConsolePanel title="NOTEBOOK" status={`${visible.length} SHOWN`} tone="notes" surface="flat" className="h-full" bodyClassName="p-0">
             <div className="border-b border-amber-400/15 p-2.5 sm:p-3">
-              <label className="flex min-h-9 items-center gap-2 rounded-lg border border-amber-400/15 bg-amber-400/[0.03] px-2.5 py-1.5 sm:min-h-10">
+              <label className="flex min-h-11 items-center gap-2 rounded-lg border border-amber-400/15 bg-amber-400/[0.03] px-2.5">
                 <Search className="w-3.5 h-3.5 text-amber-700 dark:text-amber-300" />
                 <input
                   value={query}
@@ -186,7 +192,10 @@ export function NotesBrowser() {
             </div>
             {visible.length === 0 ? (
               <div className="p-2.5 sm:p-3">
-                <EmptyState message="no notes match." />
+                <EmptyState
+                  message={data.notes.length === 0 ? "No private notes yet." : "No notes match this search."}
+                  hint={data.notes.length === 0 ? "Create a note to keep private context here." : "Try another title, phrase, or tag."}
+                />
               </div>
             ) : (
               <ul className="divide-y divide-amber-400/12">
@@ -199,7 +208,7 @@ export function NotesBrowser() {
                         type="button"
                         onClick={() => select(note.id)}
                         aria-current={active ? "true" : undefined}
-                        className={`w-full px-3 py-2.5 text-left transition-colors cursor-pointer sm:px-4 sm:py-3 ${
+                        className={`min-h-16 w-full px-3 py-2.5 text-left transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400/50 sm:px-4 sm:py-3 ${
                           active ? "bg-amber-400/[0.06]" : "hover:bg-amber-400/[0.04]"
                         }`}
                       >
@@ -217,22 +226,20 @@ export function NotesBrowser() {
               </ul>
             )}
           </ConsolePanel>
-        </div>
-
-        <div className={`lg:col-span-8 ${selected ? "" : "hidden lg:block"}`}>
-          {selected ? (
-            <ConsolePanel
-              title="PAGE"
+        )}
+        detail={selected ? (
+          <ConsolePanel
+              title="NOTE DETAIL"
               status={`updated ${formatDate(selected.updatedAt)}`}
               tone="notes"
               surface="flat"
               className="h-full"
               action={(
                 <div className="flex flex-wrap items-center gap-1">
-                  <button type="button" onClick={() => setFormId(selected.id)} disabled={isDeleting} className="inline-flex min-h-8 items-center gap-1 rounded border border-amber-400/25 px-1.5 py-1 text-[9px] tracking-widest text-muted-foreground hover:text-foreground disabled:opacity-50 sm:min-h-10 sm:px-2 sm:text-[10px]">
+                  <button type="button" onClick={() => setFormId(selected.id)} disabled={isDeleting} className="inline-flex min-h-11 items-center gap-1 rounded border border-amber-400/25 px-2.5 py-1 text-[10px] tracking-wider text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 disabled:opacity-50">
                     <Pencil className="h-3 w-3" /> EDIT
                   </button>
-                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex min-h-8 items-center gap-1 rounded border border-rose-400/20 px-1.5 py-1 text-[9px] tracking-widest text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 disabled:opacity-50 sm:min-h-10 sm:px-2 sm:text-[10px]">
+                  <button type="button" onClick={() => void handleDelete()} disabled={isDeleting} className="inline-flex min-h-11 items-center gap-1 rounded border border-rose-400/20 px-2.5 py-1 text-[10px] tracking-wider text-rose-700 dark:text-rose-300/75 hover:text-rose-800 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50">
                     <Trash2 className="h-3 w-3" /> {isDeleting ? "DELETING…" : "DELETE"}
                   </button>
                 </div>
@@ -240,8 +247,8 @@ export function NotesBrowser() {
             >
               <button
                 type="button"
-                onClick={() => select(null)}
-                className="lg:hidden mb-2.5 inline-flex items-center gap-1.5 text-[9px] tracking-widest text-amber-800 hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-200 cursor-pointer sm:mb-3 sm:text-[10px]"
+                onClick={() => select(null, true)}
+                className="lg:hidden mb-2.5 inline-flex min-h-11 items-center gap-1.5 text-[10px] tracking-wider text-amber-800 hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-200 cursor-pointer sm:mb-3"
               >
                 <ArrowLeft className="w-3 h-3" /> BACK TO LIST
               </button>
@@ -259,14 +266,13 @@ export function NotesBrowser() {
                 Plain-text preview. Sanitized Markdown rendering is a later, reviewed step.
               </p>
               {actionError && <p role="alert" className="mt-3 text-[11px] text-rose-700 dark:text-rose-300 sm:mt-4 sm:text-xs">{actionError}</p>}
-            </ConsolePanel>
-          ) : (
-            <ConsolePanel title="PAGE" tone="notes" surface="flat" className="h-full">
-              <EmptyState message="select a note to read it." />
-            </ConsolePanel>
-          )}
-        </div>
-      </div>
+          </ConsolePanel>
+        ) : (
+          <ConsolePanel title="NOTE DETAIL" tone="notes" surface="flat" className="h-full">
+            <EmptyState message="Select a note to read it." />
+          </ConsolePanel>
+        )}
+      />
     </div>
   );
 }

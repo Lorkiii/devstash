@@ -1,13 +1,20 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { FileCode2, Plus } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FileCode2, LoaderCircle, Plus, Upload } from "lucide-react";
 import { Modal } from "@/app/components/ui/modal";
 import { formatDate } from "@/app/lib/format";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import type { Project } from "@/app/lib/vault-data.types";
+import {
+  WorkspaceFileImportError,
+  clearEnvImportDraft,
+  readEnvImportFile,
+  type EnvImportDraft,
+} from "@/app/lib/workspace-file-import";
 import type { EnvBundleInput } from "@/app/lib/workspace.types";
 import { EnvBundleForm } from "./env-bundle-form";
+import { EnvBundleImportForm } from "./env-bundle-import-form";
 import { EnvBundleViewer } from "./env-bundle-viewer";
 import {
   PROJECT_WORKSPACE_PRIMARY_ACTION,
@@ -24,6 +31,12 @@ interface ProjectEnvWorkspaceProps {
   onSelectionChange: (id: string | null, replace?: boolean) => void;
 }
 
+type EnvModalState =
+  | { mode: "manual" }
+  | { mode: "edit"; bundleId: string }
+  | { mode: "import"; draft: EnvImportDraft }
+  | null;
+
 export function ProjectEnvWorkspace({
   project,
   counts,
@@ -33,10 +46,32 @@ export function ProjectEnvWorkspace({
 }: ProjectEnvWorkspaceProps) {
   const data = useUnlockedVault();
   const { createEnvBundle, deleteEnvBundle, updateEnvBundle } = useVaultSession();
-  const [formId, setFormId] = useState<"new" | string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const importActionRef = useRef<HTMLButtonElement>(null);
+  const importDraftRef = useRef<EnvImportDraft | null>(null);
+  const mountedRef = useRef(true);
+  const [modalState, setModalState] = useState<EnvModalState>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const replaceModalState = (nextState: EnvModalState) => {
+    const nextDraft = nextState?.mode === "import" ? nextState.draft : null;
+    if (importDraftRef.current !== nextDraft) clearEnvImportDraft(importDraftRef.current);
+    importDraftRef.current = nextDraft;
+    setModalState(nextState);
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearEnvImportDraft(importDraftRef.current);
+      importDraftRef.current = null;
+    };
+  }, []);
 
   const bundles = useMemo(
     () => data.envBundles
@@ -46,8 +81,8 @@ export function ProjectEnvWorkspace({
   );
   const selectedFromUrl = bundles.find((bundle) => bundle.id === selectedBundleId) ?? null;
   const selected = selectedFromUrl ?? (selectedBundleId ? null : bundles[0] ?? null);
-  const formBundle = formId && formId !== "new"
-    ? bundles.find((bundle) => bundle.id === formId)
+  const formBundle = modalState?.mode === "edit"
+    ? bundles.find((bundle) => bundle.id === modalState.bundleId)
     : undefined;
 
   useEffect(() => {
@@ -58,18 +93,52 @@ export function ProjectEnvWorkspace({
     setIsSaving(true);
     setActionError(null);
     try {
-      const saved = formId === "new"
-        ? await createEnvBundle(input)
-        : formId
-          ? await updateEnvBundle(formId, input)
+      const editing = modalState?.mode === "edit";
+      const saved = editing
+        ? await updateEnvBundle(modalState.bundleId, input)
+        : modalState
+          ? await createEnvBundle(input)
           : null;
       if (!saved) return;
-      setFormId(null);
-      onSelectionChange(saved.id, formId !== "new");
+      replaceModalState(null);
+      onSelectionChange(saved.id, editing);
     } catch {
       setActionError("The encrypted .env bundle could not be saved. No plaintext was sent.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const closeForm = () => {
+    replaceModalState(null);
+    setActionError(null);
+    setImportError(null);
+  };
+
+  const handleImportSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.item(0) ?? null;
+    event.currentTarget.value = "";
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const draft = await readEnvImportFile(file);
+      if (!mountedRef.current) {
+        clearEnvImportDraft(draft);
+        return;
+      }
+      setActionError(null);
+      replaceModalState({ mode: "import", draft });
+    } catch (error) {
+      if (!mountedRef.current) return;
+      setImportError(
+        error instanceof WorkspaceFileImportError
+          ? error.message
+          : "The selected .env file could not be imported.",
+      );
+    } finally {
+      if (mountedRef.current) setIsImporting(false);
     }
   };
 
@@ -90,16 +159,40 @@ export function ProjectEnvWorkspace({
   };
 
   const action = (
-    <button
-      type="button"
-      onClick={() => {
-        setActionError(null);
-        setFormId("new");
-      }}
-      className={PROJECT_WORKSPACE_PRIMARY_ACTION}
-    >
-      <Plus className="h-3.5 w-3.5" /> NEW .ENV BUNDLE
-    </button>
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        tabIndex={-1}
+        aria-hidden="true"
+        disabled={isImporting}
+        onChange={(event) => void handleImportSelection(event)}
+        className="hidden"
+      />
+      <button
+        ref={importActionRef}
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isImporting}
+        aria-busy={isImporting}
+        className={`${PROJECT_WORKSPACE_PRIMARY_ACTION} disabled:cursor-wait disabled:opacity-60`}
+      >
+        {isImporting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+        {isImporting ? "READING .ENV" : "IMPORT .ENV"}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setImportError(null);
+          setActionError(null);
+          replaceModalState({ mode: "manual" });
+        }}
+        disabled={isImporting}
+        className={`${PROJECT_WORKSPACE_PRIMARY_ACTION} disabled:cursor-wait disabled:opacity-60`}
+      >
+        <Plus className="h-3.5 w-3.5" /> NEW .ENV BUNDLE
+      </button>
+    </>
   );
 
   return (
@@ -111,33 +204,47 @@ export function ProjectEnvWorkspace({
       onTabChange={onTabChange}
     >
       <Modal
-        isOpen={formId !== null}
-        onClose={() => {
-          setFormId(null);
-          setActionError(null);
-        }}
-        title={formId === "new" ? "NEW .ENV BUNDLE" : "EDIT .ENV BUNDLE"}
-        status="WHOLE FILE ENCRYPTION"
-        description="Variable names, values, comments, and environment name are encrypted locally before saving."
+        isOpen={modalState !== null}
+        onClose={closeForm}
+        title={modalState?.mode === "import" ? "REVIEW IMPORTED .ENV" : modalState?.mode === "manual" ? "NEW .ENV BUNDLE" : "EDIT .ENV BUNDLE"}
+        status={modalState?.mode === "import" ? "LOCAL REVIEW" : "WHOLE FILE ENCRYPTION"}
+        description={modalState?.mode === "import"
+          ? "Review each variable locally. Nothing is encrypted or saved until you choose Create encrypted bundle."
+          : "Variable names, values, comments, and environment name are encrypted locally before saving."}
         icon={<FileCode2 className="h-4 w-4" />}
-        maxWidth="2xl"
+        maxWidth={modalState?.mode === "import" ? "3xl" : "2xl"}
+        bodyClassName={modalState?.mode === "import" ? "!overflow-hidden flex flex-col p-0" : undefined}
         closeDisabled={isSaving}
+        fallbackFocusRef={importActionRef}
       >
-        {formId && (
+        {modalState?.mode === "import" ? (
+          <EnvBundleImportForm
+            key="import-review"
+            projectId={project.id}
+            draft={modalState.draft}
+            isSaving={isSaving}
+            requestError={actionError}
+            onCancel={closeForm}
+            onSubmit={handleSave}
+          />
+        ) : modalState ? (
           <EnvBundleForm
-            key={formId}
+            key={modalState.mode === "edit" ? modalState.bundleId : "manual"}
             projectId={project.id}
             bundle={formBundle}
             isSaving={isSaving}
             requestError={actionError}
-            onCancel={() => {
-              setFormId(null);
-              setActionError(null);
-            }}
+            onCancel={closeForm}
             onSubmit={handleSave}
           />
-        )}
+        ) : null}
       </Modal>
+
+      {importError && (
+        <p role="alert" className="border-t border-rose-400/15 bg-rose-400/[0.04] px-3 py-2 font-sans text-[11px] text-rose-700 dark:text-rose-300 sm:px-5 sm:text-xs">
+          {importError}
+        </p>
+      )}
 
       {bundles.length === 0 ? (
         <WorkspaceEmptyState
@@ -183,13 +290,14 @@ export function ProjectEnvWorkspace({
                 embedded
                 isDeleting={deletingId === selected.id}
                 onEdit={() => {
+                  setImportError(null);
                   setActionError(null);
-                  setFormId(selected.id);
+                  replaceModalState({ mode: "edit", bundleId: selected.id });
                 }}
                 onDelete={() => void handleDelete()}
               />
             )}
-            {actionError && !formId && <p role="alert" className="px-3 pb-3 text-xs text-rose-700 dark:text-rose-300 sm:px-5 sm:pb-4">{actionError}</p>}
+            {actionError && !modalState && <p role="alert" className="px-3 pb-3 text-xs text-rose-700 dark:text-rose-300 sm:px-5 sm:pb-4">{actionError}</p>}
           </div>
         </div>
       )}

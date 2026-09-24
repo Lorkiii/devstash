@@ -102,7 +102,6 @@ function ShellFrame({ children }: ShellFrameProps) {
 
       <AppHeader
         isUnlocked={isUnlocked}
-        secondsUntilAutoLock={session.secondsUntilAutoLock}
         onOpenPalette={() => setIsPaletteOpen(true)}
         onOpenMobileNav={() => setIsMobileNavOpen(true)}
         onSignOut={handleSignOut}
@@ -131,7 +130,6 @@ function ShellFrame({ children }: ShellFrameProps) {
       <AppStatusBar
         isUnlocked={isUnlocked}
         recordCount={recordCount}
-        secondsUntilAutoLock={session.secondsUntilAutoLock}
       />
 
       {isUnlocked && session.data && isPaletteOpen && (

@@ -1,12 +1,18 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, FileText, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, FileText, LoaderCircle, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";
 import { NoteForm } from "@/app/components/notes/note-form";
 import { Modal } from "@/app/components/ui/modal";
 import { formatDate } from "@/app/lib/format";
 import type { Project } from "@/app/lib/vault-data.types";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
+import {
+  WorkspaceFileImportError,
+  clearNoteImportDraft,
+  readMarkdownImportFile,
+  type NoteImportDraft,
+} from "@/app/lib/workspace-file-import";
 import type { NoteInput } from "@/app/lib/workspace.types";
 import {
   PROJECT_WORKSPACE_ICON_ACTION,
@@ -39,11 +45,33 @@ export function ProjectNotesWorkspace({
 }: ProjectNotesWorkspaceProps) {
   const data = useUnlockedVault();
   const { createNote, deleteNote, touchRecent, updateNote } = useVaultSession();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const importActionRef = useRef<HTMLButtonElement>(null);
+  const importDraftRef = useRef<NoteImportDraft | null>(null);
+  const mountedRef = useRef(true);
   const [query, setQuery] = useState("");
   const [formId, setFormId] = useState<"new" | string | null>(null);
+  const [importDraft, setImportDraft] = useState<NoteImportDraft | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const replaceImportDraft = (nextDraft: NoteImportDraft | null) => {
+    clearNoteImportDraft(importDraftRef.current);
+    importDraftRef.current = nextDraft;
+    setImportDraft(nextDraft);
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearNoteImportDraft(importDraftRef.current);
+      importDraftRef.current = null;
+    };
+  }, []);
 
   const notes = useMemo(
     () => data.notes
@@ -84,11 +112,47 @@ export function ProjectNotesWorkspace({
           : null;
       if (!saved) return;
       setFormId(null);
+      replaceImportDraft(null);
       onSelectionChange(saved.id, formId !== "new");
     } catch {
       setActionError("The encrypted note could not be saved. No plaintext was sent.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const closeForm = () => {
+    setFormId(null);
+    replaceImportDraft(null);
+    setActionError(null);
+    setImportError(null);
+  };
+
+  const handleImportSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.item(0) ?? null;
+    event.currentTarget.value = "";
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const draft = await readMarkdownImportFile(file);
+      if (!mountedRef.current) {
+        clearNoteImportDraft(draft);
+        return;
+      }
+      replaceImportDraft(draft);
+      setActionError(null);
+      setFormId("new");
+    } catch (error) {
+      if (!mountedRef.current) return;
+      setImportError(
+        error instanceof WorkspaceFileImportError
+          ? error.message
+          : "The selected Markdown file could not be imported.",
+      );
+    } finally {
+      if (mountedRef.current) setIsImporting(false);
     }
   };
 
@@ -108,16 +172,42 @@ export function ProjectNotesWorkspace({
   };
 
   const action = (
-    <button
-      type="button"
-      onClick={() => {
-        setActionError(null);
-        setFormId("new");
-      }}
-      className={PROJECT_WORKSPACE_PRIMARY_ACTION}
-    >
-      <Plus className="h-3.5 w-3.5" /> NEW NOTE
-    </button>
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".md,.markdown,text/markdown"
+        tabIndex={-1}
+        aria-hidden="true"
+        disabled={isImporting}
+        onChange={(event) => void handleImportSelection(event)}
+        className="hidden"
+      />
+      <button
+        ref={importActionRef}
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={isImporting}
+        aria-busy={isImporting}
+        className={`${PROJECT_WORKSPACE_PRIMARY_ACTION} disabled:cursor-wait disabled:opacity-60`}
+      >
+        {isImporting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+        {isImporting ? "READING .MD" : "IMPORT .MD"}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          replaceImportDraft(null);
+          setImportError(null);
+          setActionError(null);
+          setFormId("new");
+        }}
+        disabled={isImporting}
+        className={`${PROJECT_WORKSPACE_PRIMARY_ACTION} disabled:cursor-wait disabled:opacity-60`}
+      >
+        <Plus className="h-3.5 w-3.5" /> NEW NOTE
+      </button>
+    </>
   );
 
   return (
@@ -130,33 +220,37 @@ export function ProjectNotesWorkspace({
     >
       <Modal
         isOpen={formId !== null}
-        onClose={() => {
-          setFormId(null);
-          setActionError(null);
-        }}
-        title={formId === "new" ? "NEW NOTE" : "EDIT NOTE"}
-        status="ENCRYPTS IN THIS TAB"
-        description="This note stays linked to the current project and is encrypted locally before saving."
+        onClose={closeForm}
+        title={formId === "new" && importDraft ? "REVIEW IMPORTED MARKDOWN" : formId === "new" ? "NEW NOTE" : "EDIT NOTE"}
+        status={importDraft ? "LOCAL DRAFT" : "ENCRYPTS IN THIS TAB"}
+        description={importDraft
+          ? "Review or edit this Markdown source. Nothing is encrypted or saved until you choose Create encrypted note."
+          : "This note stays linked to the current project and is encrypted locally before saving."}
         icon={<FileText className="h-4 w-4" />}
         maxWidth="2xl"
         closeDisabled={isSaving}
+        fallbackFocusRef={importActionRef}
       >
         {formId && (
           <NoteForm
-            key={formId}
+            key={`${formId}:${importDraft ? "import" : "manual"}`}
             note={formNote}
+            initialDraft={formId === "new" ? importDraft ?? undefined : undefined}
             projects={data.projects}
             fixedProject={project}
             isSaving={isSaving}
             requestError={actionError}
-            onCancel={() => {
-              setFormId(null);
-              setActionError(null);
-            }}
+            onCancel={closeForm}
             onSubmit={handleSave}
           />
         )}
       </Modal>
+
+      {importError && (
+        <p role="alert" className="border-t border-rose-400/15 bg-rose-400/[0.04] px-3 py-2 font-sans text-[11px] text-rose-700 dark:text-rose-300 sm:px-5 sm:text-xs">
+          {importError}
+        </p>
+      )}
 
       {notes.length === 0 ? (
         <WorkspaceEmptyState
@@ -220,7 +314,7 @@ export function ProjectNotesWorkspace({
                 <button
                   type="button"
                   onClick={() => onSelectionChange(null)}
-                  className="mb-2.5 inline-flex min-h-9 items-center gap-1.5 text-[9px] tracking-widest text-amber-700 hover:text-amber-800 dark:text-amber-300/80 dark:hover:text-amber-200 sm:mb-4 sm:min-h-10 sm:text-[10px] lg:hidden"
+                  className="mb-2.5 inline-flex min-h-11 items-center gap-1.5 text-[10px] tracking-wider text-amber-700 hover:text-amber-800 dark:text-amber-300/80 dark:hover:text-amber-200 sm:mb-4 lg:hidden"
                 >
                   <ArrowLeft className="h-3 w-3" /> BACK TO NOTES
                 </button>
@@ -240,6 +334,8 @@ export function ProjectNotesWorkspace({
                     <button
                       type="button"
                       onClick={() => {
+                        replaceImportDraft(null);
+                        setImportError(null);
                         setActionError(null);
                         setFormId(selected.id);
                       }}
@@ -254,7 +350,7 @@ export function ProjectNotesWorkspace({
                       onClick={() => void handleDelete()}
                       disabled={isDeleting}
                       aria-label="Delete note"
-                      className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50 sm:min-h-10 sm:min-w-10"
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-rose-400/20 p-1 text-rose-700/75 transition-colors hover:border-rose-400/45 hover:text-rose-800 dark:text-rose-300/70 dark:hover:text-rose-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50 disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

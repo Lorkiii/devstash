@@ -18,9 +18,6 @@ export function OpenTasksPanel({ data, limit = 5 }: OpenTasksPanelProps) {
     .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
   const visibleTasks = openTasks.slice(0, limit);
   const completedTasks = data.tasks.length - openTasks.length;
-  const completionPercent = data.tasks.length === 0
-    ? 0
-    : Math.round((completedTasks / data.tasks.length) * 100);
   const projectName = (projectId?: string) =>
     data.projects.find((project) => project.id === projectId)?.name ?? "Unassigned";
   const taskCategory = (categoryId?: string) =>
@@ -31,23 +28,13 @@ export function OpenTasksPanel({ data, limit = 5 }: OpenTasksPanelProps) {
       <header className="border-b border-accent/15 px-3 py-3 sm:px-5 sm:py-4">
         <div className="flex items-end justify-between gap-3 sm:gap-4">
           <div>
-            <p className="font-mono text-[9px] tracking-[0.2em] text-emerald-300/60">NEXT ACTIONS</p>
-            <h2 id="focus-queue-title" className="mt-0.5 text-base font-bold tracking-tight text-foreground sm:mt-1 sm:text-lg">Focus queue</h2>
+            <h2 id="focus-queue-title" className="text-base font-bold tracking-tight text-foreground sm:text-lg">Focus queue</h2>
+            <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">Your next private actions</p>
           </div>
           <div className="text-right">
-            <strong className="text-2xl font-black leading-none text-emerald-300 sm:text-3xl">{openTasks.length}</strong>
+            <strong className="text-2xl font-black leading-none text-emerald-700 dark:text-emerald-300 sm:text-3xl">{openTasks.length}</strong>
             <span className="ml-1.5 font-mono text-[9px] tracking-widest text-subtle-foreground">OPEN</span>
           </div>
-        </div>
-
-        <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3 sm:mt-4">
-          <progress
-            aria-label={`${completedTasks} of ${data.tasks.length} tasks completed`}
-            className="vault-type-progress h-1.5 w-full rounded-full text-emerald-300"
-            max={Math.max(1, data.tasks.length)}
-            value={completedTasks}
-          />
-          <span className="font-mono text-[9px] tracking-widest text-subtle-foreground">{completionPercent}% CLEARED</span>
         </div>
       </header>
 
@@ -66,7 +53,7 @@ export function OpenTasksPanel({ data, limit = 5 }: OpenTasksPanelProps) {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold text-muted-foreground sm:text-sm">{task.title}</p>
+                  <p className="line-clamp-2 break-words text-[13px] font-semibold text-foreground sm:text-sm">{task.title}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 sm:mt-1.5">
                     <TaskCategoryBadge category={taskCategory(task.categoryId)} />
                     <span className="max-w-28 truncate font-mono text-[9px] tracking-wider text-subtle-foreground">{projectName(task.projectId)}</span>
