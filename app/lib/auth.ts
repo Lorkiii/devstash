@@ -4,10 +4,13 @@ import Google from "next-auth/providers/google";
 import { getPrisma } from "./prisma";
 import { createAuthAdapter } from "./auth/adapter";
 import { getAuthEnvironment } from "./auth/environment";
+import { getSafeAuthFailureType, type SafeAuthFailureType } from "./auth/failure";
 import { approvedGoogleIdentity, authenticationRedirect, matchesLinkedGoogleSubject } from "./auth/policy";
 import { AUTH_ROUTES, AUTH_SESSION_POLICY } from "./auth/config";
 
-export function createAuthConfig(onError: () => void = () => {}): NextAuthConfig {
+export function createAuthConfig(
+  onError: (failureType: SafeAuthFailureType) => void = () => {},
+): NextAuthConfig {
   const environment = getAuthEnvironment();
   if (!environment) throw new Error("Authentication is not configured");
   const prisma = getPrisma(environment.databaseUrl);
@@ -57,7 +60,11 @@ export function createAuthConfig(onError: () => void = () => {}): NextAuthConfig
       },
     },
     // Provider and adapter errors can embed tokens, URLs, and database details.
-    logger: { error: onError, warn() {}, debug() {} },
+    logger: {
+      error(error) { onError(getSafeAuthFailureType(error)); },
+      warn() {},
+      debug() {},
+    },
     debug: false,
   };
 }

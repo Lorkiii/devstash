@@ -5,18 +5,14 @@ import { createAuthConfig } from "@/app/lib/auth";
 import { getPrisma } from "@/app/lib/prisma";
 import { AUTH_ACTIONS, AUTH_RESPONSE_POLICY } from "./config";
 import { getAuthEnvironment } from "./environment";
+import type { SafeAuthFailureType } from "./failure";
 import { isTrustedAuthRequest } from "./policy";
 import { allowAuthAttempt, getRateLimitedAuthAction } from "./rate-limit";
+import { applyPrivateAuthHeaders } from "./response";
 import { createRateLimitRepository } from "../rate-limit-repository";
 
-function applyPrivateHeaders(response: Response) {
-  response.headers.set("Cache-Control", AUTH_RESPONSE_POLICY.cacheControl);
-  response.headers.set("Referrer-Policy", AUTH_RESPONSE_POLICY.referrerPolicy);
-  return response;
-}
-
 function authenticationFailure(status: number) {
-  return applyPrivateHeaders(Response.json(
+  return applyPrivateAuthHeaders(Response.json(
     { error: AUTH_RESPONSE_POLICY.unavailableMessage },
     { status },
   ));
@@ -39,14 +35,16 @@ export async function handleAuthRequest(request: NextRequest) {
     }
 
     // Preserve the session cookie if database logout fails so logout can be retried.
-    let authFailed = false;
-    const { handlers } = NextAuth(createAuthConfig(() => { authFailed = true; }));
+    let authFailureType: SafeAuthFailureType | null = null;
+    const { handlers } = NextAuth(createAuthConfig((failureType) => {
+      authFailureType = failureType;
+    }));
     const response = await handlers[request.method === "POST" ? "POST" : "GET"](request);
     const isSignOut = request.nextUrl.pathname.endsWith(`/${AUTH_ACTIONS.signOut}`);
-    if (authFailed && isSignOut) {
+    if (authFailureType && isSignOut) {
       return authenticationFailure(AUTH_RESPONSE_POLICY.status.unavailable);
     }
-    return applyPrivateHeaders(response);
+    return applyPrivateAuthHeaders(response);
   } catch {
     return authenticationFailure(AUTH_RESPONSE_POLICY.status.unavailable);
   }
