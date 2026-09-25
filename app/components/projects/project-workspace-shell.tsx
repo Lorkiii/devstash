@@ -202,7 +202,7 @@ export function WorkspaceEmptyState({ message, hint, className = "" }: Workspace
 }
 
 export const PROJECT_WORKSPACE_PRIMARY_ACTION =
-  "inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] font-semibold tracking-wider text-foreground transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:min-h-11 sm:w-auto sm:py-2 sm:text-xs";
+  "inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] font-semibold tracking-wider text-foreground transition-colors hover:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 sm:w-auto sm:py-2 sm:text-xs";
 
 export const PROJECT_WORKSPACE_ICON_ACTION =
-  "inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-accent/20 p-1 text-muted-foreground transition-colors hover:border-accent/45 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10 sm:min-w-10";
+  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-accent/20 p-1 text-muted-foreground transition-colors hover:border-accent/45 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-50";

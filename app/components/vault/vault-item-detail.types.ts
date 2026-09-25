@@ -1,12 +1,13 @@
+import type { RefObject } from "react";
 import type { VaultItem } from "@/app/lib/vault-data.types";
 
 export interface VaultItemDetailProps {
   item: VaultItem;
   projectName?: string;
-  embedded?: boolean;
   isDeleting: boolean;
   actionError: string | null;
-  onBack: () => void;
+  fallbackFocusRef?: RefObject<HTMLElement | null>;
+  onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }

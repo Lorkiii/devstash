@@ -8,11 +8,11 @@ import type { NoteFormProps } from "./note-form.types";
 
 const FIELD_CLASS = "min-h-10 w-full rounded-lg border border-accent/25 bg-background/80 px-2.5 py-1.5 font-mono text-[13px] text-foreground outline-none sm:min-h-11 sm:px-3 sm:py-2 sm:text-sm placeholder:text-subtle-foreground focus:border-accent/70 focus:ring-2 focus:ring-accent/10 disabled:opacity-60";
 
-export function NoteForm({ note, projects, fixedProject, isSaving, requestError, onCancel, onSubmit }: NoteFormProps) {
+export function NoteForm({ note, initialDraft, projects, fixedProject, isSaving, requestError, onCancel, onSubmit }: NoteFormProps) {
   const [projectId, setProjectId] = useState(fixedProject?.id ?? note?.projectId ?? "");
-  const [title, setTitle] = useState(note?.title ?? "");
-  const [body, setBody] = useState(note?.body ?? "");
-  const [tags, setTags] = useState(note?.tags.join(", ") ?? "");
+  const [title, setTitle] = useState(note?.title ?? initialDraft?.title ?? "");
+  const [body, setBody] = useState(note?.body ?? initialDraft?.body ?? "");
+  const [tags, setTags] = useState(note?.tags.join(", ") ?? initialDraft?.tags.join(", ") ?? "");
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

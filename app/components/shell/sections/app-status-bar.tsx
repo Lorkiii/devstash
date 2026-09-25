@@ -1,26 +1,20 @@
 "use client";
 
 import React from "react";
-import { formatCountdown } from "@/app/lib/format";
 
 interface AppStatusBarProps {
   isUnlocked: boolean;
   recordCount: number;
-  secondsUntilAutoLock: number | null;
 }
 
 // tmux/VS Code style status line. Only non-sensitive metadata appears here.
-// Hidden on phones: the header already carries the lock state and countdown.
-export function AppStatusBar({ isUnlocked, recordCount, secondsUntilAutoLock }: AppStatusBarProps) {
+// Hidden on phones to keep the app chrome compact.
+export function AppStatusBar({ isUnlocked, recordCount }: AppStatusBarProps) {
   const segments: string[] = [
     "argon2id",
     "aes-256-gcm",
     isUnlocked ? `${recordCount} records in memory` : "0 records in memory",
   ];
-  if (isUnlocked && secondsUntilAutoLock !== null) {
-    segments.push(`lock in ${formatCountdown(secondsUntilAutoLock)}`);
-  }
-
   return (
     <footer className="relative z-20 hidden h-7 shrink-0 border-t border-accent/15 bg-background/85 backdrop-blur-md md:block">
       <div className="flex h-full items-center px-4 font-mono text-[10px] tracking-wider text-subtle-foreground sm:px-5 lg:px-6">

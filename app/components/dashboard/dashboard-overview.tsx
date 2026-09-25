@@ -7,6 +7,7 @@ import { QuickActionsPanel } from "@/app/components/dashboard/sections/quick-act
 import { RecentPanel } from "@/app/components/dashboard/sections/recent-panel";
 import { OpenTasksPanel } from "@/app/components/dashboard/sections/open-tasks-panel";
 import { ProjectsStrip } from "@/app/components/dashboard/sections/projects-strip";
+import { WorkspaceInventory } from "@/app/components/dashboard/sections/workspace-inventory";
 
 export function DashboardOverview() {
   const data = useUnlockedVault();
@@ -15,24 +16,23 @@ export function DashboardOverview() {
   return (
     <div className="space-y-3 pb-2 sm:space-y-5">
       <VaultStatusPanel
-        data={data}
         unlockedAt={unlockedAt}
         secondsUntilAutoLock={secondsUntilAutoLock}
         autoLockMinutes={autoLockMinutes}
       />
 
-      <QuickActionsPanel />
-
       <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-12">
         <div className="xl:col-span-7">
-          <RecentPanel data={data} recents={recents} />
+          <OpenTasksPanel data={data} limit={4} />
         </div>
         <div className="xl:col-span-5">
-          <OpenTasksPanel data={data} />
+          <RecentPanel data={data} recents={recents} limit={4} />
         </div>
       </div>
 
-      <ProjectsStrip data={data} />
+      <QuickActionsPanel />
+      <WorkspaceInventory data={data} />
+      <ProjectsStrip data={data} limit={3} />
     </div>
   );
 }

@@ -5,11 +5,9 @@ import Link from "next/link";
 import { Menu, Search, Lock, LockOpen, LogOut } from "lucide-react";
 import { AccountAvatar } from "@/app/components/account/account-avatar";
 import { useAccountProfile } from "@/app/components/account/account-profile-provider";
-import { formatCountdown } from "@/app/lib/format";
 
 interface AppHeaderProps {
   isUnlocked: boolean;
-  secondsUntilAutoLock: number | null;
   onOpenPalette: () => void;
   onOpenMobileNav: () => void;
   onSignOut: () => void;
@@ -17,13 +15,11 @@ interface AppHeaderProps {
 
 export function AppHeader({
   isUnlocked,
-  secondsUntilAutoLock,
   onOpenPalette,
   onOpenMobileNav,
   onSignOut,
 }: AppHeaderProps) {
   const { profile } = useAccountProfile();
-  const countdown = secondsUntilAutoLock === null ? null : formatCountdown(secondsUntilAutoLock);
 
   return (
     <header className="relative z-20 h-12 shrink-0 border-b border-accent/15 bg-background/70 backdrop-blur-md sm:h-14">
@@ -73,17 +69,6 @@ export function AppHeader({
               <span className="sr-only">{isUnlocked ? "Vault unlocked" : "Vault locked"}</span>
               <span aria-hidden="true" className="hidden sm:inline">{isUnlocked ? "UNLOCKED" : "LOCKED"}</span>
             </span>
-            {isUnlocked && countdown !== null && (
-              <span
-                role="timer"
-                aria-live="off"
-                aria-label={`Auto-lock in ${countdown} after inactivity`}
-                className="border-l border-current/30 pl-1 text-[11px] font-bold tracking-normal text-foreground tabular-nums sm:pl-2 sm:text-[13px]"
-              >
-                <span aria-hidden="true" className="hidden lg:inline">LOCK IN </span>
-                <span aria-hidden="true">{countdown}</span>
-              </span>
-            )}
           </div>
           <Link
             href="/settings#profile-settings"

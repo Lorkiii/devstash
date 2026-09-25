@@ -25,6 +25,7 @@ export function Modal({
   maxWidth = "2xl",
   bodyClassName = "p-2.5 sm:p-6",
   closeDisabled = false,
+  fallbackFocusRef,
   children,
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -41,15 +42,17 @@ export function Modal({
     openerRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
+    const fallbackFocus = fallbackFocusRef?.current;
     if (!dialog.open) dialog.showModal();
 
     return () => {
       if (dialog.open) dialog.close();
       const opener = openerRef.current;
       openerRef.current = null;
-      if (opener?.isConnected) opener.focus();
+      if (opener?.isConnected && opener !== document.body && !opener.closest("dialog")) opener.focus();
+      else fallbackFocus?.focus();
     };
-  }, [isOpen]);
+  }, [isOpen, fallbackFocusRef]);
 
   if (!isOpen) return null;
 

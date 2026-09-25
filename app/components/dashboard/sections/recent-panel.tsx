@@ -12,6 +12,7 @@ import type { RecentRef, VaultData } from "@/app/lib/vault-data.types";
 interface RecentPanelProps {
   data: VaultData;
   recents: RecentRef[];
+  limit?: number;
 }
 
 interface ResolvedRecent {
@@ -27,7 +28,7 @@ interface ResolvedRecent {
 
 // Recent navigation is intentionally reconstructed from session-memory refs.
 // Persisting this trail would create a plaintext mirror of private titles.
-export function RecentPanel({ data, recents }: RecentPanelProps) {
+export function RecentPanel({ data, recents, limit = 6 }: RecentPanelProps) {
   const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -95,7 +96,7 @@ export function RecentPanel({ data, recents }: RecentPanelProps) {
           : [];
       }
     }
-  }).slice(0, 6);
+  }).slice(0, limit);
 
   return (
     <section aria-labelledby="session-trail-title" className="h-full overflow-hidden rounded-xl border border-accent/20 bg-surface/85 shadow-[0_10px_32px_rgba(0,0,0,0.14)]">

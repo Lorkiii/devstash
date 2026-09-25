@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { KeyRound, Plus, Search } from "lucide-react";
 import { Modal } from "@/app/components/ui/modal";
 import { TypeBadge } from "@/app/components/ui/type-badge";
@@ -39,6 +39,7 @@ export function ProjectSecretsWorkspace({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const items = useMemo(
     () => data.secrets
@@ -134,6 +135,7 @@ export function ProjectSecretsWorkspace({
         icon={<KeyRound className="h-4 w-4" />}
         maxWidth="2xl"
         closeDisabled={isSaving}
+        fallbackFocusRef={listRef}
       >
         {formItemId && (
           <GenericSecretForm
@@ -152,14 +154,14 @@ export function ProjectSecretsWorkspace({
         )}
       </Modal>
 
-      {items.length === 0 ? (
-        <WorkspaceEmptyState
-          message="no secrets linked to this project."
-          hint="Create a generic secret here to keep it fixed to this project workspace."
-        />
-      ) : (
-        <div className="grid min-w-0 lg:grid-cols-[minmax(16rem,0.82fr)_minmax(0,1.18fr)]">
-          <div className={`${selected ? "hidden lg:block" : ""} min-w-0 border-accent/12 lg:border-r`}>
+      <div ref={listRef} tabIndex={-1} className="min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/50">
+        {items.length === 0 ? (
+          <WorkspaceEmptyState
+            message="no secrets linked to this project."
+            hint="Create a generic secret here to keep it fixed to this project workspace."
+          />
+        ) : (
+          <div className="min-w-0">
             <label className="flex min-h-10 items-center gap-2 border-b border-accent/10 px-2.5 py-1.5 sm:min-h-12 sm:px-4 sm:py-2.5">
               <Search className="h-3.5 w-3.5 shrink-0 text-violet-700/80 dark:text-violet-300/70" aria-hidden="true" />
               <input
@@ -204,31 +206,23 @@ export function ProjectSecretsWorkspace({
               </ul>
             )}
           </div>
-
-          <div className={`${selected ? "" : "hidden lg:block"} min-w-0`}>
-            {selected ? (
-              <VaultItemDetail
-                key={`${selected.id}:${selected.updatedAt}`}
-                item={selected}
-                projectName={project.name}
-                embedded
-                isDeleting={isDeleting}
-                actionError={actionError}
-                onBack={() => onSelectionChange(null)}
-                onEdit={() => {
-                  setActionError(null);
-                  setFormItemId(selected.id);
-                }}
-                onDelete={() => void handleDelete()}
-              />
-            ) : (
-              <WorkspaceEmptyState
-                message="select a secret to inspect it."
-                hint="Sensitive fields remain masked until an explicit timed reveal."
-              />
-            )}
-          </div>
-        </div>
+        )}
+      </div>
+      {selected && formItemId === null && (
+        <VaultItemDetail
+          key={`${selected.id}:${selected.updatedAt}`}
+          item={selected}
+          projectName={project.name}
+          isDeleting={isDeleting}
+          actionError={actionError}
+          fallbackFocusRef={listRef}
+          onClose={() => onSelectionChange(null, true)}
+          onEdit={() => {
+            setActionError(null);
+            setFormItemId(selected.id);
+          }}
+          onDelete={() => void handleDelete()}
+        />
       )}
     </ProjectWorkspaceShell>
   );
