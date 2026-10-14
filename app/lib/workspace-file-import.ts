@@ -241,6 +241,10 @@ export function parseEnvSource(source: string): EnvImportParseResult {
   return { rows: validateEnvImportRows(rows), skippedLineCount };
 }
 
+export function createEnvReviewDraft(environment: string, source: string): EnvImportDraft {
+  return { environment, ...parseEnvSource(source) };
+}
+
 function serializeEnvValue(value: string): string {
   if (!/[\s#"'\\]/u.test(value)) return value;
   return `"${value
@@ -368,14 +372,14 @@ export async function readEnvImportFile(file: WorkspaceImportFile): Promise<EnvI
   let source = await readUtf8Source(file);
   try {
     if (source.charCodeAt(0) === 0xfeff) source = source.slice(1);
-    const parsed = parseEnvSource(source);
-    if (parsed.rows.length === 0) {
+    const draft = createEnvReviewDraft(environment, source);
+    if (draft.rows.length === 0) {
       throw new WorkspaceFileImportError(
         "no-env-variables",
         "The selected file does not contain any variable rows to review.",
       );
     }
-    return { environment, ...parsed };
+    return draft;
   } finally {
     source = "";
   }

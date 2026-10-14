@@ -6,6 +6,7 @@ import {
   WORKSPACE_IMPORT_MAX_BYTES,
   WorkspaceFileImportError,
   clearEnvImportDraft,
+  createEnvReviewDraft,
   parseEnvSource,
   readEnvImportFile,
   readMarkdownImportFile,
@@ -90,6 +91,22 @@ test("environment serialization preserves order and safely round-trips special v
     reparsed.rows.map(({ key, value, issue }) => ({ key, value, issue })),
     rows.map(({ key, value }) => ({ key, value, issue: null })),
   );
+});
+
+test("existing environment content becomes the same editable review draft", () => {
+  const draft = createEnvReviewDraft("staging", [
+    "# synthetic fixture",
+    "FIRST=fake",
+    "",
+    'QUOTED="two words"',
+  ].join("\n"));
+
+  assert.equal(draft.environment, "staging");
+  assert.equal(draft.skippedLineCount, 2);
+  assert.deepEqual(rowValues(draft.rows), [
+    { sourceLine: 2, key: "FIRST", value: "fake", issue: null },
+    { sourceLine: 4, key: "QUOTED", value: "two words", issue: null },
+  ]);
 });
 
 test("malformed rows, invalid keys, multiline quotes, and case-sensitive duplicates are reported inline", () => {
