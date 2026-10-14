@@ -21,6 +21,7 @@ const ICON_BUTTON_CLASS = "inline-flex min-h-10 min-w-10 items-center justify-ce
 interface EnvBundleImportFormProps {
   projectId: string;
   draft: EnvImportDraft;
+  intent: "import" | "edit";
   isSaving: boolean;
   requestError: string | null;
   onCancel: () => void;
@@ -30,6 +31,7 @@ interface EnvBundleImportFormProps {
 interface ImportActionButtonProps {
   isSaving: boolean;
   canSubmit?: boolean;
+  intent?: "import" | "edit";
   onCancel?: () => void;
 }
 
@@ -123,11 +125,11 @@ function ImportCancelButton({ isSaving, onCancel }: ImportActionButtonProps) {
   );
 }
 
-function ImportSubmitButton({ isSaving, canSubmit = false }: ImportActionButtonProps) {
+function ImportSubmitButton({ isSaving, canSubmit = false, intent = "import" }: ImportActionButtonProps) {
   return (
     <button type="submit" disabled={!canSubmit} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-cyan-400/50 bg-cyan-400/15 px-4 py-2 text-[11px] font-semibold tracking-wider text-foreground transition-colors hover:bg-cyan-400/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto sm:text-xs">
       {isSaving ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-      CREATE ENCRYPTED BUNDLE
+      {intent === "edit" ? "SAVE ENCRYPTED UPDATE" : "CREATE ENCRYPTED BUNDLE"}
     </button>
   );
 }
@@ -135,11 +137,13 @@ function ImportSubmitButton({ isSaving, canSubmit = false }: ImportActionButtonP
 export function EnvBundleImportForm({
   projectId,
   draft,
+  intent,
   isSaving,
   requestError,
   onCancel,
   onSubmit,
 }: EnvBundleImportFormProps) {
+  const isEditing = intent === "edit";
   const formId = useId();
   const draftStore = useMemo(() => new SensitiveEnvImportDraftStore(draft), [draft]);
   const draftRevision = useSyncExternalStore(
@@ -176,9 +180,9 @@ export function EnvBundleImportForm({
     }
   })();
   const summaryError = environmentError ??
-    (validatedRows.length === 0 ? "Add at least one variable before creating the bundle." : null) ??
+    (validatedRows.length === 0 ? "Add at least one variable before saving the bundle." : null) ??
     (issueCount > 0
-      ? `${issueCount} ${issueCount === 1 ? "variable needs" : "variables need"} attention before this bundle can be created.`
+      ? `${issueCount} ${issueCount === 1 ? "variable needs" : "variables need"} attention before this bundle can be saved.`
       : null) ??
     serializationError;
   const canSubmit = !isSaving && !summaryError;
@@ -296,7 +300,7 @@ export function EnvBundleImportForm({
     event.preventDefault();
     setValidationError(null);
     if (!canSubmit) {
-      setValidationError("Correct the review errors before creating this encrypted bundle.");
+      setValidationError("Correct the variable errors before saving this encrypted bundle.");
       return;
     }
 
@@ -368,7 +372,9 @@ export function EnvBundleImportForm({
         </div>
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-[11px] text-muted-foreground sm:text-xs">
           <span className="font-medium text-foreground">{rows.length.toLocaleString("en-US")} {rows.length === 1 ? "variable" : "variables"}</span>
-          <span>{draft.skippedLineCount.toLocaleString("en-US")} comments or blank lines skipped</span>
+          <span>
+            {draft.skippedLineCount.toLocaleString("en-US")} comments or blank lines {isEditing ? "excluded from this update" : "skipped"}
+          </span>
           <span>Values hide again after 15 seconds.</span>
         </div>
         {summaryError && (
@@ -378,7 +384,7 @@ export function EnvBundleImportForm({
         )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Imported environment variables">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-label="Environment variables">
         <div className="sticky top-0 z-10 hidden grid-cols-[4rem_minmax(9rem,0.75fr)_minmax(12rem,1.25fr)_5.5rem] gap-3 border-b border-accent/15 bg-background/95 px-6 py-2 text-[9px] tracking-widest text-subtle-foreground backdrop-blur-sm sm:grid">
           <span>SOURCE</span>
           <span>KEY</span>
@@ -471,7 +477,9 @@ export function EnvBundleImportForm({
           <div className="grid min-h-40 place-items-center px-6 py-10 text-center">
             <div>
               <p className="text-xs font-semibold text-foreground">No variables in this review.</p>
-              <p className="mt-1 font-sans text-[11px] text-muted-foreground">Add a variable to continue, or cancel this import.</p>
+              <p className="mt-1 font-sans text-[11px] text-muted-foreground">
+                Add a variable to continue, or cancel this {isEditing ? "edit" : "import"}.
+              </p>
               <button type="button" onClick={addRow} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-400/10 px-4 text-[10px] tracking-wider text-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/45 dark:text-cyan-200">
                 <Plus className="h-3.5 w-3.5" /> ADD VARIABLE
               </button>
@@ -487,12 +495,12 @@ export function EnvBundleImportForm({
           </p>
         )}
         <div className="flex flex-col gap-2 sm:hidden">
-          <ImportSubmitButton isSaving={isSaving} canSubmit={canSubmit} />
+          <ImportSubmitButton isSaving={isSaving} canSubmit={canSubmit} intent={intent} />
           <ImportCancelButton isSaving={isSaving} onCancel={handleCancel} />
         </div>
         <div className="hidden items-center justify-end gap-2 sm:flex">
           <ImportCancelButton isSaving={isSaving} onCancel={handleCancel} />
-          <ImportSubmitButton isSaving={isSaving} canSubmit={canSubmit} />
+          <ImportSubmitButton isSaving={isSaving} canSubmit={canSubmit} intent={intent} />
         </div>
       </div>
     </form>

@@ -7,8 +7,10 @@ import { formatDate } from "@/app/lib/format";
 import { useUnlockedVault, useVaultSession } from "@/app/lib/vault-session";
 import type { Project } from "@/app/lib/vault-data.types";
 import {
+  ENV_IMPORT_MAX_ROWS,
   WorkspaceFileImportError,
   clearEnvImportDraft,
+  createEnvReviewDraft,
   readEnvImportFile,
   type EnvImportDraft,
 } from "@/app/lib/workspace-file-import";
@@ -33,7 +35,7 @@ interface ProjectEnvWorkspaceProps {
 
 type EnvModalState =
   | { mode: "manual" }
-  | { mode: "edit"; bundleId: string }
+  | { mode: "edit"; bundleId: string; draft: EnvImportDraft }
   | { mode: "import"; draft: EnvImportDraft }
   | null;
 
@@ -48,7 +50,7 @@ export function ProjectEnvWorkspace({
   const { createEnvBundle, deleteEnvBundle, updateEnvBundle } = useVaultSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importActionRef = useRef<HTMLButtonElement>(null);
-  const importDraftRef = useRef<EnvImportDraft | null>(null);
+  const reviewDraftRef = useRef<EnvImportDraft | null>(null);
   const mountedRef = useRef(true);
   const [modalState, setModalState] = useState<EnvModalState>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -58,9 +60,11 @@ export function ProjectEnvWorkspace({
   const [importError, setImportError] = useState<string | null>(null);
 
   const replaceModalState = (nextState: EnvModalState) => {
-    const nextDraft = nextState?.mode === "import" ? nextState.draft : null;
-    if (importDraftRef.current !== nextDraft) clearEnvImportDraft(importDraftRef.current);
-    importDraftRef.current = nextDraft;
+    const nextDraft = nextState?.mode === "import" || nextState?.mode === "edit"
+      ? nextState.draft
+      : null;
+    if (reviewDraftRef.current !== nextDraft) clearEnvImportDraft(reviewDraftRef.current);
+    reviewDraftRef.current = nextDraft;
     setModalState(nextState);
   };
 
@@ -68,8 +72,8 @@ export function ProjectEnvWorkspace({
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      clearEnvImportDraft(importDraftRef.current);
-      importDraftRef.current = null;
+      clearEnvImportDraft(reviewDraftRef.current);
+      reviewDraftRef.current = null;
     };
   }, []);
 
@@ -81,10 +85,6 @@ export function ProjectEnvWorkspace({
   );
   const selectedFromUrl = bundles.find((bundle) => bundle.id === selectedBundleId) ?? null;
   const selected = selectedFromUrl ?? (selectedBundleId ? null : bundles[0] ?? null);
-  const formBundle = modalState?.mode === "edit"
-    ? bundles.find((bundle) => bundle.id === modalState.bundleId)
-    : undefined;
-
   useEffect(() => {
     if (selectedBundleId && !selectedFromUrl) onSelectionChange(null, true);
   }, [selectedBundleId, selectedFromUrl, onSelectionChange]);
@@ -113,6 +113,25 @@ export function ProjectEnvWorkspace({
     replaceModalState(null);
     setActionError(null);
     setImportError(null);
+  };
+
+  const openEditor = () => {
+    if (!selected) return;
+    setImportError(null);
+    setActionError(null);
+    try {
+      replaceModalState({
+        mode: "edit",
+        bundleId: selected.id,
+        draft: createEnvReviewDraft(selected.environment, selected.content),
+      });
+    } catch (error) {
+      setActionError(
+        error instanceof WorkspaceFileImportError && error.code === "too-many-env-rows"
+          ? `This bundle contains more than ${ENV_IMPORT_MAX_ROWS.toLocaleString("en-US")} variable rows and cannot be opened in the row editor.`
+          : "The decrypted .env bundle could not be prepared for editing.",
+      );
+    }
   };
 
   const handleImportSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,21 +226,24 @@ export function ProjectEnvWorkspace({
         isOpen={modalState !== null}
         onClose={closeForm}
         title={modalState?.mode === "import" ? "REVIEW IMPORTED .ENV" : modalState?.mode === "manual" ? "NEW .ENV BUNDLE" : "EDIT .ENV BUNDLE"}
-        status={modalState?.mode === "import" ? "LOCAL REVIEW" : "WHOLE FILE ENCRYPTION"}
+        status={modalState?.mode === "import" ? "LOCAL REVIEW" : modalState?.mode === "edit" ? "VARIABLE EDITOR" : "WHOLE FILE ENCRYPTION"}
         description={modalState?.mode === "import"
           ? "Review each variable locally. Nothing is encrypted or saved until you choose Create encrypted bundle."
-          : "Variable names, values, comments, and environment name are encrypted locally before saving."}
+          : modalState?.mode === "edit"
+            ? "Edit each variable locally. Comments, blank lines, and original formatting are excluded when you save the encrypted update."
+            : "Variable names, values, comments, and environment name are encrypted locally before saving."}
         icon={<FileCode2 className="h-4 w-4" />}
-        maxWidth={modalState?.mode === "import" ? "3xl" : "2xl"}
-        bodyClassName={modalState?.mode === "import" ? "!overflow-hidden flex flex-col p-0" : undefined}
+        maxWidth={modalState?.mode === "import" || modalState?.mode === "edit" ? "3xl" : "2xl"}
+        bodyClassName={modalState?.mode === "import" || modalState?.mode === "edit" ? "!overflow-hidden flex flex-col p-0" : undefined}
         closeDisabled={isSaving}
         fallbackFocusRef={importActionRef}
       >
-        {modalState?.mode === "import" ? (
+        {modalState?.mode === "import" || modalState?.mode === "edit" ? (
           <EnvBundleImportForm
-            key="import-review"
+            key={modalState.mode === "edit" ? modalState.bundleId : "import-review"}
             projectId={project.id}
             draft={modalState.draft}
+            intent={modalState.mode}
             isSaving={isSaving}
             requestError={actionError}
             onCancel={closeForm}
@@ -229,9 +251,8 @@ export function ProjectEnvWorkspace({
           />
         ) : modalState ? (
           <EnvBundleForm
-            key={modalState.mode === "edit" ? modalState.bundleId : "manual"}
+            key="manual"
             projectId={project.id}
-            bundle={formBundle}
             isSaving={isSaving}
             requestError={actionError}
             onCancel={closeForm}
@@ -290,9 +311,7 @@ export function ProjectEnvWorkspace({
                 embedded
                 isDeleting={deletingId === selected.id}
                 onEdit={() => {
-                  setImportError(null);
-                  setActionError(null);
-                  replaceModalState({ mode: "edit", bundleId: selected.id });
+                  openEditor();
                 }}
                 onDelete={() => void handleDelete()}
               />

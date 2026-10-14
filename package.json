@@ -30,6 +30,9 @@
     "zod": "4.5.4"
   },
   "overrides": {
+    "@prisma/adapter-neon": {
+      "@neondatabase/serverless": "1.2.0"
+    },
     "@prisma/config": {
       "deepmerge-ts": "8.0.2"
     },
